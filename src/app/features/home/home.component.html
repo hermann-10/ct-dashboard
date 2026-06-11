@@ -38,8 +38,6 @@
           <div class="event-card-top">
             @if (event.image_url) {
               <img [src]="event.image_url" [alt]="event.name" class="event-flyer" />
-            } @else {
-              <div class="event-emoji">{{ event.image_emoji }}</div>
             }
             <div class="event-info">
               <div class="event-date-badge">
