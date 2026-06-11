@@ -34,7 +34,7 @@
       </div>
     } @else {
       @for (event of events(); track event.id) {
-        <a [href]="trackingUrl(event.slug)" class="event-card" target="_blank" rel="noopener">
+        <a [href]="event.ticket_url" class="event-card" target="_blank" rel="noopener">
           <div class="event-emoji">{{ event.image_emoji }}</div>
           <div class="event-info">
             <div class="event-date-badge">
