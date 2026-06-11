@@ -80,5 +80,24 @@ export const EventsAdminStore = signalStore(
         patchState(store, { error: e.message });
       }
     },
+    async fetchMissingFlyers() {
+      const missing = store.events().filter(e => !e.image_url && e.ticket_url);
+      if (!missing.length) return;
+      patchState(store, { loading: true });
+      for (const event of missing) {
+        try {
+          const imageUrl = await service.extractOgImage(event.ticket_url!);
+          if (imageUrl) {
+            const updated = await service.updateImageUrl(event.id, imageUrl);
+            patchState(store, {
+              events: store.events().map(e => e.id === event.id ? updated : e),
+            });
+          }
+        } catch {
+          // Skip this event silently
+        }
+      }
+      patchState(store, { loading: false });
+    },
   }))
 );

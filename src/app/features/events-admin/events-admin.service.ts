@@ -25,4 +25,12 @@ export class EventsAdminService {
   async togglePublished(id: string, isPublished: boolean): Promise<EventRecord> {
     return this.supabase.toggleEventPublished(id, isPublished);
   }
+
+  async extractOgImage(ticketUrl: string): Promise<string | null> {
+    return this.supabase.extractOgImage(ticketUrl);
+  }
+
+  async updateImageUrl(id: string, imageUrl: string): Promise<EventRecord> {
+    return this.supabase.updateEvent(id, { image_url: imageUrl });
+  }
 }

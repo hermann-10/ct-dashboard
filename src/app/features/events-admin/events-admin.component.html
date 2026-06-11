@@ -4,10 +4,16 @@
       <h2>Gestion des événements</h2>
       <p class="subtitle">{{ store.publishedCount() }} publiés · {{ store.upcomingCount() }} à venir</p>
     </div>
-    <button mat-flat-button color="primary" (click)="onAdd()">
-      <mat-icon>add</mat-icon>
-      Nouvel événement
-    </button>
+    <div class="header-actions">
+      <button mat-stroked-button (click)="onFetchFlyers()" [disabled]="store.loading()" matTooltip="Récupérer automatiquement les flyers depuis les liens billetterie">
+        <mat-icon>image_search</mat-icon>
+        Récupérer les flyers
+      </button>
+      <button mat-flat-button color="primary" (click)="onAdd()">
+        <mat-icon>add</mat-icon>
+        Nouvel événement
+      </button>
+    </div>
   </div>
 
   @if (store.loading()) {
@@ -23,7 +29,13 @@
     <table mat-table [dataSource]="store.events()" class="events-table">
       <ng-container matColumnDef="emoji">
         <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let event" class="emoji-cell">{{ event.image_emoji }}</td>
+        <td mat-cell *matCellDef="let event" class="emoji-cell">
+          @if (event.image_url) {
+            <img [src]="event.image_url" [alt]="event.name" class="table-thumb" />
+          } @else {
+            {{ event.image_emoji }}
+          }
+        </td>
       </ng-container>
 
       <ng-container matColumnDef="name">

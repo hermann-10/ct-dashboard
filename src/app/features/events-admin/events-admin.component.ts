@@ -81,4 +81,8 @@ export class EventsAdminComponent implements OnInit {
   copyUrl(slug: string): void {
     navigator.clipboard.writeText(this.trackingUrl(slug));
   }
+
+  onFetchFlyers(): void {
+    this.store.fetchMissingFlyers();
+  }
 }

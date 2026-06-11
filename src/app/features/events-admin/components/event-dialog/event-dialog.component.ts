@@ -107,8 +107,12 @@ export interface EventDialogData {
 
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Annuler</button>
-      <button mat-flat-button color="primary" (click)="onSave()" [disabled]="!isValid() || uploading()">
-        {{ data.mode === 'create' ? 'Créer' : 'Enregistrer' }}
+      <button mat-flat-button color="primary" (click)="onSave()" [disabled]="!isValid() || uploading() || fetchingOg()">
+        @if (fetchingOg()) {
+          Récupération du flyer...
+        } @else {
+          {{ data.mode === 'create' ? 'Créer' : 'Enregistrer' }}
+        }
       </button>
     </mat-dialog-actions>
   `,
@@ -163,6 +167,7 @@ export class EventDialogComponent {
   uploading = signal(false);
   uploadError = signal('');
   previewUrl = signal('');
+  fetchingOg = signal(false);
   private pendingFile: File | null = null;
 
   form = {
@@ -242,9 +247,24 @@ export class EventDialogComponent {
     this.pendingFile = null;
   }
 
-  onSave(): void {
-    if (this.isValid()) {
-      this.dialogRef.close(this.form);
+  async onSave(): Promise<void> {
+    if (!this.isValid()) return;
+
+    // Auto-fetch og:image if no flyer uploaded but ticket_url exists
+    if (!this.form.image_url && this.form.ticket_url) {
+      this.fetchingOg.set(true);
+      try {
+        const ogImage = await this.supabase.extractOgImage(this.form.ticket_url);
+        if (ogImage) {
+          this.form.image_url = ogImage;
+        }
+      } catch {
+        // Silently fail — keep emoji fallback
+      } finally {
+        this.fetchingOg.set(false);
+      }
     }
+
+    this.dialogRef.close(this.form);
   }
 }

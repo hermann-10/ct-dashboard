@@ -20,7 +20,21 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
 .emoji-cell { font-size: 1.5rem; width: 48px; }
+
+.table-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+}
 
 .event-name { font-weight: 500; }
 .event-slug {

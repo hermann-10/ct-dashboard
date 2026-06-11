@@ -168,4 +168,16 @@ export class SupabaseService {
       await this.supabase.storage.from('event-flyers').remove([path]);
     }
   }
+
+  // Extract og:image from a ticketing URL via serverless function
+  async extractOgImage(ticketUrl: string): Promise<string | null> {
+    try {
+      const res = await fetch(`/api/og-image?url=${encodeURIComponent(ticketUrl)}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.image_url ?? null;
+    } catch {
+      return null;
+    }
+  }
 }
