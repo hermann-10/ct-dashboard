@@ -34,30 +34,32 @@
       </div>
     } @else {
       @for (event of events(); track event.id) {
-        <a [href]="event.ticket_url" class="event-card" target="_blank" rel="noopener">
-          @if (event.image_url) {
-            <img [src]="event.image_url" [alt]="event.name" class="event-flyer" />
-          } @else {
-            <div class="event-emoji">{{ event.image_emoji }}</div>
-          }
-          <div class="event-info">
-            <div class="event-date-badge">
-              @if (isToday(event.date)) {
-                <span class="badge tonight">CE SOIR</span>
-              } @else if (isSoon(event.date)) {
-                <span class="badge soon">BIENTÔT</span>
-              }
-              <span class="event-date">{{ event.date | date:'d.MM' }}</span>
+        <div class="event-card">
+          <div class="event-card-top">
+            @if (event.image_url) {
+              <img [src]="event.image_url" [alt]="event.name" class="event-flyer" />
+            } @else {
+              <div class="event-emoji">{{ event.image_emoji }}</div>
+            }
+            <div class="event-info">
+              <div class="event-date-badge">
+                @if (isToday(event.date)) {
+                  <span class="badge tonight">CE SOIR</span>
+                } @else if (isSoon(event.date)) {
+                  <span class="badge soon">BIENTÔT</span>
+                }
+                <span class="event-date">{{ event.date | date:'d.MM' }}</span>
+              </div>
+              <h3 class="event-name">{{ event.name }}</h3>
+              <p class="event-venue">📍 {{ event.venue }}, {{ event.city }}</p>
             </div>
-            <h3 class="event-name">{{ event.name }}</h3>
-            <p class="event-venue">📍 {{ event.venue }}, {{ event.city }}</p>
           </div>
-          <div class="event-arrow">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-          </div>
-        </a>
+          @if (event.ticket_url) {
+            <a [href]="event.ticket_url" class="ticket-btn" target="_blank" rel="noopener">
+              🎟️ Acheter des tickets
+            </a>
+          }
+        </div>
       } @empty {
         <div class="no-events">
           <p>Pas d'événements à venir pour le moment.</p>
