@@ -149,4 +149,23 @@ export class SupabaseService {
   async toggleEventPublished(id: string, isPublished: boolean): Promise<any> {
     return this.updateEvent(id, { is_published: isPublished });
   }
+
+  // Storage - upload flyer
+  async uploadFlyer(file: File, slug: string): Promise<string> {
+    const ext = file.name.split('.').pop() ?? 'jpg';
+    const path = `${slug}-${Date.now()}.${ext}`;
+    const { error } = await this.supabase.storage
+      .from('event-flyers')
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (error) throw error;
+    const { data } = this.supabase.storage.from('event-flyers').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  async deleteFlyer(url: string): Promise<void> {
+    const path = url.split('/event-flyers/')[1];
+    if (path) {
+      await this.supabase.storage.from('event-flyers').remove([path]);
+    }
+  }
 }
