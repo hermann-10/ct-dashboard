@@ -1,0 +1,27 @@
+import { Routes } from '@angular/router';
+import { AdminComponent } from './admin.component';
+
+export const ADMIN_ROUTES: Routes = [
+  {
+    path: '',
+    component: AdminComponent,
+    children: [
+      {
+        path: 'dashboard',
+        loadChildren: () =>
+          import('../dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES),
+      },
+      {
+        path: 'events',
+        loadChildren: () =>
+          import('../events-admin/events-admin.routes').then(m => m.EVENTS_ADMIN_ROUTES),
+      },
+      {
+        path: 'event/:slug',
+        loadChildren: () =>
+          import('../event-detail/event-detail.routes').then(m => m.EVENT_DETAIL_ROUTES),
+      },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+    ],
+  },
+];

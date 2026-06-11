@@ -1,0 +1,45 @@
+<div class="login-wrapper">
+  <mat-card class="login-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="logo-icon">track_changes</mat-icon>
+        CT Tracker
+      </mat-card-title>
+      <mat-card-subtitle>Connectez-vous pour accéder au dashboard</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      @if (store.error()) {
+        <div class="error-banner">
+          <mat-icon>error_outline</mat-icon>
+          {{ store.error() }}
+        </div>
+      }
+
+      <form (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" [ngModel]="email()" (ngModelChange)="email.set($event)" name="email" required />
+          <mat-icon matPrefix>email</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Mot de passe</mat-label>
+          <input matInput [type]="hidePassword() ? 'password' : 'text'" [ngModel]="password()" (ngModelChange)="password.set($event)" name="password" required />
+          <mat-icon matPrefix>lock</mat-icon>
+          <button mat-icon-button matSuffix type="button" (click)="hidePassword.set(!hidePassword())">
+            <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        </mat-form-field>
+
+        <button mat-flat-button color="primary" type="submit" class="full-width login-btn" [disabled]="store.loading() || !email() || !password()">
+          @if (store.loading()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            Se connecter
+          }
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

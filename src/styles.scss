@@ -1,0 +1,21 @@
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.theme((
+    color: (
+      primary: mat.$violet-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background: #fafafa;
+}
+
+* { box-sizing: border-box; }
+a { text-decoration: none; }

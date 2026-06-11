@@ -1,0 +1,85 @@
+<div class="events-admin">
+  <div class="header">
+    <div>
+      <h2>Gestion des événements</h2>
+      <p class="subtitle">{{ store.publishedCount() }} publiés · {{ store.upcomingCount() }} à venir</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="onAdd()">
+      <mat-icon>add</mat-icon>
+      Nouvel événement
+    </button>
+  </div>
+
+  @if (store.loading()) {
+    <div class="loading">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else if (store.error()) {
+    <div class="error">
+      <mat-icon>error</mat-icon>
+      <span>{{ store.error() }}</span>
+    </div>
+  } @else {
+    <table mat-table [dataSource]="store.events()" class="events-table">
+      <ng-container matColumnDef="emoji">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let event" class="emoji-cell">{{ event.image_emoji }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Événement</th>
+        <td mat-cell *matCellDef="let event">
+          <div class="event-name">{{ event.name }}</div>
+          <div class="event-slug">
+            <code>{{ event.slug }}</code>
+            <button mat-icon-button matTooltip="Copier l'URL de tracking" (click)="copyUrl(event.slug)" class="copy-btn">
+              <mat-icon class="small-icon">content_copy</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef>Date</th>
+        <td mat-cell *matCellDef="let event">
+          <span [class.past]="isPast(event.date)">{{ event.date | date:'d MMM yyyy' }}</span>
+          @if (isPast(event.date)) {
+            <mat-icon class="past-icon" matTooltip="Passé">history</mat-icon>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="venue">
+        <th mat-header-cell *matHeaderCellDef>Lieu</th>
+        <td mat-cell *matCellDef="let event">{{ event.venue }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="city">
+        <th mat-header-cell *matHeaderCellDef>Ville</th>
+        <td mat-cell *matCellDef="let event">{{ event.city }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="published">
+        <th mat-header-cell *matHeaderCellDef>Publié</th>
+        <td mat-cell *matCellDef="let event">
+          <mat-slide-toggle [checked]="event.is_published" (change)="onTogglePublished(event)" />
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let event">
+          <button mat-icon-button matTooltip="Modifier" (click)="onEdit(event)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button matTooltip="Supprimer" color="warn" (click)="onDelete(event)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+  }
+</div>

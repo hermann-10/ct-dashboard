@@ -1,0 +1,41 @@
+<div class="dashboard-content">
+  @if (store.loading()) {
+    <div class="loading-overlay">
+      <mat-spinner diameter="48" />
+      <p>Chargement des données...</p>
+    </div>
+  } @else if (store.error()) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ store.error() }}</p>
+      <button mat-flat-button color="primary" (click)="onRefresh()">Réessayer</button>
+    </div>
+  } @else {
+    <div class="dashboard-header">
+      <h2>Dashboard</h2>
+      <button mat-icon-button (click)="onRefresh()" matTooltip="Actualiser">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+
+    <app-kpi-cards [stats]="store.stats()" />
+
+    <div class="charts-row">
+      <div class="chart-main">
+        <app-clicks-chart [timeline]="store.timeline()" />
+      </div>
+      <div class="chart-side">
+        <app-device-breakdown [devices]="store.deviceBreakdown()" />
+      </div>
+    </div>
+
+    <div class="tables-row">
+      <div class="table-main">
+        <app-events-list [events]="store.events()" (viewDetail)="onViewEvent($event)" />
+      </div>
+      <div class="table-side">
+        <app-utm-table [sources]="store.utmBreakdown()" />
+      </div>
+    </div>
+  }
+</div>
