@@ -21,6 +21,11 @@ export const ADMIN_ROUTES: Routes = [
         loadChildren: () =>
           import('../event-detail/event-detail.routes').then(m => m.EVENT_DETAIL_ROUTES),
       },
+      {
+        path: 'settings',
+        loadChildren: () =>
+          import('../settings/settings.routes').then(m => m.SETTINGS_ROUTES),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

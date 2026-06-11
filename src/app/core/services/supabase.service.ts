@@ -180,4 +180,32 @@ export class SupabaseService {
       return null;
     }
   }
+
+  // Settings
+  async getSetting(key: string): Promise<string | null> {
+    const { data } = await this.supabase
+      .from('settings')
+      .select('value')
+      .eq('key', key)
+      .single();
+    return data?.value ?? null;
+  }
+
+  async getSettings(): Promise<Record<string, string>> {
+    const { data } = await this.supabase.from('settings').select('key, value');
+    const result: Record<string, string> = {};
+    (data ?? []).forEach(row => { result[row.key] = row.value; });
+    return result;
+  }
+
+  async upsertSetting(key: string, value: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('settings')
+      .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) throw error;
+  }
+
+  async deleteSetting(key: string): Promise<void> {
+    await this.supabase.from('settings').delete().eq('key', key);
+  }
 }

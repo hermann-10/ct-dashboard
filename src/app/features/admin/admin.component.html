@@ -4,7 +4,7 @@
       <mat-icon>menu</mat-icon>
     </button>
     <mat-icon class="toolbar-logo">track_changes</mat-icon>
-    <span class="toolbar-title">CT Tracker</span>
+    <span class="toolbar-title">HM Events Tracker</span>
     <span class="spacer"></span>
     <span class="user-email">{{ userEmail()?.email }}</span>
     <button mat-icon-button (click)="onLogout()" matTooltip="Déconnexion">
@@ -22,6 +22,10 @@
         <a mat-list-item routerLink="/admin/events" routerLinkActive="active-link">
           <mat-icon matListItemIcon>event</mat-icon>
           <span matListItemTitle>Événements</span>
+        </a>
+        <a mat-list-item routerLink="/admin/settings" routerLinkActive="active-link">
+          <mat-icon matListItemIcon>settings</mat-icon>
+          <span matListItemTitle>Paramètres</span>
         </a>
       </mat-nav-list>
 
