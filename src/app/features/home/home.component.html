@@ -3,8 +3,8 @@
   <header class="hero">
     <div class="hero-bg"></div>
     <div class="hero-content">
-      <div class="logo-circle">Comportement Tropical 🌴🍹</div>
-      <h1>HM-Events</h1>
+      <div class="logo-circle">HM</div>
+      <h1>Comportement Tropical 🌴🍹</h1>
       <p class="tagline">The Best Urban & Afro Party in Switzerland 🇨🇭</p>
 
       <div class="social-links">
@@ -14,7 +14,7 @@
         <a href="https://www.tiktok.com/@comportement.tropical" target="_blank" rel="noopener" aria-label="TikTok">
           <svg viewBox="0 0 24 24" width="28" height="28" fill="white"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.46V12a8.1 8.1 0 005.58 2.24V10.8a4.83 4.83 0 01-3.77-1.87V6.69h3.77z"/></svg>
         </a>
-        <a href="https://open.spotify.com/playlist/3Shd6xlDGfbh1PZc10cdcG?si=BV40odFaQ1C-HKiiNT221g" target="_blank" rel="noopener" aria-label="Spotify">
+        <a href="https://open.spotify.com/playlist/3Shd6xlDGfbh1PZc10cdcG?si=Z04BhW2cSlmMfbjoRvfaCw" target="_blank" rel="noopener" aria-label="Spotify">
           <svg viewBox="0 0 24 24" width="28" height="28" fill="white"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
         </a>
         <a href="https://www.facebook.com/p/Comportement-Tropical-61557486043215/" target="_blank" rel="noopener" aria-label="Facebook">
@@ -35,7 +35,11 @@
     } @else {
       @for (event of events(); track event.id) {
         <a [href]="event.ticket_url" class="event-card" target="_blank" rel="noopener">
-          <div class="event-emoji">{{ event.image_emoji }}</div>
+          @if (event.image_url) {
+            <img [src]="event.image_url" [alt]="event.name" class="event-flyer" />
+          } @else {
+            <div class="event-emoji">{{ event.image_emoji }}</div>
+          }
           <div class="event-info">
             <div class="event-date-badge">
               @if (isToday(event.date)) {

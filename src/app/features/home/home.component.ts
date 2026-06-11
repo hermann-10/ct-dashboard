@@ -13,6 +13,7 @@ interface PublicEvent {
   venue: string;
   city: string;
   ticket_url: string | null;
+  image_url: string | null;
   image_emoji: string;
 }
 

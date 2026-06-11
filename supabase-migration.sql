@@ -1,3 +1,10 @@
+-- Add image_url column (run this if table already exists)
+ALTER TABLE events ADD COLUMN IF NOT EXISTS image_url TEXT;
+
+-- ============================================
+-- ORIGINAL MIGRATION (below) - skip if already run
+-- ============================================
+
 -- Events table for CT Tracker
 CREATE TABLE IF NOT EXISTS events (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

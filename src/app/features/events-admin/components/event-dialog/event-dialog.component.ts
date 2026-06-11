@@ -69,6 +69,17 @@ export interface EventDialogData {
         <input matInput [(ngModel)]="form.ticket_url" type="url" />
       </mat-form-field>
 
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>URL du flyer / image</mat-label>
+        <input matInput [(ngModel)]="form.image_url" type="url" placeholder="https://..." />
+      </mat-form-field>
+
+      @if (form.image_url) {
+        <div class="image-preview">
+          <img [src]="form.image_url" alt="Aperçu" />
+        </div>
+      }
+
       <mat-slide-toggle [(ngModel)]="form.is_published">
         Publié (visible sur la page home)
       </mat-slide-toggle>
@@ -86,6 +97,10 @@ export interface EventDialogData {
     .full-width { width: 100%; }
     .row { display: flex; gap: 1rem; }
     .row mat-form-field { flex: 1; }
+    .image-preview {
+      text-align: center;
+      img { max-width: 200px; max-height: 150px; border-radius: 8px; object-fit: cover; border: 1px solid #eee; }
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -100,6 +115,7 @@ export class EventDialogComponent {
     venue: this.data.event?.venue ?? '',
     city: this.data.event?.city ?? '',
     ticket_url: this.data.event?.ticket_url ?? '',
+    image_url: this.data.event?.image_url ?? '',
     image_emoji: this.data.event?.image_emoji ?? '🎉',
     is_published: this.data.event?.is_published ?? true,
   };

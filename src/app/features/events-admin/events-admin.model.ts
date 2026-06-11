@@ -6,6 +6,7 @@ export interface EventRecord {
   venue: string;
   city: string;
   ticket_url: string | null;
+  image_url: string | null;
   image_emoji: string;
   is_published: boolean;
   created_at: string;
@@ -19,6 +20,7 @@ export interface CreateEventDto {
   venue: string;
   city: string;
   ticket_url?: string;
+  image_url?: string;
   image_emoji?: string;
   is_published?: boolean;
 }
@@ -29,6 +31,7 @@ export interface UpdateEventDto {
   venue?: string;
   city?: string;
   ticket_url?: string;
+  image_url?: string;
   image_emoji?: string;
   is_published?: boolean;
 }
