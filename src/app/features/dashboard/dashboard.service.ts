@@ -9,7 +9,7 @@ const EVENTS: Record<string, { name: string; destination: string; date: string }
     date: '2026-06-05',
   },
   'basel-060626': {
-    name: 'Comportement Tropical - Club Cello Basel',
+    name: 'HM-Events - Club Cello Basel',
     destination: 'https://eventfrog.ch/fr/p/soirees-fetes/soiree-a-theme/comportement-tropical-club-cello-basel-7463963782672313961.html',
     date: '2026-06-06',
   },
