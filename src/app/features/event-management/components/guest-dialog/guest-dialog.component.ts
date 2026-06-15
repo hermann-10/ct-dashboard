@@ -58,7 +58,7 @@ export interface GuestDialogData {
       @if (data.mode === 'create' && remainingSpots > 0 && wouldExceedQuota) {
         <p class="quota-warning">
           <mat-icon>warning</mat-icon>
-          Trop d'accompagnants — {{ remainingSpots }} place{{ remainingSpots > 1 ? 's' : '' }} restante{{ remainingSpots > 1 ? 's' : '' }} ({{ 1 + form.get('accompagnants')?.value }} demandée{{ (1 + form.get('accompagnants')?.value) > 1 ? 's' : '' }})
+          Trop d'accompagnants — {{ remainingSpots }} place{{ remainingSpots > 1 ? 's' : '' }} restante{{ remainingSpots > 1 ? 's' : '' }} ({{ 1 + (form.get('accompagnants')?.value ?? 0) }} demandée{{ (1 + (form.get('accompagnants')?.value ?? 0)) > 1 ? 's' : '' }})
         </p>
       }
     </mat-dialog-content>
