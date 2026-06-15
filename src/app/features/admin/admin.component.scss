@@ -18,11 +18,10 @@
   height: 60px;
 
   .toolbar-logo {
-    font-size: 26px;
-    color: var(--hm-brand-primary);
-    background: rgba(108, 92, 231, 0.08);
+    height: 36px;
+    width: auto;
+    object-fit: contain;
     border-radius: var(--hm-radius-sm);
-    padding: 4px;
   }
 
   .toolbar-title {

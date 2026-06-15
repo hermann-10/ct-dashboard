@@ -6,8 +6,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ARTIST_ROLES, ArtistRole } from '../../../event-management/event-management.model';
 import { Artist, CreateArtistDto } from '../../artists.model';
+import { SupabaseService } from '../../../../core/services/supabase.service';
 
 interface DialogData {
   mode: 'create' | 'edit';
@@ -25,6 +27,7 @@ interface DialogData {
     MatFormFieldModule,
     MatSelectModule,
     MatDialogModule,
+    MatProgressSpinnerModule,
   ],
   template: `
     <h2 mat-dialog-title>{{ data.mode === 'create' ? 'Nouvel artiste' : 'Modifier l\\'artiste' }}</h2>
@@ -74,15 +77,36 @@ interface DialogData {
           <input matInput [ngModel]="city()" (ngModelChange)="city.set($event)" />
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Photo URL</mat-label>
-          <input matInput [ngModel]="photoUrl()" (ngModelChange)="photoUrl.set($event)" />
-        </mat-form-field>
+        <!-- Photo upload zone -->
+        <div class="photo-section full-width">
+          <label class="photo-label">Photo de l'artiste</label>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Note (0-5)</mat-label>
-          <input matInput type="number" min="0" max="5" [ngModel]="rating()" (ngModelChange)="rating.set($event)" />
-        </mat-form-field>
+          @if (photoUrl() || previewUrl()) {
+            <div class="image-preview">
+              <img [src]="previewUrl() || photoUrl()" alt="Photo de l'artiste" />
+              <button mat-icon-button class="remove-btn" (click)="onRemovePhoto()" type="button">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          } @else {
+            <div
+              class="upload-zone"
+              (click)="fileInput.click()"
+              (dragover)="onDragOver($event)"
+              (drop)="onDrop($event)"
+            >
+              <mat-icon class="upload-icon">cloud_upload</mat-icon>
+              <p>Glisse une photo ici ou clique pour choisir</p>
+              <p class="upload-hint">JPG, PNG, WebP — max 5 MB</p>
+            </div>
+          }
+
+          <input #fileInput type="file" accept="image/*" hidden (change)="onFileSelected($event)" />
+
+          @if (uploadError()) {
+            <p class="upload-error">{{ uploadError() }}</p>
+          }
+        </div>
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Notes internes</mat-label>
@@ -92,8 +116,12 @@ interface DialogData {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Annuler</button>
-      <button mat-flat-button color="primary" [disabled]="!name().trim()" (click)="onSave()">
-        {{ data.mode === 'create' ? 'Créer' : 'Enregistrer' }}
+      <button mat-flat-button color="primary" [disabled]="!name().trim() || uploading()" (click)="onSave()">
+        @if (uploading()) {
+          <mat-spinner diameter="20" />
+        } @else {
+          {{ data.mode === 'create' ? 'Créer' : 'Enregistrer' }}
+        }
       </button>
     </mat-dialog-actions>
   `,
@@ -105,12 +133,93 @@ interface DialogData {
     }
     .full-width { grid-column: 1 / -1; }
     mat-dialog-content { max-height: 70vh; }
+
+    .photo-section {
+      margin: 0.25rem 0 0.75rem;
+    }
+
+    .photo-label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .upload-zone {
+      border: 2px dashed #ccc;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+
+      &:hover {
+        border-color: var(--hm-brand-primary, #6C5CE7);
+        background: rgba(108, 92, 231, 0.04);
+      }
+
+      .upload-icon {
+        font-size: 36px;
+        width: 36px;
+        height: 36px;
+        color: #999;
+      }
+
+      p {
+        margin: 0.25rem 0 0;
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      .upload-hint {
+        font-size: 0.75rem;
+        color: #999;
+      }
+    }
+
+    .image-preview {
+      position: relative;
+      display: inline-block;
+
+      img {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 12px;
+        object-fit: cover;
+        display: block;
+      }
+
+      .remove-btn {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        width: 28px;
+        height: 28px;
+        line-height: 28px;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
+    }
+
+    .upload-error {
+      color: #dc2626;
+      font-size: 0.85rem;
+      margin: 0.25rem 0 0;
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ArtistDialogComponent {
   readonly dialogRef = inject(MatDialogRef<ArtistDialogComponent>);
   readonly data: DialogData = inject(MAT_DIALOG_DATA);
+  private readonly supabase = inject(SupabaseService);
   readonly roles = ARTIST_ROLES;
 
   name = signal(this.data.artist?.name ?? '');
@@ -122,10 +231,72 @@ export class ArtistDialogComponent {
   website = signal(this.data.artist?.website ?? '');
   city = signal(this.data.artist?.city ?? '');
   photoUrl = signal(this.data.artist?.photo_url ?? '');
-  rating = signal(this.data.artist?.rating ?? 0);
   notes = signal(this.data.artist?.notes ?? '');
 
-  onSave(): void {
+  previewUrl = signal('');
+  uploading = signal(false);
+  uploadError = signal('');
+  private pendingFile: File | null = null;
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) this.handleFile(file);
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const file = event.dataTransfer?.files?.[0];
+    if (file?.type.startsWith('image/')) this.handleFile(file);
+  }
+
+  private handleFile(file: File): void {
+    if (file.size > 5 * 1024 * 1024) {
+      this.uploadError.set('Le fichier est trop lourd (max 5 MB)');
+      return;
+    }
+    this.uploadError.set('');
+    this.pendingFile = file;
+
+    // Show local preview immediately
+    const reader = new FileReader();
+    reader.onload = () => this.previewUrl.set(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  onRemovePhoto(): void {
+    this.photoUrl.set('');
+    this.previewUrl.set('');
+    this.pendingFile = null;
+    this.uploadError.set('');
+  }
+
+  async onSave(): Promise<void> {
+    if (!this.name().trim() || this.uploading()) return;
+
+    // Upload pending file to Supabase if one was selected
+    if (this.pendingFile) {
+      this.uploading.set(true);
+      try {
+        const url = await this.supabase.uploadArtistPhoto(this.pendingFile, this.name());
+        this.photoUrl.set(url);
+        this.pendingFile = null;
+        this.uploadError.set('');
+      } catch (e: any) {
+        this.uploadError.set('Erreur d\'upload : ' + (e.message ?? e));
+        this.uploading.set(false);
+        return;
+      } finally {
+        this.uploading.set(false);
+      }
+    }
+
     const dto: CreateArtistDto = {
       name: this.name().trim(),
       genre: this.genre().trim(),
@@ -137,7 +308,6 @@ export class ArtistDialogComponent {
       city: this.city().trim(),
       photo_url: this.photoUrl().trim() || null,
       notes: this.notes().trim(),
-      rating: this.rating(),
     };
     this.dialogRef.close(dto);
   }

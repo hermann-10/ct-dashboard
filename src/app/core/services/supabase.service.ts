@@ -180,6 +180,19 @@ export class SupabaseService {
     return data.publicUrl;
   }
 
+  // Storage - upload artist photo
+  async uploadArtistPhoto(file: File, artistName: string): Promise<string> {
+    const slug = artistName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const ext = file.name.split('.').pop() ?? 'jpg';
+    const path = `${slug}-${Date.now()}.${ext}`;
+    const { error } = await this.supabase.storage
+      .from('artist-photos')
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (error) throw error;
+    const { data } = this.supabase.storage.from('artist-photos').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
   // ── Event Charges CRUD ──
   async getEventCharges(eventId: string): Promise<any[]> {
     const { data, error } = await this.supabase

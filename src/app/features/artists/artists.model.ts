@@ -53,7 +53,6 @@ export interface CreateArtistDto {
   city?: string;
   photo_url?: string | null;
   notes?: string;
-  rating?: number;
 }
 
 export interface UpdateArtistDto extends Partial<CreateArtistDto> {}
