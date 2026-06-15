@@ -17,6 +17,11 @@ export const ADMIN_ROUTES: Routes = [
           import('../events-admin/events-admin.routes').then(m => m.EVENTS_ADMIN_ROUTES),
       },
       {
+        path: 'event/:slug/manage',
+        loadChildren: () =>
+          import('../event-management/event-management.routes').then(m => m.EVENT_MANAGEMENT_ROUTES),
+      },
+      {
         path: 'event/:slug',
         loadChildren: () =>
           import('../event-detail/event-detail.routes').then(m => m.EVENT_DETAIL_ROUTES),

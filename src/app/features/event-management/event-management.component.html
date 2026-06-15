@@ -1,0 +1,97 @@
+<div class="event-management">
+  @if (store.loading()) {
+    <div class="loading-overlay">
+      <mat-spinner diameter="48" />
+      <p>Chargement...</p>
+    </div>
+  } @else if (store.error()) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ store.error() }}</p>
+      <a mat-flat-button routerLink="/admin/events">Retour aux événements</a>
+    </div>
+  } @else if (store.event(); as event) {
+    <div class="page-header">
+      <a mat-icon-button routerLink="/admin/events" matTooltip="Retour">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <div class="event-info">
+        <h2>{{ event.name }}</h2>
+        <p class="event-meta">{{ event.date }} · {{ event.venue }}, {{ event.city }}</p>
+      </div>
+    </div>
+
+    <mat-tab-group animationDuration="200ms" dynamicHeight>
+      <!-- Tab 1: Vue d'ensemble -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">dashboard</mat-icon>
+          Vue d'ensemble
+        </ng-template>
+        <div class="tab-content">
+          <app-budget-overview [budget]="store.budget()" [lineupFees]="store.totalLineupFees()" />
+        </div>
+      </mat-tab>
+
+      <!-- Tab 2: Budget (Charges + Recettes) -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">account_balance_wallet</mat-icon>
+          Budget
+        </ng-template>
+        <div class="tab-content">
+          <h3 class="section-title">Charges / Dépenses</h3>
+          <app-charges-table
+            [charges]="store.charges()"
+            (add)="onAddCharge()"
+            (edit)="onEditCharge($event)"
+            (remove)="onRemoveCharge($event)"
+            (togglePaid)="onToggleChargePaid($event)"
+          />
+
+          <h3 class="section-title" style="margin-top: 2rem;">Recettes</h3>
+          <app-revenues-table
+            [revenues]="store.revenues()"
+            (add)="onAddRevenue()"
+            (edit)="onEditRevenue($event)"
+            (remove)="onRemoveRevenue($event)"
+            (toggleReceived)="onToggleRevenueReceived($event)"
+          />
+        </div>
+      </mat-tab>
+
+      <!-- Tab 3: Lineup -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">groups</mat-icon>
+          Lineup
+        </ng-template>
+        <div class="tab-content">
+          <app-lineup-table
+            [lineup]="store.lineup()"
+            (add)="onAddLineup()"
+            (edit)="onEditLineup($event)"
+            (remove)="onRemoveLineup($event)"
+            (toggleConfirmed)="onToggleLineupConfirmed($event)"
+          />
+        </div>
+      </mat-tab>
+
+      <!-- Tab 4: Notes & Stratégie -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">notes</mat-icon>
+          Notes
+        </ng-template>
+        <div class="tab-content">
+          <app-event-notes
+            [notes]="store.event()?.notes ?? null"
+            [strategy]="store.event()?.strategy ?? null"
+            [saving]="store.saving()"
+            (save)="onSaveNotes($event)"
+          />
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>

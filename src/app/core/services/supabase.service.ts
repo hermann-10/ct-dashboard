@@ -162,6 +162,149 @@ export class SupabaseService {
     return data.publicUrl;
   }
 
+  // ── Event Charges CRUD ──
+  async getEventCharges(eventId: string): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('event_charges')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async createEventCharge(charge: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('event_charges')
+      .insert(charge)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async updateEventCharge(id: string, changes: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('event_charges')
+      .update({ ...changes, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteEventCharge(id: string): Promise<void> {
+    const { error } = await this.supabase.from('event_charges').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  // ── Event Revenues CRUD ──
+  async getEventRevenues(eventId: string): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('event_revenues')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async createEventRevenue(revenue: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('event_revenues')
+      .insert(revenue)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async updateEventRevenue(id: string, changes: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('event_revenues')
+      .update({ ...changes, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteEventRevenue(id: string): Promise<void> {
+    const { error } = await this.supabase.from('event_revenues').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  // ── Event Lineup CRUD ──
+  async getEventLineup(eventId: string): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('event_lineup')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('sort_order', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async createEventLineupEntry(entry: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('event_lineup')
+      .insert(entry)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async updateEventLineupEntry(id: string, changes: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('event_lineup')
+      .update({ ...changes, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteEventLineupEntry(id: string): Promise<void> {
+    const { error } = await this.supabase.from('event_lineup').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  // ── Event notes/strategy ──
+  async getEventById(id: string): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('events')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async getEventBySlug(slug: string): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('events')
+      .select('*')
+      .eq('slug', slug)
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async updateEventNotes(id: string, notes: string | null, strategy: string | null): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('events')
+      .update({ notes, strategy, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
   async deleteFlyer(url: string): Promise<void> {
     const path = url.split('/event-flyers/')[1];
     if (path) {

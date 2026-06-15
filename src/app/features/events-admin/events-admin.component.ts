@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -33,6 +34,7 @@ import { EventRecord } from './events-admin.model';
 export class EventsAdminComponent implements OnInit {
   readonly store = inject(EventsAdminStore);
   private readonly dialog = inject(MatDialog);
+  private readonly router = inject(Router);
 
   displayedColumns = ['emoji', 'name', 'date', 'venue', 'city', 'published', 'actions'];
 
@@ -62,6 +64,10 @@ export class EventsAdminComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) this.store.update(event.id, result);
     });
+  }
+
+  onManage(event: EventRecord): void {
+    this.router.navigate(['/admin/event', event.slug, 'manage']);
   }
 
   onTogglePublished(event: EventRecord): void {
