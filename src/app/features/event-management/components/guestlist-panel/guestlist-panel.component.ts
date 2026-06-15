@@ -3,9 +3,20 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
-import { EventGuestlist, EventLineup, GuestlistSummary, ManagedEvent } from '../../event-management.model';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { EventGuestlist, EventLineup, GuestlistSummary, GuestlistEntry, ManagedEvent } from '../../event-management.model';
 import { GuestlistExportService } from '../../guestlist-export.service';
 import { GuestlistCardComponent } from '../guestlist-card/guestlist-card.component';
+
+interface FlatGuest {
+  artistName: string;
+  entry: GuestlistEntry;
+  guestlistId: string;
+}
 
 @Component({
   selector: 'app-guestlist-panel',
@@ -15,6 +26,11 @@ import { GuestlistCardComponent } from '../guestlist-card/guestlist-card.compone
     MatIconModule,
     MatTooltipModule,
     MatMenuModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatChipsModule,
+    MatProgressBarModule,
     GuestlistCardComponent,
   ],
   template: `
@@ -64,6 +80,107 @@ import { GuestlistCardComponent } from '../guestlist-card/guestlist-card.compone
       </div>
     </div>
 
+    <!-- ── Vue d'ensemble ── -->
+    @if (guestlists().length > 0) {
+      <div class="overview-section">
+        <!-- Stats cards -->
+        <div class="overview-stats">
+          <div class="stat-card">
+            <span class="stat-value">{{ totalPersons() }}</span>
+            <span class="stat-label">Personnes</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">{{ totalCapacity() }}</span>
+            <span class="stat-label">Capacité</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value stat-checkin">{{ totalCheckedIn() }}</span>
+            <span class="stat-label">Check-in</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" [class.stat-full]="fillPercent() >= 100">{{ fillPercent() }}%</span>
+            <span class="stat-label">Remplissage</span>
+          </div>
+        </div>
+
+        <mat-progress-bar
+          mode="determinate"
+          [value]="fillPercent()"
+          [color]="fillPercent() >= 100 ? 'warn' : 'primary'"
+          class="overview-bar"
+        />
+
+        <!-- Filters -->
+        <div class="overview-filters">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-icon matPrefix>search</mat-icon>
+            <mat-label>Rechercher un invité</mat-label>
+            <input matInput [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)" />
+            @if (searchTerm()) {
+              <button matSuffix mat-icon-button (click)="searchTerm.set('')">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Filtrer par artiste</mat-label>
+            <mat-select [value]="artistFilter()" (selectionChange)="artistFilter.set($event.value)">
+              <mat-option value="">Tous les artistes</mat-option>
+              @for (name of artistNames(); track name) {
+                <mat-option [value]="name">{{ name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Consolidated guest table -->
+        <div class="overview-table">
+          <div class="table-header">
+            <span class="th-name">Invité</span>
+            <span class="th-accomp">+</span>
+            <span class="th-artist">Artiste</span>
+            <span class="th-status">Statut</span>
+          </div>
+          @if (filteredGuests().length === 0) {
+            <div class="table-empty">
+              @if (searchTerm() || artistFilter()) {
+                Aucun résultat pour cette recherche.
+              } @else {
+                Aucun invité inscrit.
+              }
+            </div>
+          } @else {
+            <div class="table-body">
+              @for (g of filteredGuests(); track g.entry.id) {
+                <div class="table-row" [class.checked-in]="g.entry.is_checked_in">
+                  <span class="td-name">{{ g.entry.guest_name }}</span>
+                  <span class="td-accomp">
+                    @if (g.entry.accompagnants > 0) {
+                      <span class="accomp-badge">+{{ g.entry.accompagnants }}</span>
+                    }
+                  </span>
+                  <span class="td-artist">{{ g.artistName }}</span>
+                  <span class="td-status">
+                    @if (g.entry.is_checked_in) {
+                      <mat-icon class="icon-checked">check_circle</mat-icon>
+                    } @else {
+                      <mat-icon class="icon-pending">radio_button_unchecked</mat-icon>
+                    }
+                  </span>
+                </div>
+              }
+            </div>
+            <div class="table-footer">
+              {{ filteredGuests().length }} invité{{ filteredGuests().length > 1 ? 's' : '' }}
+              · {{ filteredPersons() }} personne{{ filteredPersons() > 1 ? 's' : '' }} au total
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ── Guestlists individuelles ── -->
     @if (guestlists().length === 0) {
       <div class="empty-state">
         <mat-icon class="empty-icon">list_alt</mat-icon>
@@ -75,6 +192,7 @@ import { GuestlistCardComponent } from '../guestlist-card/guestlist-card.compone
         </button>
       </div>
     } @else {
+      <h4 class="section-subtitle">Par artiste</h4>
       <div class="guestlist-grid">
         @for (gl of guestlists(); track gl.id) {
           <app-guestlist-card
@@ -119,6 +237,190 @@ import { GuestlistCardComponent } from '../guestlist-card/guestlist-card.compone
     .panel-actions {
       display: flex;
       gap: 0.5rem;
+    }
+
+    /* ── Overview section ── */
+    .overview-section {
+      background: white;
+      border-radius: 16px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    .overview-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .stat-card {
+      text-align: center;
+      padding: 0.75rem 0.5rem;
+      background: #f8f9fa;
+      border-radius: 12px;
+    }
+
+    .stat-value {
+      display: block;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .stat-checkin {
+      color: #22c55e;
+    }
+
+    .stat-full {
+      color: #ef4444;
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 0.15rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      font-weight: 500;
+    }
+
+    .overview-bar {
+      margin-bottom: 1rem;
+      border-radius: 4px;
+    }
+
+    .overview-filters {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .search-field {
+      flex: 1;
+    }
+
+    .filter-field {
+      min-width: 200px;
+    }
+
+    /* ── Table ── */
+    .overview-table {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .table-header {
+      display: grid;
+      grid-template-columns: 1fr 50px 1fr 60px;
+      gap: 0.5rem;
+      padding: 0.6rem 1rem;
+      background: #f8f9fa;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .table-body {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .table-row {
+      display: grid;
+      grid-template-columns: 1fr 50px 1fr 60px;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      align-items: center;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.9rem;
+      transition: background 0.15s;
+
+      &:hover {
+        background: #fafafa;
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &.checked-in {
+        .td-name {
+          text-decoration: line-through;
+          opacity: 0.5;
+        }
+      }
+    }
+
+    .td-name {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .td-artist {
+      font-size: 0.85rem;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .td-status {
+      text-align: center;
+    }
+
+    .accomp-badge {
+      display: inline-block;
+      background: #e0e7ff;
+      color: #3730a3;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.1rem 0.4rem;
+      border-radius: 6px;
+    }
+
+    .icon-checked {
+      color: #22c55e;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    .icon-pending {
+      color: #ccc;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    .table-empty {
+      padding: 2rem;
+      text-align: center;
+      color: #999;
+      font-size: 0.9rem;
+    }
+
+    .table-footer {
+      padding: 0.5rem 1rem;
+      background: #f8f9fa;
+      font-size: 0.8rem;
+      color: #666;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    /* ── Subtitle ── */
+    .section-subtitle {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #555;
+      margin: 0 0 0.75rem;
     }
 
     .guestlist-grid {
@@ -167,10 +469,28 @@ import { GuestlistCardComponent } from '../guestlist-card/guestlist-card.compone
       100% { opacity: 0; }
     }
 
-    @media (max-width: 500px) {
+    @media (max-width: 600px) {
+      .overview-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .overview-filters {
+        flex-direction: column;
+      }
+
+      .filter-field {
+        min-width: 100%;
+      }
+
+      .table-header,
+      .table-row {
+        grid-template-columns: 1fr 40px 80px 50px;
+      }
+
       .guestlist-grid {
         grid-template-columns: 1fr;
       }
+
       .panel-header {
         flex-direction: column;
         align-items: flex-start;
@@ -196,6 +516,65 @@ export class GuestlistPanelComponent {
 
   notification = signal('');
 
+  // ── Overview state ──
+  searchTerm = signal('');
+  artistFilter = signal('');
+
+  // All unique artist names
+  artistNames = computed(() =>
+    this.guestlists().map(gl => gl.artist_name).sort((a, b) => a.localeCompare(b, 'fr'))
+  );
+
+  // Flatten all entries across all guestlists
+  private allGuests = computed<FlatGuest[]>(() => {
+    const result: FlatGuest[] = [];
+    for (const gl of this.guestlists()) {
+      for (const entry of gl.entries ?? []) {
+        result.push({ artistName: gl.artist_name, entry, guestlistId: gl.id });
+      }
+    }
+    return result.sort((a, b) => a.entry.guest_name.localeCompare(b.entry.guest_name, 'fr'));
+  });
+
+  // Filtered list
+  filteredGuests = computed(() => {
+    let list = this.allGuests();
+    const artist = this.artistFilter();
+    if (artist) {
+      list = list.filter(g => g.artistName === artist);
+    }
+    const term = this.searchTerm().toLowerCase().trim();
+    if (term.length >= 1) {
+      list = list.filter(g => g.entry.guest_name.toLowerCase().includes(term));
+    }
+    return list;
+  });
+
+  // Stats
+  totalPersons = computed(() => {
+    const guests = this.allGuests();
+    return guests.length + guests.reduce((s, g) => s + (g.entry.accompagnants ?? 0), 0);
+  });
+
+  totalCapacity = computed(() =>
+    this.guestlists().reduce((s, gl) => s + gl.quota, 0)
+  );
+
+  totalCheckedIn = computed(() =>
+    this.allGuests().filter(g => g.entry.is_checked_in).length
+  );
+
+  fillPercent = computed(() => {
+    const cap = this.totalCapacity();
+    return cap > 0 ? Math.min(100, Math.round((this.totalPersons() / cap) * 100)) : 0;
+  });
+
+  filteredPersons = computed(() => {
+    const guests = this.filteredGuests();
+    return guests.length + guests.reduce((s, g) => s + (g.entry.accompagnants ?? 0), 0);
+  });
+
+  // ── Actions ──
   private showNotification(msg: string): void {
     this.notification.set(msg);
     setTimeout(() => this.notification.set(''), 2500);
