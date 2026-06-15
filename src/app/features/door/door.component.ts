@@ -151,7 +151,7 @@ export class DoorComponent implements OnInit {
     this.togglingId.set(guest.entry.id);
     try {
       const newValue = !guest.entry.is_checked_in;
-      await this.supabase.updateGuestlistEntry(guest.entry.id, { is_checked_in: newValue });
+      await this.supabase.toggleDoorCheckin(guest.entry.id, newValue);
       // Update local state
       this.guestlists.update(lists =>
         lists.map(gl =>
