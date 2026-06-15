@@ -3,7 +3,7 @@
   "outputDirectory": "dist/ct-dashboard/browser",
   "framework": null,
   "redirects": [
-    { "source": "/go/:slug", "destination": "/api/go?slug=:slug", "statusCode": 307 }
+    { "source": "/go/:slug", "destination": "/api/go?slug=:slug", "permanent": false }
   ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
