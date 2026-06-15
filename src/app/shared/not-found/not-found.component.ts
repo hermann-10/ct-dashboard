@@ -12,7 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
       <mat-icon class="nf-icon">explore_off</mat-icon>
       <h1>404</h1>
       <p>Page introuvable</p>
-      <a mat-flat-button color="primary" routerLink="/dashboard">Retour au dashboard</a>
+      <a mat-flat-button color="primary" routerLink="/">Retour à l'accueil</a>
     </div>
   `,
   styles: `
