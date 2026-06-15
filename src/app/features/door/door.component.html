@@ -11,10 +11,16 @@
   </div>
 } @else if (event(); as ev) {
   <!-- Header -->
-  <div class="door-header" [style.background-image]="ev.image_url ? 'url(' + ev.image_url + ')' : ''">
-    <div class="door-header-overlay">
-      <p class="door-event-name">{{ ev.name }}</p>
-      <p class="door-event-meta">{{ eventDate() }} · {{ ev.venue }}, {{ ev.city }}</p>
+  <div class="door-header">
+    <div class="door-header-bg"></div>
+    <div class="door-header-content">
+      @if (ev.image_url) {
+        <img [src]="ev.image_url" [alt]="ev.name" class="door-flyer" />
+      }
+      <div class="door-header-info">
+        <p class="door-event-name">{{ ev.name }}</p>
+        <p class="door-event-meta">{{ eventDate() }} · {{ ev.venue }}, {{ ev.city }}</p>
+      </div>
     </div>
   </div>
 
