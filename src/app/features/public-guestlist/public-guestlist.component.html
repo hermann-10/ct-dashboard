@@ -14,27 +14,37 @@
   <div class="gl-header" [style.background-image]="gl.event.image_url ? 'url(' + gl.event.image_url + ')' : ''">
     <div class="gl-header-overlay">
       <p class="gl-event-name">{{ gl.event.name }}</p>
-      <p class="gl-event-meta">{{ eventDate() }} · {{ gl.event.venue }}, {{ gl.event.city }}</p>
+      <p class="gl-event-meta">
+        <mat-icon style="font-size: 1rem; width: 1rem; height: 1rem; color: rgba(255,255,255,0.7)">calendar_today</mat-icon>
+        {{ eventDate() }}
+        <span style="opacity: 0.5">·</span>
+        <mat-icon style="font-size: 1rem; width: 1rem; height: 1rem; color: rgba(255,255,255,0.7)">place</mat-icon>
+        {{ gl.event.venue }}, {{ gl.event.city }}
+      </p>
     </div>
   </div>
 
   <div class="gl-body">
-    <!-- Artist + quota info -->
-    <div class="gl-artist-section">
-      <h1 class="gl-artist-name">{{ gl.artist_name }}</h1>
-      <div class="gl-quota-info">
-        <span class="gl-quota-count">{{ entryCount() }} / {{ quota() }}</span>
-        <span class="gl-quota-label">invités</span>
-        @if (totalPersons() !== entryCount()) {
-          <span class="gl-quota-detail">({{ totalPersons() }} pers. avec +1)</span>
-        }
+    <!-- Artist card (floating above body) -->
+    <div class="gl-artist-card">
+      <div class="gl-artist-header">
+        <h1 class="gl-artist-name">{{ gl.artist_name }}</h1>
+        <div class="gl-quota-badge">
+          {{ entryCount() }}<span style="opacity:0.5">/</span>{{ quota() }}
+          <span class="gl-quota-label">invités</span>
+        </div>
       </div>
-      <mat-progress-bar
-        [mode]="'determinate'"
-        [value]="fillPercent()"
-        [color]="fillPercent() >= 100 ? 'warn' : 'primary'"
-        class="gl-quota-bar"
-      />
+      @if (totalPersons() !== entryCount()) {
+        <p class="gl-quota-detail">{{ totalPersons() }} personnes au total avec accompagnants</p>
+      }
+      <div class="gl-progress-wrap">
+        <mat-progress-bar
+          [mode]="'determinate'"
+          [value]="fillPercent()"
+          [color]="fillPercent() >= 100 ? 'warn' : 'primary'"
+          class="gl-quota-bar"
+        />
+      </div>
     </div>
 
     <!-- Notification -->
@@ -48,9 +58,12 @@
     <!-- Add guest form -->
     @if (!isFull()) {
       <div class="gl-add-form">
-        <h3>Ajouter un invité</h3>
+        <h3>
+          <mat-icon>person_add</mat-icon>
+          Ajouter un invité
+        </h3>
         <div class="gl-form-fields">
-          <mat-form-field appearance="outline" class="gl-field-name">
+          <mat-form-field appearance="outline">
             <mat-label>Nom de l'invité</mat-label>
             <input
               matInput
@@ -61,7 +74,7 @@
             />
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="gl-field-small">
+          <mat-form-field appearance="outline">
             <mat-label>+1</mat-label>
             <input
               matInput
@@ -73,7 +86,7 @@
             />
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="gl-field-remarks">
+          <mat-form-field appearance="outline">
             <mat-label>Remarques</mat-label>
             <input
               matInput
@@ -95,13 +108,13 @@
           } @else {
             <mat-icon>person_add</mat-icon>
           }
-          Ajouter
+          Ajouter à la liste
         </button>
       </div>
     } @else {
       <div class="gl-full-banner">
         <mat-icon>block</mat-icon>
-        <p>Guestlist complète ({{ quota() }}/{{ quota() }})</p>
+        <p>Guestlist complète — {{ quota() }}/{{ quota() }} places prises</p>
       </div>
     }
 
@@ -116,8 +129,8 @@
                 class="gl-qr-code"
                 [src]="getQrCode(entry.checkin_token)"
                 [alt]="'QR ' + entry.guest_name"
-                width="60"
-                height="60"
+                width="56"
+                height="56"
               />
             }
             <div class="gl-guest-info">
@@ -130,14 +143,14 @@
               }
               @if (entry.is_checked_in) {
                 <span class="gl-checked-badge">
-                  <mat-icon>check</mat-icon> Check-in
+                  <mat-icon>check</mat-icon> Arrivé
                 </span>
               }
             </div>
             @if (!entry.is_checked_in) {
               <button
                 mat-icon-button
-                matTooltip="Retirer"
+                matTooltip="Retirer de la liste"
                 [disabled]="saving()"
                 (click)="onRemoveGuest(entry)"
                 class="gl-remove-btn"
