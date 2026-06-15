@@ -87,18 +87,26 @@ export class SupabaseService {
   }
 
   async getClicksTimeline(eventSlug?: string, startDate?: string, endDate?: string) {
-    let query = this.supabase.from('clicks').select('created_at');
+    let query = this.supabase.from('clicks').select('created_at, event_slug');
     if (eventSlug) query = query.eq('event_slug', eventSlug);
     if (startDate) query = query.gte('created_at', startDate);
     if (endDate) query = query.lte('created_at', endDate);
     query = query.order('created_at', { ascending: true });
     const { data } = await query;
     const byDay: Record<string, number> = {};
+    const byDayEvent: Record<string, Record<string, number>> = {};
     (data ?? []).forEach(d => {
       const day = d.created_at.substring(0, 10);
       byDay[day] = (byDay[day] || 0) + 1;
+      if (!byDayEvent[day]) byDayEvent[day] = {};
+      const slug = d.event_slug || 'unknown';
+      byDayEvent[day][slug] = (byDayEvent[day][slug] || 0) + 1;
     });
-    return Object.entries(byDay).map(([date, count]) => ({ date, count }));
+    return Object.entries(byDay).map(([date, count]) => ({
+      date,
+      count,
+      byEvent: byDayEvent[date] ?? {},
+    }));
   }
 
   // Events CRUD

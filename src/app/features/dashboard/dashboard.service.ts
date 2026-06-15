@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../core/services/supabase.service';
-import { EventConfig, ClickRecord, DeviceBreakdown, UtmBreakdown, TimelinePoint, DashboardStats } from './dashboard.model';
+import { EventConfig, ClickRecord, DeviceBreakdown, UtmBreakdown, TimelinePoint, DashboardStats, EventTimelineData } from './dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
@@ -53,5 +53,35 @@ export class DashboardService {
 
   async getTimeline(eventSlug?: string, startDate?: string, endDate?: string): Promise<TimelinePoint[]> {
     return this.supabase.getClicksTimeline(eventSlug, startDate, endDate);
+  }
+
+  async getEventTimeline(events: EventConfig[], eventSlug?: string, startDate?: string, endDate?: string): Promise<EventTimelineData> {
+    const raw = await this.supabase.getClicksTimeline(eventSlug, startDate, endDate);
+    const dates = raw.map(r => r.date);
+
+    // Collect all event slugs that appear
+    const allSlugs = new Set<string>();
+    raw.forEach((r: any) => {
+      if (r.byEvent) {
+        Object.keys(r.byEvent).forEach(s => allSlugs.add(s));
+      }
+    });
+
+    // Build one dataset per event
+    const eventNameMap = new Map(events.map(e => [e.slug, e.name]));
+    const datasets = Array.from(allSlugs).map(slug => ({
+      slug,
+      name: eventNameMap.get(slug) ?? slug,
+      data: dates.map(date => {
+        const point = raw.find(r => r.date === date) as any;
+        return point?.byEvent?.[slug] ?? 0;
+      }),
+    }));
+
+    const totalPerDay = dates.map((_d, i) =>
+      datasets.reduce((sum, ds) => sum + ds.data[i], 0)
+    );
+
+    return { dates, datasets, totalPerDay };
   }
 }

@@ -42,6 +42,12 @@ export interface TimelinePoint {
   count: number;
 }
 
+export interface EventTimelineData {
+  dates: string[];
+  datasets: { slug: string; name: string; data: number[] }[];
+  totalPerDay: number[];
+}
+
 export interface DashboardStats {
   totalClicks: number;
   uniqueVisitors: number;

@@ -1,7 +1,7 @@
 import { signalStore, withState, withComputed, withMethods, patchState } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { DashboardService } from './dashboard.service';
-import { EventConfig, ClickRecord, DeviceBreakdown, UtmBreakdown, TimelinePoint, DashboardStats } from './dashboard.model';
+import { EventConfig, ClickRecord, DeviceBreakdown, UtmBreakdown, TimelinePoint, DashboardStats, EventTimelineData } from './dashboard.model';
 
 interface DashboardState {
   events: EventConfig[];
@@ -10,6 +10,7 @@ interface DashboardState {
   deviceBreakdown: DeviceBreakdown[];
   utmBreakdown: UtmBreakdown[];
   timeline: TimelinePoint[];
+  eventTimeline: EventTimelineData | null;
   selectedEventSlug: string | null;
   startDate: string | null;
   endDate: string | null;
@@ -24,6 +25,7 @@ const initialState: DashboardState = {
   deviceBreakdown: [],
   utmBreakdown: [],
   timeline: [],
+  eventTimeline: null,
   selectedEventSlug: null,
   startDate: null,
   endDate: null,
@@ -71,6 +73,8 @@ export const DashboardStore = signalStore(
           service.getUtmBreakdown(slug, startDate, endDate),
           service.getTimeline(slug, startDate, endDate),
         ]);
+        // Build event-based timeline for stacked chart
+        const eventTimeline = await service.getEventTimeline(events, slug, startDate, endDate);
         patchState(store, {
           events,
           stats,
@@ -78,6 +82,7 @@ export const DashboardStore = signalStore(
           deviceBreakdown,
           utmBreakdown,
           timeline,
+          eventTimeline,
           loading: false,
         });
       } catch (e: any) {

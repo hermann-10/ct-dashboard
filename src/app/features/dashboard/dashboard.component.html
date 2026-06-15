@@ -54,7 +54,7 @@
 
     <div class="charts-row">
       <div class="chart-main">
-        <app-clicks-chart [timeline]="store.timeline()" />
+        <app-clicks-chart [timeline]="store.timeline()" [eventTimeline]="store.eventTimeline()" />
       </div>
       <div class="chart-side">
         <app-device-breakdown [devices]="store.deviceBreakdown()" />

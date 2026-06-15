@@ -49,12 +49,10 @@ import { SupabaseService } from '../../core/services/supabase.service';
 
           <div class="actions">
             <button mat-flat-button color="primary" (click)="onSavePixel()" [disabled]="saving()">
-              @if (saving()) {
-                Enregistrement...
-              } @else {
+              @if (!saving()) {
                 <mat-icon>save</mat-icon>
-                Enregistrer
               }
+              {{ saving() ? 'Enregistrement...' : 'Enregistrer' }}
             </button>
             @if (pixelId) {
               <button mat-stroked-button color="warn" (click)="onRemovePixel()" [disabled]="saving()">
