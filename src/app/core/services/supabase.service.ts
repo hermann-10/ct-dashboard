@@ -547,4 +547,60 @@ export class SupabaseService {
   async deleteNotificationRule(id: string): Promise<void> {
     await this.supabase.from('notification_rules').delete().eq('id', id);
   }
+
+  // ── Artists CRM ──
+  async getArtists(): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('artists')
+      .select('*')
+      .order('name', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async getArtistById(id: string): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('artists')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async createArtist(artist: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('artists')
+      .insert(artist)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async updateArtist(id: string, changes: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('artists')
+      .update({ ...changes, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteArtist(id: string): Promise<void> {
+    const { error } = await this.supabase.from('artists').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  async getArtistBookings(artistId: string): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('event_lineup')
+      .select('*, event:events(name, date, venue, city, slug)')
+      .eq('artist_id', artistId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
 }

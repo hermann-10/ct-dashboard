@@ -27,6 +27,11 @@ export const ADMIN_ROUTES: Routes = [
           import('../event-detail/event-detail.routes').then(m => m.EVENT_DETAIL_ROUTES),
       },
       {
+        path: 'artists',
+        loadChildren: () =>
+          import('../artists/artists.routes').then(m => m.ARTISTS_ROUTES),
+      },
+      {
         path: 'settings',
         loadChildren: () =>
           import('../settings/settings.routes').then(m => m.SETTINGS_ROUTES),

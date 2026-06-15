@@ -1,0 +1,200 @@
+.artists-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+// ── Header ──
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+
+  .header-info {
+    h2 { margin: 0; font-size: 1.4rem; font-weight: 600; }
+    .subtitle { margin: 0.25rem 0 0; font-size: 0.875rem; opacity: 0.6; }
+  }
+
+  .add-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+}
+
+// ── Filters ──
+.filters-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.search-field {
+  flex: 2;
+  min-width: 220px;
+}
+
+.filter-field {
+  flex: 1;
+  min-width: 140px;
+}
+
+// ── Loading / Error ──
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem;
+  gap: 1rem;
+  opacity: 0.6;
+}
+
+.error-state mat-icon {
+  font-size: 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: #ef4444;
+}
+
+// ── Grid ──
+.artists-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+// ── Card ──
+.artist-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.2s, transform 0.15s;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+.card-avatar {
+  height: 140px;
+  background-color: #1a1a2e;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.initials {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 2px;
+}
+
+.card-body {
+  padding: 1rem;
+  flex: 1;
+}
+
+.card-name {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.card-meta {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+}
+
+.card-genre {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.card-role {
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: #f3f4f6;
+  color: #555;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.card-city {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  color: #888;
+
+  mat-icon {
+    font-size: 0.9rem;
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+}
+
+.card-rating {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  color: #f59e0b;
+  letter-spacing: 1px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem 0.75rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.social-icon {
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+  color: #aaa;
+}
+
+// ── Empty ──
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem;
+  gap: 0.75rem;
+  color: #999;
+
+  mat-icon {
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+    opacity: 0.4;
+  }
+}
+
+// ── Responsive ──
+@media (max-width: 768px) {
+  .artists-page { padding: 1rem; }
+  .page-header .header-info h2 { font-size: 1.1rem; }
+  .artists-grid { grid-template-columns: 1fr; }
+}

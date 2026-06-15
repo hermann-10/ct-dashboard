@@ -1,0 +1,145 @@
+@if (store.loading()) {
+  <div class="loading-state">
+    <mat-spinner diameter="40" />
+    <p>Chargement...</p>
+  </div>
+} @else if (store.error()) {
+  <div class="error-state">
+    <mat-icon>error_outline</mat-icon>
+    <p>{{ store.error() }}</p>
+    <a mat-flat-button routerLink="/admin/artists">Retour</a>
+  </div>
+} @else if (store.selectedArtist(); as artist) {
+  <div class="artist-detail">
+    <!-- Header -->
+    <div class="detail-header">
+      <a mat-icon-button routerLink="/admin/artists" matTooltip="Retour">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <div class="header-avatar" [style.background-image]="artist.photo_url ? 'url(' + artist.photo_url + ')' : ''">
+        @if (!artist.photo_url) {
+          <span class="initials">{{ getInitials(artist.name) }}</span>
+        }
+      </div>
+      <div class="header-info">
+        <h2>{{ artist.name }}</h2>
+        <div class="header-meta">
+          @if (artist.genre) {
+            <span class="chip genre">{{ artist.genre }}</span>
+          }
+          <span class="chip role">{{ getRoleLabel(artist.role) }}</span>
+          @if (artist.city) {
+            <span class="chip city">
+              <mat-icon>location_on</mat-icon>
+              {{ artist.city }}
+            </span>
+          }
+        </div>
+        @if (artist.rating > 0) {
+          <p class="rating">{{ getRatingStars(artist.rating) }}</p>
+        }
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button (click)="onEdit()">
+          <mat-icon>edit</mat-icon>
+          Modifier
+        </button>
+        <button mat-stroked-button color="warn" (click)="onDelete()">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-value">{{ store.selectedArtistStats().totalBookings }}</span>
+        <span class="stat-label">Bookings</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ formatCurrency(store.selectedArtistStats().totalFees) }}</span>
+        <span class="stat-label">Total cachets</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ formatCurrency(store.selectedArtistStats().averageFee) }}</span>
+        <span class="stat-label">Cachet moyen</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ store.selectedArtistStats().confirmedRate }}%</span>
+        <span class="stat-label">Taux confirmé</span>
+      </div>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="section-card">
+      <h3 class="section-title">Contact</h3>
+      <div class="contact-grid">
+        @if (artist.email) {
+          <div class="contact-item">
+            <mat-icon>email</mat-icon>
+            <a [href]="'mailto:' + artist.email">{{ artist.email }}</a>
+          </div>
+        }
+        @if (artist.phone) {
+          <div class="contact-item">
+            <mat-icon>phone</mat-icon>
+            <a [href]="'tel:' + artist.phone">{{ artist.phone }}</a>
+          </div>
+        }
+        @if (artist.instagram) {
+          <div class="contact-item">
+            <mat-icon>photo_camera</mat-icon>
+            <span>{{ artist.instagram }}</span>
+          </div>
+        }
+        @if (artist.website) {
+          <div class="contact-item">
+            <mat-icon>language</mat-icon>
+            <span>{{ artist.website }}</span>
+          </div>
+        }
+        @if (!artist.email && !artist.phone && !artist.instagram && !artist.website) {
+          <p class="no-data">Aucune info de contact</p>
+        }
+      </div>
+    </div>
+
+    <!-- Notes -->
+    @if (artist.notes) {
+      <div class="section-card">
+        <h3 class="section-title">Notes internes</h3>
+        <p class="notes-text">{{ artist.notes }}</p>
+      </div>
+    }
+
+    <!-- Booking History -->
+    <div class="section-card">
+      <h3 class="section-title">Historique des bookings</h3>
+      @if (store.bookings().length > 0) {
+        <div class="bookings-list">
+          @for (booking of store.bookings(); track booking.id) {
+            <a class="booking-row" [routerLink]="['/admin/event', booking.event_id, 'manage']" [class.confirmed]="booking.is_confirmed">
+              <div class="booking-info">
+                <span class="booking-event">{{ booking.event_name }}</span>
+                <span class="booking-meta">
+                  {{ formatDate(booking.event_date) }} · {{ booking.event_venue }}, {{ booking.event_city }}
+                </span>
+              </div>
+              <div class="booking-details">
+                <span class="booking-fee">{{ formatCurrency(booking.fee) }}</span>
+                @if (booking.set_time) {
+                  <span class="booking-time">{{ booking.set_time }}</span>
+                }
+                <span class="booking-status" [class.confirmed]="booking.is_confirmed" [class.pending]="!booking.is_confirmed">
+                  {{ booking.is_confirmed ? 'Confirmé' : 'En attente' }}
+                </span>
+              </div>
+            </a>
+          }
+        </div>
+      } @else {
+        <p class="no-data">Aucun booking enregistré pour cet artiste.</p>
+      }
+    </div>
+  </div>
+}

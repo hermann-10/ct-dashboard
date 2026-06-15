@@ -1,0 +1,118 @@
+<div class="artists-page">
+  <div class="page-header">
+    <div class="header-info">
+      <h2>CRM Artistes</h2>
+      <p class="subtitle">{{ store.artistCount() }} artistes enregistrés</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="onAddArtist()" class="add-btn">
+      <mat-icon>person_add</mat-icon>
+      Ajouter
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        placeholder="Rechercher un artiste..."
+        [ngModel]="store.searchTerm()"
+        (ngModelChange)="onSearch($event)"
+      />
+      @if (store.searchTerm()) {
+        <button matSuffix mat-icon-button (click)="onSearch('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Genre</mat-label>
+      <mat-select [ngModel]="store.filterGenre()" (ngModelChange)="onFilterGenre($event)">
+        <mat-option value="">Tous</mat-option>
+        @for (genre of store.genres(); track genre) {
+          <mat-option [value]="genre">{{ genre }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Rôle</mat-label>
+      <mat-select [ngModel]="store.filterRole()" (ngModelChange)="onFilterRole($event)">
+        <mat-option value="">Tous</mat-option>
+        @for (role of roles; track role.value) {
+          <mat-option [value]="role.value">{{ role.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- Loading -->
+  @if (store.loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40" />
+      <p>Chargement des artistes...</p>
+    </div>
+  } @else if (store.error()) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ store.error() }}</p>
+    </div>
+  } @else {
+    <!-- Artists Grid -->
+    <div class="artists-grid">
+      @for (artist of store.filteredArtists(); track artist.id) {
+        <a class="artist-card" [routerLink]="['/admin/artists', artist.id]">
+          <div class="card-avatar" [style.background-image]="artist.photo_url ? 'url(' + artist.photo_url + ')' : ''">
+            @if (!artist.photo_url) {
+              <span class="initials">{{ getInitials(artist.name) }}</span>
+            }
+          </div>
+          <div class="card-body">
+            <h3 class="card-name">{{ artist.name }}</h3>
+            <div class="card-meta">
+              @if (artist.genre) {
+                <span class="card-genre">{{ artist.genre }}</span>
+              }
+              <span class="card-role">{{ getRoleLabel(artist.role) }}</span>
+            </div>
+            @if (artist.city) {
+              <p class="card-city">
+                <mat-icon>location_on</mat-icon>
+                {{ artist.city }}
+              </p>
+            }
+            @if (artist.rating > 0) {
+              <p class="card-rating">{{ getRatingStars(artist.rating) }}</p>
+            }
+          </div>
+          <div class="card-actions">
+            @if (artist.instagram) {
+              <mat-icon class="social-icon" matTooltip="Instagram">photo_camera</mat-icon>
+            }
+            @if (artist.email) {
+              <mat-icon class="social-icon" matTooltip="Email">email</mat-icon>
+            }
+            @if (artist.phone) {
+              <mat-icon class="social-icon" matTooltip="Téléphone">phone</mat-icon>
+            }
+          </div>
+        </a>
+      } @empty {
+        <div class="empty-state">
+          <mat-icon>person_search</mat-icon>
+          @if (store.searchTerm() || store.filterGenre() || store.filterRole()) {
+            <p>Aucun artiste ne correspond aux filtres.</p>
+          } @else {
+            <p>Aucun artiste enregistré.</p>
+            <button mat-flat-button color="primary" (click)="onAddArtist()">
+              <mat-icon>person_add</mat-icon>
+              Ajouter un artiste
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
