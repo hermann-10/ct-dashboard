@@ -549,6 +549,68 @@ export class SupabaseService {
   }
 
   // ── Artists CRM ──
+  // ── Products / Bar ──
+  async getProducts(): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('products')
+      .select('*')
+      .order('name', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async createProduct(product: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('products')
+      .insert(product)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async updateProduct(id: string, changes: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('products')
+      .update({ ...changes, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteProduct(id: string): Promise<void> {
+    const { error } = await this.supabase.from('products').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  async getEventSales(eventId: string): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('event_sales')
+      .select('*, product:products(*)')
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async upsertEventSale(sale: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('event_sales')
+      .upsert(sale, { onConflict: 'event_id,product_id' })
+      .select('*, product:products(*)')
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteEventSale(id: string): Promise<void> {
+    const { error } = await this.supabase.from('event_sales').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  // ── Artists CRM ──
   async getArtists(): Promise<any[]> {
     const { data, error } = await this.supabase
       .from('artists')
@@ -602,5 +664,86 @@ export class SupabaseService {
       .order('created_at', { ascending: false });
     if (error) throw error;
     return data ?? [];
+  }
+
+  // ── Newsletter Contacts ──
+  async getNewsletterContacts(): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('newsletter_contacts')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async createNewsletterContact(contact: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('newsletter_contacts')
+      .insert(contact)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async createNewsletterContactsBulk(contacts: any[]): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('newsletter_contacts')
+      .upsert(contacts, { onConflict: 'email', ignoreDuplicates: true })
+      .select();
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async updateNewsletterContact(id: string, changes: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('newsletter_contacts')
+      .update({ ...changes, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteNewsletterContact(id: string): Promise<void> {
+    const { error } = await this.supabase.from('newsletter_contacts').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  // ── Newsletters ──
+  async getNewsletters(): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('newsletters')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async createNewsletter(newsletter: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('newsletters')
+      .insert(newsletter)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async updateNewsletter(id: string, changes: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('newsletters')
+      .update({ ...changes, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteNewsletter(id: string): Promise<void> {
+    const { error } = await this.supabase.from('newsletters').delete().eq('id', id);
+    if (error) throw error;
   }
 }

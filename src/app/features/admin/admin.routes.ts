@@ -32,6 +32,16 @@ export const ADMIN_ROUTES: Routes = [
           import('../artists/artists.routes').then(m => m.ARTISTS_ROUTES),
       },
       {
+        path: 'bar',
+        loadChildren: () =>
+          import('../bar/bar.routes').then(m => m.BAR_ROUTES),
+      },
+      {
+        path: 'newsletter',
+        loadChildren: () =>
+          import('../newsletter/newsletter.routes').then(m => m.NEWSLETTER_ROUTES),
+      },
+      {
         path: 'settings',
         loadChildren: () =>
           import('../settings/settings.routes').then(m => m.SETTINGS_ROUTES),

@@ -1,0 +1,206 @@
+<div class="newsletter-page">
+  <div class="page-header">
+    <div class="header-info">
+      <h2>Newsletter / Email Marketing</h2>
+      <p class="subtitle">
+        {{ store.stats().activeContacts }} abonnés actifs · {{ store.stats().sentNewsletters }} campagnes envoyées
+      </p>
+    </div>
+  </div>
+
+  <!-- Notification -->
+  @if (notification(); as n) {
+    <div class="notification" [class.success]="n.type === 'success'" [class.error]="n.type === 'error'">
+      <mat-icon>{{ n.type === 'success' ? 'check_circle' : 'error' }}</mat-icon>
+      {{ n.message }}
+    </div>
+  }
+
+  @if (store.loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40" />
+      <p>Chargement...</p>
+    </div>
+  } @else {
+    <!-- Stats row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-value">{{ store.stats().totalContacts }}</span>
+        <span class="stat-label">Contacts</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ store.stats().activeContacts }}</span>
+        <span class="stat-label">Actifs</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ store.stats().sentNewsletters }}</span>
+        <span class="stat-label">Envoyées</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ store.stats().avgOpenRate }}%</span>
+        <span class="stat-label">Taux ouverture</span>
+      </div>
+    </div>
+
+    <mat-tab-group animationDuration="200ms" dynamicHeight>
+      <!-- Tab 1: Contacts -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">people</mat-icon>
+          Contacts
+          <span class="tab-badge">{{ store.contacts().length }}</span>
+        </ng-template>
+        <div class="tab-content">
+          <div class="tab-actions">
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-icon matPrefix>search</mat-icon>
+              <input
+                matInput
+                placeholder="Rechercher..."
+                [ngModel]="store.searchTerm()"
+                (ngModelChange)="store.setSearch($event)"
+              />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Tag</mat-label>
+              <mat-select [ngModel]="store.filterTag()" (ngModelChange)="store.setFilterTag($event)">
+                <mat-option value="">Tous</mat-option>
+                @for (tag of store.allTags(); track tag) {
+                  <mat-option [value]="tag">{{ tag }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <div class="btn-group">
+              <button mat-flat-button color="primary" (click)="onAddContact()">
+                <mat-icon>person_add</mat-icon> Ajouter
+              </button>
+              <button mat-stroked-button (click)="onImportContacts()">
+                <mat-icon>upload_file</mat-icon> Importer CSV
+              </button>
+            </div>
+          </div>
+
+          <div class="contacts-table-wrap">
+            <table class="contacts-table">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Nom</th>
+                  <th>Tags</th>
+                  <th>Statut</th>
+                  <th>Inscrit le</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (contact of store.filteredContacts(); track contact.id) {
+                  <tr [class.inactive]="contact.status !== 'active'">
+                    <td class="email-cell">{{ contact.email }}</td>
+                    <td>{{ contact.first_name }} {{ contact.last_name }}</td>
+                    <td>
+                      @for (tag of contact.tags; track tag) {
+                        <span class="tag-chip">{{ tag }}</span>
+                      }
+                    </td>
+                    <td>
+                      <span class="status-badge" [class]="contact.status">
+                        {{ getStatusLabel(contact.status) }}
+                      </span>
+                    </td>
+                    <td class="date-cell">{{ formatDate(contact.created_at) }}</td>
+                    <td class="action-cell">
+                      <button mat-icon-button matTooltip="Supprimer" (click)="onDeleteContact(contact)">
+                        <mat-icon>delete_outline</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="empty-cell">
+                      <mat-icon>people_outline</mat-icon>
+                      <p>Aucun contact. Ajoutez-en ou importez un fichier CSV.</p>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Tab 2: Campagnes -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">campaign</mat-icon>
+          Campagnes
+          <span class="tab-badge">{{ store.newsletters().length }}</span>
+        </ng-template>
+        <div class="tab-content">
+          <div class="tab-actions">
+            <div class="spacer"></div>
+            <button mat-flat-button color="primary" (click)="onCreateNewsletter()">
+              <mat-icon>add</mat-icon> Nouvelle campagne
+            </button>
+          </div>
+
+          <div class="campaigns-list">
+            @for (nl of store.newsletters(); track nl.id) {
+              <div class="campaign-card">
+                <div class="campaign-info">
+                  <h3>{{ nl.subject }}</h3>
+                  @if (nl.preview_text) {
+                    <p class="preview-text">{{ nl.preview_text }}</p>
+                  }
+                  <div class="campaign-meta">
+                    <span class="status-badge" [class]="nl.status">{{ getStatusLabel(nl.status) }}</span>
+                    @if (nl.sent_at) {
+                      <span class="meta-date">Envoyée le {{ formatDate(nl.sent_at) }}</span>
+                    } @else {
+                      <span class="meta-date">Créée le {{ formatDate(nl.created_at) }}</span>
+                    }
+                  </div>
+                </div>
+                @if (nl.status === 'sent') {
+                  <div class="campaign-stats">
+                    <span class="cs-item">
+                      <span class="cs-value">{{ nl.total_recipients }}</span>
+                      <span class="cs-label">envoyés</span>
+                    </span>
+                    <span class="cs-item">
+                      <span class="cs-value">{{ nl.total_opened }}</span>
+                      <span class="cs-label">ouverts</span>
+                    </span>
+                    <span class="cs-item">
+                      <span class="cs-value">{{ nl.total_clicked }}</span>
+                      <span class="cs-label">clics</span>
+                    </span>
+                  </div>
+                }
+                <div class="campaign-actions">
+                  @if (nl.status === 'draft') {
+                    <button mat-stroked-button (click)="onEditNewsletter(nl)">
+                      <mat-icon>edit</mat-icon> Modifier
+                    </button>
+                  }
+                  <button mat-icon-button matTooltip="Supprimer" (click)="onDeleteNewsletter(nl)">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <div class="empty-state">
+                <mat-icon>mail_outline</mat-icon>
+                <p>Aucune campagne. Créez votre première newsletter !</p>
+                <button mat-flat-button color="primary" (click)="onCreateNewsletter()">
+                  <mat-icon>add</mat-icon> Créer une campagne
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>

@@ -127,7 +127,18 @@
         </div>
       </mat-tab>
 
-      <!-- Tab 5: Notes & Stratégie -->
+      <!-- Tab 5: Bar / Ventes -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">local_bar</mat-icon>
+          Bar
+        </ng-template>
+        <div class="tab-content">
+          <app-event-sales-panel [eventId]="event.id" />
+        </div>
+      </mat-tab>
+
+      <!-- Tab 6: Notes & Stratégie -->
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon class="tab-icon">notes</mat-icon>

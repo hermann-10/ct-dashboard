@@ -1,0 +1,116 @@
+<div class="bar-page">
+  <div class="page-header">
+    <div class="header-info">
+      <h2>Produits / Bar</h2>
+      <p class="subtitle">{{ store.products().length }} produits enregistrés</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="onAddProduct()" class="add-btn">
+      <mat-icon>add</mat-icon>
+      Nouveau produit
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        placeholder="Rechercher un produit..."
+        [ngModel]="store.searchTerm()"
+        (ngModelChange)="onSearch($event)"
+      />
+      @if (store.searchTerm()) {
+        <button matSuffix mat-icon-button (click)="onSearch('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Catégorie</mat-label>
+      <mat-select [ngModel]="store.filterCategory()" (ngModelChange)="onFilterCategory($event)">
+        <mat-option value="">Toutes</mat-option>
+        @for (cat of categories; track cat.value) {
+          <mat-option [value]="cat.value">{{ cat.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  @if (store.loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40" />
+      <p>Chargement...</p>
+    </div>
+  } @else if (store.error()) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ store.error() }}</p>
+    </div>
+  } @else {
+    <!-- Product Table -->
+    <div class="product-table-wrapper">
+      <table class="product-table">
+        <thead>
+          <tr>
+            <th>Produit</th>
+            <th>Catégorie</th>
+            <th class="num">Achat</th>
+            <th class="num">Vente</th>
+            <th class="num">Marge</th>
+            <th class="num">Stock</th>
+            <th>Statut</th>
+            <th class="actions-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of store.filteredProducts(); track product.id) {
+            <tr [class.inactive]="!product.is_active">
+              <td class="product-name-cell">
+                <span class="product-name">{{ product.name }}</span>
+                @if (product.notes) {
+                  <span class="product-notes" [matTooltip]="product.notes">
+                    <mat-icon>info_outline</mat-icon>
+                  </span>
+                }
+              </td>
+              <td><span class="cat-chip">{{ getCategoryLabel(product.category) }}</span></td>
+              <td class="num">{{ formatPrice(product.purchase_price) }}</td>
+              <td class="num fw">{{ formatPrice(product.sell_price) }}</td>
+              <td class="num">
+                <span class="margin-badge" [class.good]="getMargin(product) >= 50" [class.low]="getMargin(product) < 30">
+                  {{ getMargin(product) }}%
+                </span>
+              </td>
+              <td class="num">
+                <span [class.low-stock]="product.stock <= 5 && product.stock > 0" [class.no-stock]="product.stock === 0">
+                  {{ product.stock }} {{ product.unit }}
+                </span>
+              </td>
+              <td>
+                <span class="status-dot" [class.active]="product.is_active" [class.disabled]="!product.is_active"></span>
+                {{ product.is_active ? 'Actif' : 'Inactif' }}
+              </td>
+              <td class="actions-col">
+                <button mat-icon-button matTooltip="Modifier" (click)="onEditProduct(product)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button matTooltip="Supprimer" (click)="onDeleteProduct(product)">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty-cell">
+                <mat-icon>inventory_2</mat-icon>
+                <p>Aucun produit trouvé.</p>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

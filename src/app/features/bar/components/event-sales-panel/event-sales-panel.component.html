@@ -1,0 +1,121 @@
+@if (store.loading()) {
+  <div class="loading-state">
+    <mat-spinner diameter="32" />
+  </div>
+} @else {
+  <!-- Stats -->
+  <div class="sales-stats">
+    <div class="stat">
+      <span class="stat-value">{{ formatPrice(store.salesStats().totalRevenue) }} CHF</span>
+      <span class="stat-label">CA Bar</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{{ formatPrice(store.salesStats().totalProfit) }} CHF</span>
+      <span class="stat-label">Bénéfice</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{{ store.salesStats().marginPercent }}%</span>
+      <span class="stat-label">Marge</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{{ store.salesStats().totalItemsSold }}</span>
+      <span class="stat-label">Vendus</span>
+    </div>
+  </div>
+
+  <!-- Add sale form -->
+  <div class="add-sale-form">
+    <mat-form-field appearance="outline" class="product-select">
+      <mat-label>Produit</mat-label>
+      <mat-select [ngModel]="selectedProduct()" (ngModelChange)="onProductSelected($event)">
+        @for (p of availableProducts(); track p.id) {
+          <mat-option [value]="p.id">{{ p.name }} ({{ formatPrice(p.sell_price) }} CHF)</mat-option>
+        }
+        @if (availableProducts().length === 0) {
+          <mat-option disabled value="">Tous les produits sont déjà ajoutés</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="qty-field">
+      <mat-label>Qté</mat-label>
+      <input matInput type="number" min="1" [ngModel]="quantity()" (ngModelChange)="quantity.set($event)" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="price-field">
+      <mat-label>Prix unit.</mat-label>
+      <input matInput type="number" min="0" step="0.50" [ngModel]="unitPrice()" (ngModelChange)="unitPrice.set($event)" />
+    </mat-form-field>
+
+    <button
+      mat-flat-button
+      color="primary"
+      [disabled]="!selectedProduct() || quantity() <= 0 || store.saving()"
+      (click)="onAddSale()"
+      class="add-sale-btn"
+    >
+      <mat-icon>add</mat-icon>
+    </button>
+  </div>
+
+  <!-- Sales list -->
+  @if (store.sales().length > 0) {
+    <div class="sales-table-wrap">
+      <table class="sales-table">
+        <thead>
+          <tr>
+            <th>Produit</th>
+            <th class="num">Qté</th>
+            <th class="num">Prix unit.</th>
+            <th class="num">Total</th>
+            <th class="num">Marge</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (sale of store.sales(); track sale.id) {
+            <tr>
+              <td class="name-cell">{{ sale.product?.name ?? getProductName(sale.product_id) }}</td>
+              <td class="num">
+                <input
+                  type="number"
+                  class="inline-input"
+                  min="1"
+                  [ngModel]="sale.quantity_sold"
+                  (change)="onUpdateQuantity(sale.id, sale.product_id, $any($event.target).valueAsNumber, sale.unit_price)"
+                />
+              </td>
+              <td class="num">{{ formatPrice(sale.unit_price) }}</td>
+              <td class="num fw">{{ formatPrice(sale.quantity_sold * sale.unit_price) }}</td>
+              <td class="num">
+                @if (sale.product) {
+                  {{ formatPrice((sale.unit_price - sale.product.purchase_price) * sale.quantity_sold) }}
+                }
+              </td>
+              <td class="action-cell">
+                <button mat-icon-button matTooltip="Retirer" (click)="onRemoveSale(sale.id)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </td>
+            </tr>
+          }
+          <tr class="total-row">
+            <td colspan="3"><strong>Total</strong></td>
+            <td class="num fw">{{ formatPrice(store.salesStats().totalRevenue) }} CHF</td>
+            <td class="num fw">{{ formatPrice(store.salesStats().totalProfit) }} CHF</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="no-sales">Aucune vente enregistrée pour cet événement.</p>
+  }
+
+  @if (store.salesStats().topProduct) {
+    <p class="top-product">
+      <mat-icon>emoji_events</mat-icon>
+      Top vente : <strong>{{ store.salesStats().topProduct }}</strong>
+    </p>
+  }
+}

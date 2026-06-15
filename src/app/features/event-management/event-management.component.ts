@@ -22,6 +22,7 @@ import {
   GuestDialogComponent, GuestDialogData,
   GuestlistDialogComponent, GuestlistDialogData,
 } from './components';
+import { EventSalesPanelComponent } from '../bar/components/event-sales-panel/event-sales-panel.component';
 
 @Component({
   selector: 'app-event-management',
@@ -32,6 +33,7 @@ import {
     MatDialogModule, MatTooltipModule,
     BudgetOverviewComponent, ChargesTableComponent, RevenuesTableComponent,
     LineupTableComponent, EventNotesComponent, GuestlistPanelComponent,
+    EventSalesPanelComponent,
   ],
   templateUrl: './event-management.component.html',
   styleUrl: './event-management.component.scss',
