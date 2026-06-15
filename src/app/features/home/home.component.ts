@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy, ChangeDetectionStrategy, PLATFORM_ID } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -26,7 +26,7 @@ interface PublicEvent {
   styleUrl: './home.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class HomeComponent implements OnInit {
   private readonly supabase = inject(SupabaseService);
   private readonly platformId = inject(PLATFORM_ID);
 
@@ -35,8 +35,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   loading = signal(true);
 
   nextEvent = computed(() => this.events().length > 0 ? this.events()[0] : null);
-  countdown = signal({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  private countdownInterval: any;
 
   async ngOnInit(): Promise<void> {
     try {
@@ -47,7 +45,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       ]);
       this.events.set(upcoming);
       this.pastEvents.set(past);
-      this.startCountdown();
     } catch (e) {
       console.error('Failed to load events', e);
     } finally {
@@ -113,30 +110,4 @@ export class HomeComponent implements OnInit, OnDestroy {
     return `https://go.hm-events.ch/go/${slug}`;
   }
 
-  ngOnDestroy(): void {
-    if (this.countdownInterval) {
-      clearInterval(this.countdownInterval);
-    }
-  }
-
-  private startCountdown(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    this.countdownInterval = setInterval(() => {
-      const next = this.nextEvent();
-      if (!next) return;
-      const eventDate = new Date(next.date + 'T23:59:59');
-      const now = new Date();
-      const diff = eventDate.getTime() - now.getTime();
-      if (diff <= 0) {
-        this.countdown.set({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-      this.countdown.set({
-        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((diff / (1000 * 60)) % 60),
-        seconds: Math.floor((diff / 1000) % 60),
-      });
-    }, 1000);
-  }
 }

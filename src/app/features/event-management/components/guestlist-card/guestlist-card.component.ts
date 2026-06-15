@@ -23,7 +23,7 @@ import { EventGuestlist, GuestlistEntry } from '../../event-management.model';
       <mat-card-header>
         <mat-card-title>{{ guestlist().artist_name }}</mat-card-title>
         <mat-card-subtitle>
-          {{ entryCount() }} / {{ guestlist().quota }} invités
+          {{ entryCount() }} / {{ guestlist().quota }} personnes
           @if (checkedInCount() > 0) {
             · {{ checkedInCount() }} check-in
           }
@@ -249,7 +249,10 @@ export class GuestlistCardComponent {
   linkCopied = signal(false);
 
   entries = computed(() => this.guestlist().entries ?? []);
-  entryCount = computed(() => this.entries().length);
+  entryCount = computed(() => {
+    const entries = this.entries();
+    return entries.length + entries.reduce((s, e) => s + (e.accompagnants ?? 0), 0);
+  });
   checkedInCount = computed(() => this.entries().filter(e => e.is_checked_in).length);
   fillPercent = computed(() => {
     const q = this.guestlist().quota;

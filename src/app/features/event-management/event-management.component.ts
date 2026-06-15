@@ -207,7 +207,8 @@ export class EventManagementComponent implements OnInit {
   }
 
   onAddGuestEntry(guestlist: EventGuestlist): void {
-    const currentCount = (guestlist.entries ?? []).length;
+    const entries = guestlist.entries ?? [];
+    const currentCount = entries.length + entries.reduce((s, e) => s + (e.accompagnants ?? 0), 0);
     const dialogRef = this.dialog.open(GuestDialogComponent, {
       data: { mode: 'create', currentCount, quota: guestlist.quota } as GuestDialogData,
       width: '450px',

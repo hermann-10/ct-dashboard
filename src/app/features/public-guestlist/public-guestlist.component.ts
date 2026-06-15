@@ -68,8 +68,7 @@ export class PublicGuestlistComponent implements OnInit {
   newAccompagnants = signal(0);
   newRemarks = signal('');
 
-  entryCount = computed(() => (this.guestlist()?.entries ?? []).length);
-  totalPersons = computed(() => {
+  entryCount = computed(() => {
     const entries = this.guestlist()?.entries ?? [];
     return entries.length + entries.reduce((s, e) => s + (e.accompagnants ?? 0), 0);
   });
@@ -115,6 +114,14 @@ export class PublicGuestlistComponent implements OnInit {
 
     const gl = this.guestlist();
     if (!gl) return;
+
+    // Check that the new entry (1 + accompagnants) fits within the remaining quota
+    const newPersons = 1 + this.newAccompagnants();
+    const remaining = this.quota() - this.entryCount();
+    if (newPersons > remaining) {
+      this.showNotification('error', `Plus assez de places (${remaining} restante${remaining > 1 ? 's' : ''}).`);
+      return;
+    }
 
     this.saving.set(true);
     try {

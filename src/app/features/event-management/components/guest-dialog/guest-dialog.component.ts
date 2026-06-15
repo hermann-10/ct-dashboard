@@ -55,6 +55,12 @@ export interface GuestDialogData {
           La guestlist est pleine ({{ data.currentCount }}/{{ data.quota }})
         </p>
       }
+      @if (data.mode === 'create' && remainingSpots > 0 && wouldExceedQuota) {
+        <p class="quota-warning">
+          <mat-icon>warning</mat-icon>
+          Trop d'accompagnants — {{ remainingSpots }} place{{ remainingSpots > 1 ? 's' : '' }} restante{{ remainingSpots > 1 ? 's' : '' }} ({{ 1 + form.get('accompagnants')?.value }} demandée{{ (1 + form.get('accompagnants')?.value) > 1 ? 's' : '' }})
+        </p>
+      }
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
@@ -62,7 +68,7 @@ export interface GuestDialogData {
       <button
         mat-flat-button
         color="primary"
-        [disabled]="form.invalid || (data.mode === 'create' && remainingSpots <= 0)"
+        [disabled]="form.invalid || (data.mode === 'create' && (remainingSpots <= 0 || wouldExceedQuota))"
         (click)="onSave()"
       >
         Enregistrer
@@ -98,6 +104,11 @@ export class GuestDialogComponent {
     accompagnants: [this.data.entry?.accompagnants ?? 0, [Validators.min(0), Validators.max(5)]],
     remarks: [this.data.entry?.remarks ?? ''],
   });
+
+  get wouldExceedQuota(): boolean {
+    const accompagnants = this.form.get('accompagnants')?.value ?? 0;
+    return (1 + accompagnants) > this.remainingSpots;
+  }
 
   onSave(): void {
     if (this.form.invalid) return;

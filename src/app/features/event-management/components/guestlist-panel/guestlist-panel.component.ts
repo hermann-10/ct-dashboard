@@ -24,7 +24,7 @@ import { GuestlistCardComponent } from '../guestlist-card/guestlist-card.compone
         @if (summary(); as s) {
           <span class="panel-stats">
             {{ s.totalGuestlists }} liste{{ s.totalGuestlists > 1 ? 's' : '' }}
-            · {{ s.totalGuests }} invité{{ s.totalGuests > 1 ? 's' : '' }}
+            · {{ s.totalGuests }} personne{{ s.totalGuests > 1 ? 's' : '' }}
             @if (s.totalCheckedIn > 0) {
               · {{ s.totalCheckedIn }} check-in
             }

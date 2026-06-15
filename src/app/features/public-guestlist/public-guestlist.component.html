@@ -31,12 +31,9 @@
         <h1 class="gl-artist-name">{{ gl.artist_name }}</h1>
         <div class="gl-quota-badge">
           {{ entryCount() }}<span style="opacity:0.5">/</span>{{ quota() }}
-          <span class="gl-quota-label">invités</span>
+          <span class="gl-quota-label">personnes</span>
         </div>
       </div>
-      @if (totalPersons() !== entryCount()) {
-        <p class="gl-quota-detail">{{ totalPersons() }} personnes au total avec accompagnants</p>
-      }
       <div class="gl-progress-wrap">
         <mat-progress-bar
           [mode]="'determinate'"
