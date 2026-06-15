@@ -1,8 +1,10 @@
-import { Component, input, output, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, computed, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { EventGuestlist, EventLineup, GuestlistSummary } from '../../event-management.model';
+import { MatMenuModule } from '@angular/material/menu';
+import { EventGuestlist, EventLineup, GuestlistSummary, ManagedEvent } from '../../event-management.model';
+import { GuestlistExportService } from '../../guestlist-export.service';
 import { GuestlistCardComponent } from '../guestlist-card/guestlist-card.component';
 
 @Component({
@@ -12,6 +14,7 @@ import { GuestlistCardComponent } from '../guestlist-card/guestlist-card.compone
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
+    MatMenuModule,
     GuestlistCardComponent,
   ],
   template: `
@@ -29,14 +32,24 @@ import { GuestlistCardComponent } from '../guestlist-card/guestlist-card.compone
         }
       </div>
       <div class="panel-actions">
-        <button
-          mat-flat-button
-          matTooltip="Copier toutes les listes"
-          (click)="onCopyAll()"
-        >
-          <mat-icon>content_copy</mat-icon>
-          Copier tout
+        <button mat-flat-button [matMenuTriggerFor]="exportMenu" matTooltip="Exporter les guestlists">
+          <mat-icon>download</mat-icon>
+          Exporter
         </button>
+        <mat-menu #exportMenu="matMenu">
+          <button mat-menu-item (click)="onExportPdf()">
+            <mat-icon>picture_as_pdf</mat-icon>
+            <span>Export PDF</span>
+          </button>
+          <button mat-menu-item (click)="onExportExcel()">
+            <mat-icon>table_chart</mat-icon>
+            <span>Export Excel</span>
+          </button>
+          <button mat-menu-item (click)="onCopyAll()">
+            <mat-icon>content_copy</mat-icon>
+            <span>Copier tout</span>
+          </button>
+        </mat-menu>
         <button
           mat-flat-button
           color="primary"
@@ -45,6 +58,9 @@ import { GuestlistCardComponent } from '../guestlist-card/guestlist-card.compone
           <mat-icon>add</mat-icon>
           Nouvelle guestlist
         </button>
+        @if (notification()) {
+          <span class="export-notification">{{ notification() }}</span>
+        }
       </div>
     </div>
 
@@ -134,6 +150,23 @@ import { GuestlistCardComponent } from '../guestlist-card/guestlist-card.compone
       margin-bottom: 1rem;
     }
 
+    .export-notification {
+      background: #dcfce7;
+      color: #166534;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 12px;
+      animation: fadeInOut 2.5s ease forwards;
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateY(-4px); }
+      15% { opacity: 1; transform: translateY(0); }
+      75% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
     @media (max-width: 500px) {
       .guestlist-grid {
         grid-template-columns: 1fr;
@@ -147,9 +180,12 @@ import { GuestlistCardComponent } from '../guestlist-card/guestlist-card.compone
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GuestlistPanelComponent {
+  private readonly exportService = inject(GuestlistExportService);
+
   guestlists = input<EventGuestlist[]>([]);
   lineup = input<EventLineup[]>([]);
   summary = input<GuestlistSummary | null>(null);
+  event = input<ManagedEvent | null>(null);
 
   createGuestlist = output<void>();
   addEntry = output<EventGuestlist>();
@@ -158,20 +194,29 @@ export class GuestlistPanelComponent {
   editGuestlist = output<EventGuestlist>();
   removeGuestlist = output<string>();
 
+  notification = signal('');
+
+  private showNotification(msg: string): void {
+    this.notification.set(msg);
+    setTimeout(() => this.notification.set(''), 2500);
+  }
+
+  onExportPdf(): void {
+    const ev = this.event();
+    if (!ev) return;
+    this.exportService.exportPdf(ev, this.guestlists());
+    this.showNotification('PDF téléchargé !');
+  }
+
+  async onExportExcel(): Promise<void> {
+    const ev = this.event();
+    if (!ev) return;
+    await this.exportService.exportExcel(ev, this.guestlists());
+    this.showNotification('Excel téléchargé !');
+  }
+
   onCopyAll(): void {
-    const gls = this.guestlists();
-    if (gls.length === 0) return;
-    const lines = gls.map(gl => {
-      const entries = (gl.entries ?? [])
-        .map(e => {
-          let line = `  ${e.guest_name}`;
-          if (e.accompagnants > 0) line += ` (+${e.accompagnants})`;
-          if (e.remarks) line += ` — ${e.remarks}`;
-          return line;
-        })
-        .sort((a, b) => a.localeCompare(b, 'fr'));
-      return `${gl.artist_name} (${(gl.entries ?? []).length}/${gl.quota})\n${entries.join('\n')}`;
-    });
-    navigator.clipboard.writeText(lines.join('\n\n'));
+    this.exportService.copyAllToClipboard(this.guestlists());
+    this.showNotification('Copié !');
   }
 }
