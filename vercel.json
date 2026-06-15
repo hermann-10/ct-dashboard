@@ -3,6 +3,7 @@
   "outputDirectory": "dist/ct-dashboard/browser",
   "framework": null,
   "rewrites": [
+    { "source": "/go/:slug", "destination": "/api/go?slug=:slug" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
