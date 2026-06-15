@@ -20,6 +20,10 @@ export const routes: Routes = [
     loadChildren: () => import('./features/public-guestlist/public-guestlist.routes').then(m => m.PUBLIC_GUESTLIST_ROUTES),
   },
   {
+    path: 'door/:slug',
+    loadChildren: () => import('./features/door/door.routes').then(m => m.DOOR_ROUTES),
+  },
+  {
     path: 'checkin/:slug',
     canActivate: [authGuard],
     loadChildren: () => import('./features/checkin/checkin.routes').then(m => m.CHECKIN_ROUTES),

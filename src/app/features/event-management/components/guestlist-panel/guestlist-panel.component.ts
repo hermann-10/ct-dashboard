@@ -48,6 +48,10 @@ interface FlatGuest {
         }
       </div>
       <div class="panel-actions">
+        <button mat-flat-button matTooltip="Copier le lien pour la personne à l'accueil" (click)="onCopyDoorLink()">
+          <mat-icon>door_front</mat-icon>
+          Lien accueil
+        </button>
         <button mat-flat-button [matMenuTriggerFor]="exportMenu" matTooltip="Exporter les guestlists">
           <mat-icon>download</mat-icon>
           Exporter
@@ -597,5 +601,13 @@ export class GuestlistPanelComponent {
   onCopyAll(): void {
     this.exportService.copyAllToClipboard(this.guestlists());
     this.showNotification('Copié !');
+  }
+
+  onCopyDoorLink(): void {
+    const ev = this.event();
+    if (!ev) return;
+    const url = `${window.location.origin}/door/${ev.slug}`;
+    navigator.clipboard.writeText(url);
+    this.showNotification('Lien accueil copié !');
   }
 }

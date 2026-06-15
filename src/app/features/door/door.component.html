@@ -1,0 +1,120 @@
+@if (loading()) {
+  <div class="loading-state">
+    <mat-spinner diameter="48" />
+    <p>Chargement des guestlists...</p>
+  </div>
+} @else if (error()) {
+  <div class="error-state">
+    <mat-icon class="error-icon">link_off</mat-icon>
+    <h2>Introuvable</h2>
+    <p>{{ error() }}</p>
+  </div>
+} @else if (event(); as ev) {
+  <!-- Header -->
+  <div class="door-header" [style.background-image]="ev.image_url ? 'url(' + ev.image_url + ')' : ''">
+    <div class="door-header-overlay">
+      <p class="door-event-name">{{ ev.name }}</p>
+      <p class="door-event-meta">{{ eventDate() }} · {{ ev.venue }}, {{ ev.city }}</p>
+    </div>
+  </div>
+
+  <div class="door-body">
+    <!-- Stats -->
+    <div class="door-stats">
+      <div class="stat-card">
+        <span class="stat-value">{{ totalPersons() }}</span>
+        <span class="stat-label">Inscrits</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value stat-checkin">{{ checkedInPersons() }}</span>
+        <span class="stat-label">Arrivés</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ totalPersons() - checkedInPersons() }}</span>
+        <span class="stat-label">Restants</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ totalCapacity() }}</span>
+        <span class="stat-label">Capacité</span>
+      </div>
+    </div>
+
+    <mat-progress-bar
+      mode="determinate"
+      [value]="fillPercent()"
+      [color]="fillPercent() >= 100 ? 'warn' : 'primary'"
+      class="door-bar"
+    />
+
+    <!-- Search & filter -->
+    <div class="door-filters">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-icon matPrefix>search</mat-icon>
+        <mat-label>Rechercher un invité</mat-label>
+        <input matInput [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)" />
+        @if (searchTerm()) {
+          <button matSuffix mat-icon-button (click)="searchTerm.set('')">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Artiste</mat-label>
+        <mat-select [value]="artistFilter()" (selectionChange)="artistFilter.set($event.value)">
+          <mat-option value="">Tous</mat-option>
+          @for (name of artistNames(); track name) {
+            <mat-option [value]="name">{{ name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Guest list -->
+    @if (filteredGuests().length === 0) {
+      <div class="door-empty">
+        @if (searchTerm() || artistFilter()) {
+          <mat-icon>search_off</mat-icon>
+          <p>Aucun résultat.</p>
+        } @else {
+          <mat-icon>people_outline</mat-icon>
+          <p>Aucun invité inscrit.</p>
+        }
+      </div>
+    } @else {
+      <div class="door-count">{{ filteredCount() }} invité{{ filteredCount() > 1 ? 's' : '' }}</div>
+
+      <div class="door-list">
+        @for (g of filteredGuests(); track g.entry.id) {
+          <div
+            class="door-row"
+            [class.checked-in]="g.entry.is_checked_in"
+            (click)="toggleCheckedIn(g)"
+          >
+            <div class="row-check">
+              @if (togglingId() === g.entry.id) {
+                <mat-spinner diameter="20" />
+              } @else if (g.entry.is_checked_in) {
+                <mat-icon class="icon-checked">check_circle</mat-icon>
+              } @else {
+                <mat-icon class="icon-pending">radio_button_unchecked</mat-icon>
+              }
+            </div>
+            <div class="row-info">
+              <span class="row-name">{{ g.entry.guest_name }}</span>
+              @if (g.entry.accompagnants > 0) {
+                <span class="row-accomp">+{{ g.entry.accompagnants }}</span>
+              }
+            </div>
+            <span class="row-artist">{{ g.artistName }}</span>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Footer -->
+    <div class="door-footer">
+      <p>Propulsé par <strong>HM Events</strong></p>
+    </div>
+  </div>
+}

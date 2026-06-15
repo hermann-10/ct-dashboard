@@ -1,0 +1,270 @@
+// ── Loading / Error ──
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1rem;
+  color: #888;
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  color: #888;
+
+  .error-icon {
+    font-size: 4rem;
+    width: 4rem;
+    height: 4rem;
+    opacity: 0.4;
+  }
+}
+
+// ── Header ──
+.door-header {
+  position: relative;
+  background: linear-gradient(135deg, #e65100, #ff6d00);
+  background-size: cover;
+  background-position: center;
+  min-height: 120px;
+}
+
+.door-header-overlay {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7));
+  padding: 2rem 1.5rem 1.5rem;
+  color: white;
+  text-align: center;
+}
+
+.door-event-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin: 0 0 0.25rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.door-event-meta {
+  font-size: 0.85rem;
+  opacity: 0.85;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+// ── Body ──
+.door-body {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1rem 1rem 2rem;
+}
+
+// ── Stats ──
+.door-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 0.6rem 0.25rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.stat-checkin {
+  color: #22c55e;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.65rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+  margin-top: 0.1rem;
+}
+
+.door-bar {
+  margin-bottom: 1rem;
+  border-radius: 4px;
+}
+
+// ── Filters ──
+.door-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.search-field {
+  flex: 1;
+}
+
+.filter-field {
+  min-width: 140px;
+}
+
+// ── List ──
+.door-count {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.door-list {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.door-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: #fafafa;
+  }
+
+  &:active {
+    background: #f0f0f0;
+  }
+
+  &.checked-in {
+    background: #f0fdf4;
+
+    .row-name {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    .row-artist {
+      opacity: 0.4;
+    }
+  }
+}
+
+.row-check {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.icon-checked {
+  color: #22c55e;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.icon-pending {
+  color: #ccc;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.row-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.row-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-accomp {
+  display: inline-block;
+  background: #e0e7ff;
+  color: #3730a3;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.row-artist {
+  font-size: 0.8rem;
+  color: #888;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.door-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1rem;
+  color: #aaa;
+  text-align: center;
+
+  mat-icon {
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.4;
+  }
+}
+
+// ── Footer ──
+.door-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 0.8rem;
+  color: #bbb;
+}
+
+// ── Mobile ──
+@media (max-width: 480px) {
+  .door-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .door-filters {
+    flex-direction: column;
+  }
+
+  .filter-field {
+    min-width: 100%;
+  }
+
+  .row-artist {
+    display: none;
+  }
+}

@@ -478,6 +478,35 @@ export class SupabaseService {
     };
   }
 
+  // ── Door (consolidated guestlists by event slug) ──
+  async getEventGuestlistsBySlug(slug: string): Promise<any> {
+    // Get event by slug
+    const { data: event, error: eventErr } = await this.supabase
+      .from('events')
+      .select('id, name, date, venue, city, image_url')
+      .eq('slug', slug)
+      .single();
+    if (eventErr) throw eventErr;
+
+    // Get all guestlists for this event with entries
+    const { data: guestlists, error: glErr } = await this.supabase
+      .from('event_guestlists')
+      .select('id, artist_name, quota, entries:guestlist_entries(*)')
+      .eq('event_id', event.id)
+      .order('artist_name');
+    if (glErr) throw glErr;
+
+    return {
+      event,
+      guestlists: (guestlists ?? []).map((gl: any) => ({
+        ...gl,
+        entries: (gl.entries ?? []).sort((a: any, b: any) =>
+          (a.guest_name ?? '').localeCompare(b.guest_name ?? '', 'fr')
+        ),
+      })),
+    };
+  }
+
   // ── Check-in ──
   async checkinByToken(checkinToken: string): Promise<{ entry: any; artistName: string } | null> {
     // Find entry by checkin_token with parent guestlist info
