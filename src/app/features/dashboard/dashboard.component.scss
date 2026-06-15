@@ -3,8 +3,24 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 
   h2 { margin: 0; font-size: 1.4rem; font-weight: 600; }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.event-filter {
+  width: 280px;
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
 }
 
 .dashboard-content {
@@ -54,5 +70,14 @@
   .charts-row,
   .tables-row {
     grid-template-columns: 1fr;
+  }
+
+  .event-filter {
+    width: 100%;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

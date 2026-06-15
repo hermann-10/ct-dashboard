@@ -2,34 +2,23 @@ import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { EventConfig, ClickRecord, DeviceBreakdown, UtmBreakdown, TimelinePoint, DashboardStats } from './dashboard.model';
 
-const EVENTS: Record<string, { name: string; destination: string; date: string }> = {
-  'summer-vibes': {
-    name: 'Summer Vibes Afro - Halle W',
-    destination: 'https://eventfrog.ch/fr/p/soirees-fetes/soiree-a-theme/summer-vibes-afro-halle-w-7465431493805902516.html',
-    date: '2026-06-05',
-  },
-  'basel-060626': {
-    name: 'HM-Events - Club Cello Basel',
-    destination: 'https://eventfrog.ch/fr/p/soirees-fetes/soiree-a-theme/comportement-tropical-club-cello-basel-7463963782672313961.html',
-    date: '2026-06-06',
-  },
-};
-
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   private readonly supabase = inject(SupabaseService);
 
+  /** Load all events from Supabase (with click counts) */
   async getEvents(): Promise<EventConfig[]> {
+    const events = await this.supabase.getEvents();
     return Promise.all(
-      Object.entries(EVENTS).map(async ([slug, event]) => {
-        const totalClicks = await this.supabase.getClicksCount(slug);
-        const uniqueVisitors = await this.supabase.getUniqueVisitors(slug);
+      events.map(async (evt: any) => {
+        const totalClicks = await this.supabase.getClicksCount(evt.slug);
+        const uniqueVisitors = await this.supabase.getUniqueVisitors(evt.slug);
         return {
-          slug,
-          name: event.name,
-          destination: event.destination,
-          date: event.date,
-          trackingUrl: `https://go.hm-events.ch/go/${slug}`,
+          slug: evt.slug,
+          name: evt.name,
+          destination: evt.ticket_url ?? '',
+          date: evt.date,
+          trackingUrl: `https://hm-events.ch/api/go?slug=${evt.slug}`,
           totalClicks,
           uniqueVisitors,
         };
@@ -37,10 +26,11 @@ export class DashboardService {
     );
   }
 
-  async getStats(): Promise<DashboardStats> {
-    const totalClicks = await this.supabase.getClicksCount();
-    const uniqueVisitors = await this.supabase.getUniqueVisitors();
-    const totalEvents = Object.keys(EVENTS).length;
+  async getStats(eventSlug?: string): Promise<DashboardStats> {
+    const totalClicks = await this.supabase.getClicksCount(eventSlug);
+    const uniqueVisitors = await this.supabase.getUniqueVisitors(eventSlug);
+    const events = await this.supabase.getEvents();
+    const totalEvents = events.length;
     const conversionRate = totalClicks > 0 ? (uniqueVisitors / totalClicks) * 100 : 0;
     return { totalClicks, uniqueVisitors, totalEvents, conversionRate };
   }
