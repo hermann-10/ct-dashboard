@@ -33,9 +33,19 @@
   z-index: 1;
 }
 
+.logos {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
 .logo-circle {
   width: 90px;
   height: 90px;
+  min-width: 90px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
@@ -43,7 +53,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1rem;
   overflow: hidden;
 
   .logo-img {
@@ -51,6 +60,12 @@
     height: 100%;
     object-fit: cover;
   }
+}
+
+.logo-ct {
+  height: 90px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
 }
 
 h1 {
