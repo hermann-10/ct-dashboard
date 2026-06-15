@@ -2,8 +2,10 @@
   "buildCommand": "npx ng build --configuration production",
   "outputDirectory": "dist/ct-dashboard/browser",
   "framework": null,
+  "redirects": [
+    { "source": "/go/:slug", "destination": "/api/go?slug=:slug", "statusCode": 307 }
+  ],
   "rewrites": [
-    { "source": "/go/:slug", "destination": "/api/go/:slug" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
