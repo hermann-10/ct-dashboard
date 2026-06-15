@@ -9,6 +9,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SupabaseService } from '../../core/services/supabase.service';
+import QRCode from 'qrcode';
 
 interface GuestEntry {
   id: string;
@@ -16,6 +17,7 @@ interface GuestEntry {
   accompagnants: number;
   remarks: string | null;
   is_checked_in: boolean;
+  checkin_token: string;
 }
 
 interface GuestlistData {
@@ -59,6 +61,7 @@ export class PublicGuestlistComponent implements OnInit {
   error = signal<string | null>(null);
   saving = signal(false);
   notification = signal<{ type: 'success' | 'error'; message: string } | null>(null);
+  qrCodes = signal<Map<string, string>>(new Map());
 
   // Form fields
   newGuestName = signal('');
@@ -98,6 +101,7 @@ export class PublicGuestlistComponent implements OnInit {
     try {
       const data = await this.supabase.getGuestlistByToken(token);
       this.guestlist.set(data);
+      await this.generateQrCodes(data.entries);
     } catch {
       this.error.set('Guestlist introuvable. Vérifiez le lien.');
     } finally {
@@ -135,6 +139,10 @@ export class PublicGuestlistComponent implements OnInit {
       this.newRemarks.set('');
 
       this.showNotification('success', `${entry.guest_name} ajouté(e) !`);
+      // Generate QR for new entry
+      if (entry.checkin_token) {
+        await this.generateQrCodes([entry]);
+      }
     } catch {
       this.showNotification('error', 'Erreur lors de l\'ajout. Réessayez.');
     } finally {
@@ -159,6 +167,27 @@ export class PublicGuestlistComponent implements OnInit {
     } finally {
       this.saving.set(false);
     }
+  }
+
+  getQrCode(token: string): string | undefined {
+    return this.qrCodes().get(token);
+  }
+
+  private async generateQrCodes(entries: GuestEntry[]): Promise<void> {
+    const currentMap = new Map(this.qrCodes());
+    for (const entry of entries) {
+      if (entry.checkin_token && !currentMap.has(entry.checkin_token)) {
+        try {
+          const dataUrl = await QRCode.toDataURL(entry.checkin_token, {
+            width: 120,
+            margin: 1,
+            color: { dark: '#1e1e3c', light: '#ffffff' },
+          });
+          currentMap.set(entry.checkin_token, dataUrl);
+        } catch { /* ignore QR generation errors */ }
+      }
+    }
+    this.qrCodes.set(currentMap);
   }
 
   private showNotification(type: 'success' | 'error', message: string): void {

@@ -20,6 +20,11 @@ export const routes: Routes = [
     loadChildren: () => import('./features/public-guestlist/public-guestlist.routes').then(m => m.PUBLIC_GUESTLIST_ROUTES),
   },
   {
+    path: 'checkin/:slug',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/checkin/checkin.routes').then(m => m.CHECKIN_ROUTES),
+  },
+  {
     path: 'dashboard',
     redirectTo: 'admin/dashboard',
     pathMatch: 'full',

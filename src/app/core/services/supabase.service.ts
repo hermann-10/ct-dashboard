@@ -465,6 +465,25 @@ export class SupabaseService {
     };
   }
 
+  // ── Check-in ──
+  async checkinByToken(checkinToken: string): Promise<{ entry: any; artistName: string } | null> {
+    // Find entry by checkin_token with parent guestlist info
+    const { data, error } = await this.supabase
+      .from('guestlist_entries')
+      .select('*, guestlist:event_guestlists(artist_name)')
+      .eq('checkin_token', checkinToken)
+      .single();
+    if (error || !data) return null;
+
+    // Mark as checked in
+    await this.supabase
+      .from('guestlist_entries')
+      .update({ is_checked_in: true })
+      .eq('id', data.id);
+
+    return { entry: { ...data, is_checked_in: true }, artistName: (data as any).guestlist?.artist_name ?? '' };
+  }
+
   // ── Notifications ──
   async getNotifications(unreadOnly = false): Promise<any[]> {
     let query = this.supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(50);

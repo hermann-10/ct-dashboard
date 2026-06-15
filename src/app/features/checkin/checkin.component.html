@@ -1,0 +1,144 @@
+@if (loading()) {
+  <div class="ci-loading">
+    <mat-spinner diameter="48" />
+    <p>Chargement...</p>
+  </div>
+} @else if (event(); as ev) {
+  <div class="ci-page">
+    <!-- ── Header ── -->
+    <header class="ci-header">
+      <a class="ci-back" [routerLink]="['/admin/events', ev.slug]">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <div class="ci-event-info">
+        <h1>{{ ev.name }}</h1>
+        <p>{{ ev.date }} · {{ ev.venue }}</p>
+      </div>
+    </header>
+
+    <!-- ── Stats bar ── -->
+    <div class="ci-stats">
+      <div class="ci-stat">
+        <span class="ci-stat-value">{{ checkedInCount() }}</span>
+        <span class="ci-stat-label">Check-in</span>
+      </div>
+      <div class="ci-stat-divider"></div>
+      <div class="ci-stat">
+        <span class="ci-stat-value">{{ totalGuests() }}</span>
+        <span class="ci-stat-label">Invités</span>
+      </div>
+      <div class="ci-stat-divider"></div>
+      <div class="ci-stat">
+        <span class="ci-stat-value">{{ checkedInPersons() }}/{{ totalPersons() }}</span>
+        <span class="ci-stat-label">Personnes</span>
+      </div>
+    </div>
+    <mat-progress-bar
+      [mode]="'determinate'"
+      [value]="progressPercent()"
+      class="ci-progress"
+    />
+
+    <!-- ── Search + Scan toggle ── -->
+    <div class="ci-controls">
+      <div class="ci-search-wrap">
+        <mat-icon class="ci-search-icon">search</mat-icon>
+        <input
+          #searchInput
+          type="text"
+          placeholder="Rechercher un invité..."
+          [value]="searchTerm()"
+          (input)="onSearchInput($event)"
+          class="ci-search-input"
+          autocomplete="off"
+        />
+        @if (searchTerm()) {
+          <button class="ci-clear-btn" (click)="onClearSearch()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </div>
+      <button
+        class="ci-scan-toggle"
+        [class.active]="scanMode()"
+        (click)="toggleScan()"
+      >
+        <mat-icon>{{ scanMode() ? 'close' : 'qr_code_scanner' }}</mat-icon>
+      </button>
+    </div>
+
+    <!-- ── QR Scanner ── -->
+    @if (scanMode()) {
+      <div class="ci-scanner">
+        <div id="qr-reader"></div>
+        <p class="ci-scanner-hint">Pointez la caméra vers le QR code de l'invité</p>
+      </div>
+    }
+
+    <!-- ── Notification ── -->
+    @if (notification(); as n) {
+      <div class="ci-notification" [class]="'ci-notif-' + n.type">
+        <mat-icon>
+          @switch (n.type) {
+            @case ('success') { check_circle }
+            @case ('error') { error }
+            @case ('info') { info }
+          }
+        </mat-icon>
+        <div class="ci-notif-text">
+          <span class="ci-notif-msg">{{ n.message }}</span>
+          @if (n.detail) {
+            <span class="ci-notif-detail">{{ n.detail }}</span>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ── Guest list ── -->
+    <div class="ci-list">
+      @if (filteredEntries().length === 0 && searchTerm()) {
+        <div class="ci-empty">
+          <mat-icon>search_off</mat-icon>
+          <p>Aucun résultat pour « {{ searchTerm() }} »</p>
+        </div>
+      } @else {
+        @for (group of groupedFiltered(); track group.artistName) {
+          <div class="ci-group">
+            <div class="ci-group-header">
+              <span class="ci-group-name">{{ group.artistName }}</span>
+              <span class="ci-group-count">
+                {{ countChecked(group.entries) }}/{{ group.entries.length }}
+              </span>
+            </div>
+            @for (entry of group.entries; track entry.id) {
+              <button
+                class="ci-guest-row"
+                [class.checked]="entry.is_checked_in"
+                (click)="onToggleCheckin(entry)"
+              >
+                <div class="ci-check-icon">
+                  <mat-icon>{{ entry.is_checked_in ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                </div>
+                <div class="ci-guest-info">
+                  <span class="ci-guest-name">{{ entry.guest_name }}</span>
+                  @if (entry.accompagnants > 0) {
+                    <span class="ci-accomp">+{{ entry.accompagnants }}</span>
+                  }
+                  @if (entry.remarks) {
+                    <span class="ci-remarks">{{ entry.remarks }}</span>
+                  }
+                </div>
+              </button>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+} @else {
+  <div class="ci-loading">
+    <mat-icon class="ci-error-icon">error_outline</mat-icon>
+    <p>Événement introuvable</p>
+    <a mat-flat-button routerLink="/admin/events">Retour</a>
+  </div>
+}

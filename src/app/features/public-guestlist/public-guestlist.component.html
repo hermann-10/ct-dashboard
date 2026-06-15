@@ -111,6 +111,15 @@
         <h3>Invités ({{ gl.entries.length }})</h3>
         @for (entry of gl.entries; track entry.id) {
           <div class="gl-guest-row" [class.checked-in]="entry.is_checked_in">
+            @if (entry.checkin_token && getQrCode(entry.checkin_token)) {
+              <img
+                class="gl-qr-code"
+                [src]="getQrCode(entry.checkin_token)"
+                [alt]="'QR ' + entry.guest_name"
+                width="60"
+                height="60"
+              />
+            }
             <div class="gl-guest-info">
               <span class="gl-guest-name">{{ entry.guest_name }}</span>
               @if (entry.accompagnants > 0) {
