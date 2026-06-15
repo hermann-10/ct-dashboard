@@ -39,7 +39,7 @@
               } @else if (isSoon(next.date)) {
                 <span class="badge-soon">BIENTÔT</span>
               }
-              {{ next.date | date:'EEEE d MMMM':'':'fr' }}
+              {{ next.date | date:'EEEE d MMMM' }}
             </span>
             <h2 class="hero-event-name">{{ next.name }}</h2>
             <p class="hero-event-venue">📍 {{ next.venue }}, {{ next.city }}</p>

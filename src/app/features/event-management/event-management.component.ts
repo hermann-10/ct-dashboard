@@ -126,8 +126,9 @@ export class EventManagementComponent implements OnInit {
 
   // ── Lineup ──
   onAddLineup(): void {
+    const existingArtistNames = this.store.lineup().map(e => e.artist_name);
     const dialogRef = this.dialog.open(LineupDialogComponent, {
-      data: { mode: 'create' } as LineupDialogData,
+      data: { mode: 'create', existingArtistNames } as LineupDialogData,
       width: '500px',
     });
     dialogRef.afterClosed().subscribe(result => {

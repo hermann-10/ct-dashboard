@@ -24,6 +24,7 @@ interface ArtistOption {
 export interface LineupDialogData {
   mode: 'create' | 'edit';
   entry?: EventLineup;
+  existingArtistNames?: string[];
 }
 
 @Component({
@@ -178,12 +179,19 @@ export class LineupDialogComponent implements OnInit {
   loadingArtists = signal(false);
   creatingArtist = signal(false);
 
+  private existingNames = new Set(
+    (this.data.existingArtistNames ?? []).map(n => n.toLowerCase())
+  );
+
   filteredArtists = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
-    if (term.length < 1) return this.allArtists();
-    return this.allArtists().filter(a =>
-      a.name.toLowerCase().includes(term)
-    );
+    let list = this.allArtists();
+    // In create mode, exclude artists already in the lineup
+    if (this.data.mode === 'create') {
+      list = list.filter(a => !this.existingNames.has(a.name.toLowerCase()));
+    }
+    if (term.length < 1) return list;
+    return list.filter(a => a.name.toLowerCase().includes(term));
   });
 
   readonly form = this.fb.nonNullable.group({
