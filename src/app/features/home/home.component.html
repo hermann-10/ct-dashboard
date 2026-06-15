@@ -27,30 +27,6 @@
         </a>
       </div>
 
-      @if (nextEvent(); as next) {
-        <div class="hero-next-event">
-          @if (next.image_url) {
-            <img [src]="next.image_url" [alt]="next.name" class="hero-flyer" />
-          }
-          <div class="hero-event-info">
-            <span class="hero-event-date">
-              @if (isToday(next.date)) {
-                <span class="badge-live">CE SOIR</span>
-              } @else if (isSoon(next.date)) {
-                <span class="badge-soon">BIENTÔT</span>
-              }
-              {{ next.date | date:'EEEE d MMMM' }}
-            </span>
-            <h2 class="hero-event-name">{{ next.name }}</h2>
-            <p class="hero-event-venue">📍 {{ next.venue }}, {{ next.city }}</p>
-            @if (next.ticket_url) {
-              <a [href]="next.ticket_url" class="hero-ticket-btn" target="_blank" rel="noopener" (click)="onTicketClick(next)">
-                🎟️ Acheter des tickets
-              </a>
-            }
-          </div>
-        </div>
-      }
     </div>
   </header>
 
