@@ -101,10 +101,10 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  onEventFilter(slug: string | null): void {
+  onEventFilter(slug: string): void {
     const startDate = this.store.startDate() ?? undefined;
     const endDate = this.store.endDate() ?? undefined;
-    this.store.loadAll({ eventSlug: slug ?? undefined, startDate, endDate });
+    this.store.loadAll({ eventSlug: slug || undefined, startDate, endDate });
   }
 
   onViewEvent(slug: string): void {

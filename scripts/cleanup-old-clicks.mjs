@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Supprime tous les clics avant le 9 juin 2026
+ * Supprime tous les clics avant le 15 juin 2026
  * Usage: node scripts/cleanup-old-clicks.mjs
  */
 import { createClient } from '@supabase/supabase-js';
@@ -10,7 +10,7 @@ const supabase = createClient(
   'sb_publishable_-eSVqLLI6WgDOEoagAt7Zw_R58yXm6q'
 );
 
-const CUTOFF = '2026-06-09T00:00:00';
+const CUTOFF = '2026-06-15T00:00:00';
 
 async function main() {
   console.log(`\n🔍 Recherche des clics avant le ${CUTOFF}...\n`);
@@ -28,7 +28,7 @@ async function main() {
   }
 
   if (!oldClicks || oldClicks.length === 0) {
-    console.log('✅ Aucun clic avant le 9 juin 2026. Rien à supprimer.');
+    console.log('✅ Aucun clic avant le 15 juin 2026. Rien à supprimer.');
     return;
   }
 
