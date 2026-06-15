@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy, PLATFORM_ID } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -33,8 +33,6 @@ export class HomeComponent implements OnInit {
   events = signal<PublicEvent[]>([]);
   pastEvents = signal<PublicEvent[]>([]);
   loading = signal(true);
-
-  nextEvent = computed(() => this.events().length > 0 ? this.events()[0] : null);
 
   async ngOnInit(): Promise<void> {
     try {
