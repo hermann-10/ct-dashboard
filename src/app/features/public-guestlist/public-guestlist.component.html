@@ -1,0 +1,149 @@
+@if (loading()) {
+  <div class="loading-state">
+    <mat-spinner diameter="48" />
+    <p>Chargement de la guestlist...</p>
+  </div>
+} @else if (error()) {
+  <div class="error-state">
+    <mat-icon class="error-icon">link_off</mat-icon>
+    <h2>Guestlist introuvable</h2>
+    <p>{{ error() }}</p>
+  </div>
+} @else if (guestlist(); as gl) {
+  <!-- Header with event info -->
+  <div class="gl-header" [style.background-image]="gl.event.image_url ? 'url(' + gl.event.image_url + ')' : ''">
+    <div class="gl-header-overlay">
+      <p class="gl-event-name">{{ gl.event.name }}</p>
+      <p class="gl-event-meta">{{ eventDate() }} · {{ gl.event.venue }}, {{ gl.event.city }}</p>
+    </div>
+  </div>
+
+  <div class="gl-body">
+    <!-- Artist + quota info -->
+    <div class="gl-artist-section">
+      <h1 class="gl-artist-name">{{ gl.artist_name }}</h1>
+      <div class="gl-quota-info">
+        <span class="gl-quota-count">{{ entryCount() }} / {{ quota() }}</span>
+        <span class="gl-quota-label">invités</span>
+        @if (totalPersons() !== entryCount()) {
+          <span class="gl-quota-detail">({{ totalPersons() }} pers. avec +1)</span>
+        }
+      </div>
+      <mat-progress-bar
+        [mode]="'determinate'"
+        [value]="fillPercent()"
+        [color]="fillPercent() >= 100 ? 'warn' : 'primary'"
+        class="gl-quota-bar"
+      />
+    </div>
+
+    <!-- Notification -->
+    @if (notification(); as n) {
+      <div class="gl-notification" [class.success]="n.type === 'success'" [class.error]="n.type === 'error'">
+        <mat-icon>{{ n.type === 'success' ? 'check_circle' : 'error' }}</mat-icon>
+        {{ n.message }}
+      </div>
+    }
+
+    <!-- Add guest form -->
+    @if (!isFull()) {
+      <div class="gl-add-form">
+        <h3>Ajouter un invité</h3>
+        <div class="gl-form-fields">
+          <mat-form-field appearance="outline" class="gl-field-name">
+            <mat-label>Nom de l'invité</mat-label>
+            <input
+              matInput
+              [ngModel]="newGuestName()"
+              (ngModelChange)="newGuestName.set($event)"
+              (keydown.enter)="onAddGuest()"
+              placeholder="Prénom Nom"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="gl-field-small">
+            <mat-label>+1</mat-label>
+            <input
+              matInput
+              type="number"
+              [ngModel]="newAccompagnants()"
+              (ngModelChange)="newAccompagnants.set($event)"
+              min="0"
+              max="5"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="gl-field-remarks">
+            <mat-label>Remarques</mat-label>
+            <input
+              matInput
+              [ngModel]="newRemarks()"
+              (ngModelChange)="newRemarks.set($event)"
+              placeholder="Optionnel"
+            />
+          </mat-form-field>
+        </div>
+        <button
+          mat-flat-button
+          color="primary"
+          [disabled]="!newGuestName().trim() || saving()"
+          (click)="onAddGuest()"
+          class="gl-add-btn"
+        >
+          @if (saving()) {
+            <mat-spinner diameter="18" />
+          } @else {
+            <mat-icon>person_add</mat-icon>
+          }
+          Ajouter
+        </button>
+      </div>
+    } @else {
+      <div class="gl-full-banner">
+        <mat-icon>block</mat-icon>
+        <p>Guestlist complète ({{ quota() }}/{{ quota() }})</p>
+      </div>
+    }
+
+    <!-- Guest list -->
+    @if (gl.entries.length > 0) {
+      <div class="gl-guest-list">
+        <h3>Invités ({{ gl.entries.length }})</h3>
+        @for (entry of gl.entries; track entry.id) {
+          <div class="gl-guest-row" [class.checked-in]="entry.is_checked_in">
+            <div class="gl-guest-info">
+              <span class="gl-guest-name">{{ entry.guest_name }}</span>
+              @if (entry.accompagnants > 0) {
+                <span class="gl-accomp">+{{ entry.accompagnants }}</span>
+              }
+              @if (entry.remarks) {
+                <span class="gl-remarks">{{ entry.remarks }}</span>
+              }
+              @if (entry.is_checked_in) {
+                <span class="gl-checked-badge">
+                  <mat-icon>check</mat-icon> Check-in
+                </span>
+              }
+            </div>
+            @if (!entry.is_checked_in) {
+              <button
+                mat-icon-button
+                matTooltip="Retirer"
+                [disabled]="saving()"
+                (click)="onRemoveGuest(entry)"
+                class="gl-remove-btn"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Footer -->
+    <div class="gl-footer">
+      <p>Propulsé par <strong>HM Events</strong></p>
+    </div>
+  </div>
+}

@@ -1,4 +1,4 @@
-import { Component, input, output, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -29,6 +29,9 @@ import { EventGuestlist, GuestlistEntry } from '../../event-management.model';
           }
         </mat-card-subtitle>
         <div class="card-actions">
+          <button mat-icon-button matTooltip="Copier le lien de partage" (click)="onCopyShareLink()">
+            <mat-icon>share</mat-icon>
+          </button>
           <button mat-icon-button matTooltip="Copier la liste" (click)="onCopy()">
             <mat-icon>content_copy</mat-icon>
           </button>
@@ -39,6 +42,9 @@ import { EventGuestlist, GuestlistEntry } from '../../event-management.model';
             <mat-icon>delete</mat-icon>
           </button>
         </div>
+        @if (linkCopied()) {
+          <span class="link-copied-badge">Lien copié !</span>
+        }
       </mat-card-header>
 
       <mat-progress-bar
@@ -208,6 +214,26 @@ import { EventGuestlist, GuestlistEntry } from '../../event-management.model';
       color: #ef4444;
       font-weight: 600;
     }
+
+    .link-copied-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: #dcfce7;
+      color: #166534;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 12px;
+      animation: fadeInOut 2.5s ease forwards;
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateY(-4px); }
+      15% { opacity: 1; transform: translateY(0); }
+      75% { opacity: 1; }
+      100% { opacity: 0; }
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -220,6 +246,8 @@ export class GuestlistCardComponent {
   editGuestlist = output<EventGuestlist>();
   removeGuestlist = output<string>();
 
+  linkCopied = signal(false);
+
   entries = computed(() => this.guestlist().entries ?? []);
   entryCount = computed(() => this.entries().length);
   checkedInCount = computed(() => this.entries().filter(e => e.is_checked_in).length);
@@ -228,6 +256,15 @@ export class GuestlistCardComponent {
     return q > 0 ? Math.min(100, Math.round((this.entryCount() / q) * 100)) : 0;
   });
   isFull = computed(() => this.entryCount() >= this.guestlist().quota);
+
+  onCopyShareLink(): void {
+    const token = this.guestlist().share_token;
+    if (!token) return;
+    const url = `${window.location.origin}/guestlist/${token}`;
+    navigator.clipboard.writeText(url);
+    this.linkCopied.set(true);
+    setTimeout(() => this.linkCopied.set(false), 2500);
+  }
 
   onCopy(): void {
     const names = this.entries()

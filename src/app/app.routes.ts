@@ -16,6 +16,10 @@ export const routes: Routes = [
     loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES),
   },
   {
+    path: 'guestlist/:token',
+    loadChildren: () => import('./features/public-guestlist/public-guestlist.routes').then(m => m.PUBLIC_GUESTLIST_ROUTES),
+  },
+  {
     path: 'dashboard',
     redirectTo: 'admin/dashboard',
     pathMatch: 'full',

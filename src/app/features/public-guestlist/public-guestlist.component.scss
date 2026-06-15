@@ -1,0 +1,303 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+// ── Loading / Error states ──
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+}
+
+.error-icon {
+  font-size: 4rem;
+  width: 4rem;
+  height: 4rem;
+  color: #ccc;
+  margin-bottom: 1rem;
+}
+
+// ── Header ──
+.gl-header {
+  position: relative;
+  background-color: #1a1a2e;
+  background-size: cover;
+  background-position: center;
+  min-height: 160px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.gl-header-overlay {
+  width: 100%;
+  padding: 2rem 1.5rem 1.5rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+  color: #fff;
+}
+
+.gl-event-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.gl-event-meta {
+  font-size: 0.9rem;
+  margin: 0;
+  opacity: 0.85;
+}
+
+// ── Body ──
+.gl-body {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+// ── Artist section ──
+.gl-artist-section {
+  margin-bottom: 1.5rem;
+}
+
+.gl-artist-name {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: #1a1a2e;
+}
+
+.gl-quota-info {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.gl-quota-count {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.gl-quota-label {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.gl-quota-detail {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.gl-quota-bar {
+  border-radius: 4px;
+}
+
+// ── Notification ──
+.gl-notification {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  animation: slideIn 0.25s ease;
+
+  &.success {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  &.error {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  mat-icon {
+    font-size: 1.2rem;
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ── Add form ──
+.gl-add-form {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e5e7eb;
+
+  h3 {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a2e;
+  }
+}
+
+.gl-form-fields {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.gl-field-name {
+  flex: 2;
+  min-width: 180px;
+}
+
+.gl-field-small {
+  flex: 0 0 70px;
+}
+
+.gl-field-remarks {
+  flex: 1;
+  min-width: 120px;
+}
+
+.gl-add-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+// ── Full banner ──
+.gl-full-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #fff7ed;
+  color: #9a3412;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+
+  mat-icon { color: #f59e0b; }
+  p { margin: 0; }
+}
+
+// ── Guest list ──
+.gl-guest-list {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 1.5rem;
+
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a2e;
+  }
+}
+
+.gl-guest-row {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #f3f4f6;
+
+  &:last-child { border-bottom: none; }
+
+  &.checked-in {
+    opacity: 0.5;
+    .gl-guest-name {
+      text-decoration: line-through;
+    }
+  }
+}
+
+.gl-guest-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.gl-guest-name {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.gl-accomp {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.gl-remarks {
+  font-size: 0.8rem;
+  color: #999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gl-checked-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #dcfce7;
+  color: #166534;
+  padding: 2px 8px;
+  border-radius: 12px;
+
+  mat-icon {
+    font-size: 0.8rem;
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+}
+
+.gl-remove-btn {
+  flex-shrink: 0;
+  opacity: 0.3;
+  &:hover { opacity: 1; }
+}
+
+// ── Footer ──
+.gl-footer {
+  text-align: center;
+  padding: 2rem 0;
+  color: #aaa;
+  font-size: 0.8rem;
+
+  strong { color: #6366f1; }
+}
+
+// ── Responsive ──
+@media (max-width: 480px) {
+  .gl-body { padding: 1rem; }
+  .gl-event-name { font-size: 1.2rem; }
+  .gl-form-fields { flex-direction: column; }
+  .gl-field-small { flex: 1; }
+}

@@ -133,6 +133,7 @@ export interface EventGuestlist {
   lineup_id: string | null;
   artist_name: string;
   quota: number;
+  share_token: string;
   created_at: string;
   entries: GuestlistEntry[];
 }

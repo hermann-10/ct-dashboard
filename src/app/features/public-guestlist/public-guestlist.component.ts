@@ -1,0 +1,168 @@
+import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { SupabaseService } from '../../core/services/supabase.service';
+
+interface GuestEntry {
+  id: string;
+  guest_name: string;
+  accompagnants: number;
+  remarks: string | null;
+  is_checked_in: boolean;
+}
+
+interface GuestlistData {
+  id: string;
+  artist_name: string;
+  quota: number;
+  share_token: string;
+  event: {
+    name: string;
+    date: string;
+    venue: string;
+    city: string;
+    image_url: string | null;
+  };
+  entries: GuestEntry[];
+}
+
+@Component({
+  selector: 'app-public-guestlist',
+  standalone: true,
+  imports: [
+    FormsModule,
+    MatButtonModule,
+    MatIconModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatProgressBarModule,
+    MatProgressSpinnerModule,
+    MatTooltipModule,
+  ],
+  templateUrl: './public-guestlist.component.html',
+  styleUrl: './public-guestlist.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class PublicGuestlistComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly supabase = inject(SupabaseService);
+
+  guestlist = signal<GuestlistData | null>(null);
+  loading = signal(true);
+  error = signal<string | null>(null);
+  saving = signal(false);
+  notification = signal<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Form fields
+  newGuestName = signal('');
+  newAccompagnants = signal(0);
+  newRemarks = signal('');
+
+  entryCount = computed(() => (this.guestlist()?.entries ?? []).length);
+  totalPersons = computed(() => {
+    const entries = this.guestlist()?.entries ?? [];
+    return entries.length + entries.reduce((s, e) => s + (e.accompagnants ?? 0), 0);
+  });
+  quota = computed(() => this.guestlist()?.quota ?? 0);
+  fillPercent = computed(() => {
+    const q = this.quota();
+    return q > 0 ? Math.min(100, Math.round((this.entryCount() / q) * 100)) : 0;
+  });
+  isFull = computed(() => this.entryCount() >= this.quota());
+  eventDate = computed(() => {
+    const d = this.guestlist()?.event?.date;
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('fr-CH', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    });
+  });
+
+  ngOnInit(): void {
+    const token = this.route.snapshot.paramMap.get('token');
+    if (token) {
+      this.loadGuestlist(token);
+    } else {
+      this.error.set('Lien invalide');
+      this.loading.set(false);
+    }
+  }
+
+  private async loadGuestlist(token: string): Promise<void> {
+    try {
+      const data = await this.supabase.getGuestlistByToken(token);
+      this.guestlist.set(data);
+    } catch {
+      this.error.set('Guestlist introuvable. Vérifiez le lien.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  async onAddGuest(): Promise<void> {
+    const name = this.newGuestName().trim();
+    if (!name || this.isFull()) return;
+
+    const gl = this.guestlist();
+    if (!gl) return;
+
+    this.saving.set(true);
+    try {
+      const entry = await this.supabase.createGuestlistEntry({
+        guestlist_id: gl.id,
+        guest_name: name,
+        accompagnants: this.newAccompagnants(),
+        remarks: this.newRemarks().trim() || undefined,
+      });
+
+      const updated = {
+        ...gl,
+        entries: [...gl.entries, entry].sort((a: GuestEntry, b: GuestEntry) =>
+          a.guest_name.localeCompare(b.guest_name, 'fr')
+        ),
+      };
+      this.guestlist.set(updated);
+
+      // Reset form
+      this.newGuestName.set('');
+      this.newAccompagnants.set(0);
+      this.newRemarks.set('');
+
+      this.showNotification('success', `${entry.guest_name} ajouté(e) !`);
+    } catch {
+      this.showNotification('error', 'Erreur lors de l\'ajout. Réessayez.');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async onRemoveGuest(entry: GuestEntry): Promise<void> {
+    const gl = this.guestlist();
+    if (!gl) return;
+
+    this.saving.set(true);
+    try {
+      await this.supabase.deleteGuestlistEntry(entry.id);
+      this.guestlist.set({
+        ...gl,
+        entries: gl.entries.filter(e => e.id !== entry.id),
+      });
+      this.showNotification('success', `${entry.guest_name} retiré(e).`);
+    } catch {
+      this.showNotification('error', 'Erreur lors de la suppression.');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  private showNotification(type: 'success' | 'error', message: string): void {
+    this.notification.set({ type, message });
+    setTimeout(() => this.notification.set(null), 3000);
+  }
+}

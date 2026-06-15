@@ -449,6 +449,22 @@ export class SupabaseService {
     if (error) throw error;
   }
 
+  // ── Public Guestlist (by share_token) ──
+  async getGuestlistByToken(token: string): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('event_guestlists')
+      .select('*, event:events(name, date, venue, city, image_url), entries:guestlist_entries(*)')
+      .eq('share_token', token)
+      .single();
+    if (error) throw error;
+    return {
+      ...data,
+      entries: (data.entries ?? []).sort((a: any, b: any) =>
+        (a.guest_name ?? '').localeCompare(b.guest_name ?? '', 'fr')
+      ),
+    };
+  }
+
   // ── Notifications ──
   async getNotifications(unreadOnly = false): Promise<any[]> {
     let query = this.supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(50);
