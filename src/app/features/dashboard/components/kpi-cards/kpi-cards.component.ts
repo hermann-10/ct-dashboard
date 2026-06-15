@@ -55,16 +55,37 @@ import { DashboardStats } from '../../dashboard.model';
       align-items: center;
       gap: 1rem;
       padding: 1.25rem 1.5rem;
+      border: 1px solid var(--hm-border, #E5E7EB);
+      border-radius: var(--hm-radius-md, 12px);
+      box-shadow: var(--hm-shadow-xs, 0 1px 2px rgba(0,0,0,0.04));
+      transition: box-shadow 200ms ease, transform 200ms ease;
+    }
+    .kpi-card:hover {
+      box-shadow: var(--hm-shadow-md, 0 4px 6px rgba(0,0,0,0.07));
+      transform: translateY(-1px);
     }
     .kpi-icon {
-      font-size: 2.5rem;
-      width: 2.5rem;
-      height: 2.5rem;
-      opacity: 0.9;
-      &.clicks { color: #6366f1; }
-      &.visitors { color: #10b981; }
-      &.events { color: #f59e0b; }
-      &.rate { color: #ec4899; }
+      font-size: 2.2rem;
+      width: 2.2rem;
+      height: 2.2rem;
+      padding: 0.5rem;
+      border-radius: var(--hm-radius-sm, 8px);
+    }
+    .kpi-icon.clicks {
+      color: var(--hm-brand-primary, #6C5CE7);
+      background: rgba(108, 92, 231, 0.08);
+    }
+    .kpi-icon.visitors {
+      color: var(--hm-success, #10B981);
+      background: rgba(16, 185, 129, 0.08);
+    }
+    .kpi-icon.events {
+      color: var(--hm-warning, #F59E0B);
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .kpi-icon.rate {
+      color: #EC4899;
+      background: rgba(236, 72, 153, 0.08);
     }
     .kpi-content {
       display: flex;
@@ -72,13 +93,18 @@ import { DashboardStats } from '../../dashboard.model';
     }
     .kpi-value {
       font-size: 1.75rem;
-      font-weight: 700;
+      font-weight: 800;
       line-height: 1;
+      color: var(--hm-text-primary, #1E1B4B);
+      letter-spacing: -0.02em;
     }
     .kpi-label {
-      font-size: 0.8rem;
-      opacity: 0.7;
-      margin-top: 0.25rem;
+      font-size: var(--hm-text-xs, 0.75rem);
+      color: var(--hm-text-secondary, #6B7280);
+      margin-top: 0.3rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

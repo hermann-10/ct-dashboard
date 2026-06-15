@@ -71,6 +71,7 @@ export interface EventRevenue {
 export interface EventLineup {
   id: string;
   event_id: string;
+  artist_id: string | null;
   artist_name: string;
   role: ArtistRole;
   fee: number;
@@ -105,6 +106,7 @@ export interface CreateRevenueDto {
 
 export interface CreateLineupDto {
   event_id: string;
+  artist_id?: string | null;
   artist_name: string;
   role: ArtistRole;
   fee?: number;

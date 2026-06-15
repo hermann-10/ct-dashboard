@@ -13,8 +13,8 @@
 }
 
 .stat {
-  background: #f9fafb;
-  border-radius: 8px;
+  background: var(--hm-bg-secondary);
+  border-radius: var(--hm-radius-sm);
   padding: 0.75rem;
   text-align: center;
   display: flex;
@@ -25,12 +25,12 @@
 .stat-value {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--hm-text-primary);
 }
 
 .stat-label {
   font-size: 0.7rem;
-  color: #888;
+  color: var(--hm-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -50,8 +50,8 @@
 
 // ── Table ──
 .sales-table-wrap {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-sm);
   overflow-x: auto;
   margin-bottom: 1rem;
 }
@@ -64,15 +64,15 @@
   th, td {
     padding: 0.6rem 0.75rem;
     text-align: left;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--hm-border-light);
   }
 
   th {
     font-weight: 600;
     font-size: 0.75rem;
-    color: #888;
+    color: var(--hm-text-secondary);
     text-transform: uppercase;
-    background: #fafafa;
+    background: var(--hm-bg-secondary);
   }
 
   .num { text-align: right; }
@@ -81,31 +81,31 @@
   .action-cell { width: 40px; text-align: right; }
 
   tr:last-child td { border-bottom: none; }
-  tr:hover:not(.total-row) { background: #f9fafb; }
+  tr:hover:not(.total-row) { background: var(--hm-bg-secondary); }
 }
 
 .total-row {
-  background: #f3f4f6;
+  background: var(--hm-border-light);
   td { border-bottom: none !important; font-size: 0.9rem; }
 }
 
 .inline-input {
   width: 55px;
   padding: 4px 6px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--hm-border);
   border-radius: 4px;
   text-align: right;
   font-size: 0.85rem;
 
   &:focus {
     outline: none;
-    border-color: #6366f1;
+    border-color: var(--hm-brand-primary);
   }
 }
 
 .no-sales {
   text-align: center;
-  color: #aaa;
+  color: var(--hm-text-tertiary);
   font-size: 0.9rem;
   padding: 1.5rem 0;
 }
@@ -115,16 +115,16 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.85rem;
-  color: #888;
+  color: var(--hm-text-secondary);
 
   mat-icon {
     font-size: 1rem;
     width: 1rem;
     height: 1rem;
-    color: #f59e0b;
+    color: var(--hm-warning);
   }
 
-  strong { color: #1a1a2e; }
+  strong { color: var(--hm-text-primary); }
 }
 
 @media (max-width: 600px) {
