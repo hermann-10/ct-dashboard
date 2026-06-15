@@ -370,6 +370,85 @@ export class SupabaseService {
     await this.supabase.from('settings').delete().eq('key', key);
   }
 
+  // ── Guestlists ──
+  async getEventGuestlists(eventId: string): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('event_guestlists')
+      .select('*, entries:guestlist_entries(*)')
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    // Sort entries within each guestlist by guest_name
+    return (data ?? []).map((gl: any) => ({
+      ...gl,
+      entries: (gl.entries ?? []).sort((a: any, b: any) =>
+        (a.guest_name ?? '').localeCompare(b.guest_name ?? '', 'fr')
+      ),
+    }));
+  }
+
+  async createEventGuestlist(dto: { event_id: string; lineup_id?: string | null; artist_name: string; quota?: number }): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('event_guestlists')
+      .insert({
+        event_id: dto.event_id,
+        lineup_id: dto.lineup_id ?? null,
+        artist_name: dto.artist_name,
+        quota: dto.quota ?? 10,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return { ...data, entries: [] };
+  }
+
+  async updateEventGuestlist(id: string, changes: { artist_name?: string; quota?: number }): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('event_guestlists')
+      .update(changes)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteEventGuestlist(id: string): Promise<void> {
+    const { error } = await this.supabase.from('event_guestlists').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  async createGuestlistEntry(dto: { guestlist_id: string; guest_name: string; accompagnants?: number; remarks?: string }): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('guestlist_entries')
+      .insert({
+        guestlist_id: dto.guestlist_id,
+        guest_name: dto.guest_name,
+        accompagnants: dto.accompagnants ?? 0,
+        remarks: dto.remarks ?? null,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async updateGuestlistEntry(id: string, changes: Partial<{ guest_name: string; accompagnants: number; remarks: string | null; is_checked_in: boolean }>): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('guestlist_entries')
+      .update(changes)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteGuestlistEntry(id: string): Promise<void> {
+    const { error } = await this.supabase.from('guestlist_entries').delete().eq('id', id);
+    if (error) throw error;
+  }
+
   // ── Notifications ──
   async getNotifications(unreadOnly = false): Promise<any[]> {
     let query = this.supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(50);

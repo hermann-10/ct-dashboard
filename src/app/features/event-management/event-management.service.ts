@@ -2,7 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../core/services/supabase.service';
 import {
   EventCharge, EventRevenue, EventLineup, ManagedEvent,
+  EventGuestlist, GuestlistEntry,
   CreateChargeDto, CreateRevenueDto, CreateLineupDto,
+  CreateGuestlistDto, CreateGuestEntryDto,
 } from './event-management.model';
 
 @Injectable({ providedIn: 'root' })
@@ -67,5 +69,34 @@ export class EventManagementService {
 
   async deleteLineupEntry(id: string): Promise<void> {
     return this.supabase.deleteEventLineupEntry(id);
+  }
+
+  // ── Guestlists ──
+  async getGuestlists(eventId: string): Promise<EventGuestlist[]> {
+    return this.supabase.getEventGuestlists(eventId);
+  }
+
+  async createGuestlist(dto: CreateGuestlistDto): Promise<EventGuestlist> {
+    return this.supabase.createEventGuestlist(dto);
+  }
+
+  async updateGuestlist(id: string, changes: { artist_name?: string; quota?: number }): Promise<EventGuestlist> {
+    return this.supabase.updateEventGuestlist(id, changes);
+  }
+
+  async deleteGuestlist(id: string): Promise<void> {
+    return this.supabase.deleteEventGuestlist(id);
+  }
+
+  async createGuestEntry(dto: CreateGuestEntryDto): Promise<GuestlistEntry> {
+    return this.supabase.createGuestlistEntry(dto);
+  }
+
+  async updateGuestEntry(id: string, changes: Partial<GuestlistEntry>): Promise<GuestlistEntry> {
+    return this.supabase.updateGuestlistEntry(id, changes);
+  }
+
+  async deleteGuestEntry(id: string): Promise<void> {
+    return this.supabase.deleteGuestlistEntry(id);
   }
 }

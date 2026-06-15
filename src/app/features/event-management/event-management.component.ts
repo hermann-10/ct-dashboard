@@ -8,16 +8,19 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { EventManagementStore } from './event-management.store';
 import { PdfExportService } from './pdf-export.service';
-import { EventCharge, EventRevenue, EventLineup } from './event-management.model';
+import { EventCharge, EventRevenue, EventLineup, EventGuestlist } from './event-management.model';
 import {
   BudgetOverviewComponent,
   ChargesTableComponent,
   RevenuesTableComponent,
   LineupTableComponent,
   EventNotesComponent,
+  GuestlistPanelComponent,
   ChargeDialogComponent, ChargeDialogData,
   RevenueDialogComponent, RevenueDialogData,
   LineupDialogComponent, LineupDialogData,
+  GuestDialogComponent, GuestDialogData,
+  GuestlistDialogComponent, GuestlistDialogData,
 } from './components';
 
 @Component({
@@ -28,7 +31,7 @@ import {
     MatTabsModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
     MatDialogModule, MatTooltipModule,
     BudgetOverviewComponent, ChargesTableComponent, RevenuesTableComponent,
-    LineupTableComponent, EventNotesComponent,
+    LineupTableComponent, EventNotesComponent, GuestlistPanelComponent,
   ],
   templateUrl: './event-management.component.html',
   styleUrl: './event-management.component.scss',
@@ -157,6 +160,69 @@ export class EventManagementComponent implements OnInit {
   // ── Notes ──
   onSaveNotes(data: { notes: string | null; strategy: string | null }): void {
     this.store.saveNotes(data.notes, data.strategy);
+  }
+
+  // ── Guestlists ──
+  onCreateGuestlist(): void {
+    const dialogRef = this.dialog.open(GuestlistDialogComponent, {
+      data: {
+        mode: 'create',
+        lineup: this.store.lineup(),
+        existingArtistNames: this.store.guestlists().map(gl => gl.artist_name),
+      } as GuestlistDialogData,
+      width: '500px',
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && this.store.event()) {
+        this.store.addGuestlist({ ...result, event_id: this.store.event()!.id });
+      }
+    });
+  }
+
+  onEditGuestlist(guestlist: EventGuestlist): void {
+    const dialogRef = this.dialog.open(GuestlistDialogComponent, {
+      data: {
+        mode: 'edit',
+        guestlist,
+        lineup: this.store.lineup(),
+        existingArtistNames: this.store.guestlists()
+          .filter(gl => gl.id !== guestlist.id)
+          .map(gl => gl.artist_name),
+      } as GuestlistDialogData,
+      width: '500px',
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.store.editGuestlist(guestlist.id, result);
+      }
+    });
+  }
+
+  onRemoveGuestlist(id: string): void {
+    if (confirm('Supprimer cette guestlist et tous ses invités ?')) {
+      this.store.removeGuestlist(id);
+    }
+  }
+
+  onAddGuestEntry(guestlist: EventGuestlist): void {
+    const currentCount = (guestlist.entries ?? []).length;
+    const dialogRef = this.dialog.open(GuestDialogComponent, {
+      data: { mode: 'create', currentCount, quota: guestlist.quota } as GuestDialogData,
+      width: '450px',
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.store.addGuestEntry(guestlist.id, { ...result, guestlist_id: guestlist.id });
+      }
+    });
+  }
+
+  onRemoveGuestEntry(event: { guestlistId: string; entryId: string }): void {
+    this.store.removeGuestEntry(event.guestlistId, event.entryId);
+  }
+
+  onToggleGuestCheckedIn(event: { guestlistId: string; entryId: string }): void {
+    this.store.toggleGuestCheckedIn(event.guestlistId, event.entryId);
   }
 
   // ── PDF Export ──

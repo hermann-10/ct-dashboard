@@ -3,7 +3,9 @@ import { computed, inject } from '@angular/core';
 import { EventManagementService } from './event-management.service';
 import {
   EventCharge, EventRevenue, EventLineup, ManagedEvent, BudgetSummary,
+  EventGuestlist, GuestlistEntry, GuestlistSummary,
   CreateChargeDto, CreateRevenueDto, CreateLineupDto,
+  CreateGuestlistDto, CreateGuestEntryDto,
 } from './event-management.model';
 
 interface EventManagementState {
@@ -11,6 +13,7 @@ interface EventManagementState {
   charges: EventCharge[];
   revenues: EventRevenue[];
   lineup: EventLineup[];
+  guestlists: EventGuestlist[];
   loading: boolean;
   saving: boolean;
   error: string | null;
@@ -21,6 +24,7 @@ const initialState: EventManagementState = {
   charges: [],
   revenues: [],
   lineup: [],
+  guestlists: [],
   loading: false,
   saving: false,
   error: null,
@@ -29,7 +33,7 @@ const initialState: EventManagementState = {
 export const EventManagementStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withComputed(({ charges, revenues, lineup }) => ({
+  withComputed(({ charges, revenues, lineup, guestlists }) => ({
     budget: computed<BudgetSummary>(() => {
       const ch = charges();
       const rev = revenues();
@@ -48,6 +52,16 @@ export const EventManagementStore = signalStore(
     confirmedArtists: computed(() => lineup().filter(a => a.is_confirmed).length),
     totalArtists: computed(() => lineup().length),
     totalLineupFees: computed(() => lineup().reduce((sum, a) => sum + Number(a.fee ?? 0), 0)),
+    guestlistSummary: computed<GuestlistSummary>(() => {
+      const gls = guestlists();
+      const allEntries = gls.flatMap(gl => gl.entries ?? []);
+      return {
+        totalGuestlists: gls.length,
+        totalGuests: allEntries.length + allEntries.reduce((s, e) => s + (e.accompagnants ?? 0), 0),
+        totalCheckedIn: allEntries.filter(e => e.is_checked_in).length,
+        totalCapacity: gls.reduce((s, gl) => s + gl.quota, 0),
+      };
+    }),
   })),
   withMethods((store, service = inject(EventManagementService)) => ({
     // ── Load all data for an event ──
@@ -55,12 +69,13 @@ export const EventManagementStore = signalStore(
       patchState(store, { loading: true, error: null });
       try {
         const event = await service.getEventBySlug(slug);
-        const [charges, revenues, lineup] = await Promise.all([
+        const [charges, revenues, lineup, guestlists] = await Promise.all([
           service.getCharges(event.id),
           service.getRevenues(event.id),
           service.getLineup(event.id),
+          service.getGuestlists(event.id),
         ]);
-        patchState(store, { event, charges, revenues, lineup, loading: false });
+        patchState(store, { event, charges, revenues, lineup, guestlists, loading: false });
       } catch (e: any) {
         patchState(store, { loading: false, error: e.message ?? 'Erreur de chargement' });
       }
@@ -216,6 +231,91 @@ export const EventManagementStore = signalStore(
       try {
         const updated = await service.updateEventNotes(event.id, notes, strategy);
         patchState(store, { event: { ...event, notes: updated.notes, strategy: updated.strategy }, saving: false });
+      } catch (e: any) {
+        patchState(store, { saving: false, error: e.message });
+      }
+    },
+
+    // ── Guestlists ──
+    async addGuestlist(dto: CreateGuestlistDto) {
+      patchState(store, { saving: true });
+      try {
+        const created = await service.createGuestlist(dto);
+        patchState(store, { guestlists: [...store.guestlists(), created], saving: false });
+      } catch (e: any) {
+        patchState(store, { saving: false, error: e.message });
+      }
+    },
+    async editGuestlist(id: string, changes: { artist_name?: string; quota?: number }) {
+      patchState(store, { saving: true });
+      try {
+        const updated = await service.updateGuestlist(id, changes);
+        patchState(store, {
+          guestlists: store.guestlists().map(gl =>
+            gl.id === id ? { ...gl, ...updated } : gl
+          ),
+          saving: false,
+        });
+      } catch (e: any) {
+        patchState(store, { saving: false, error: e.message });
+      }
+    },
+    async removeGuestlist(id: string) {
+      patchState(store, { saving: true });
+      try {
+        await service.deleteGuestlist(id);
+        patchState(store, { guestlists: store.guestlists().filter(gl => gl.id !== id), saving: false });
+      } catch (e: any) {
+        patchState(store, { saving: false, error: e.message });
+      }
+    },
+    async addGuestEntry(guestlistId: string, dto: CreateGuestEntryDto) {
+      patchState(store, { saving: true });
+      try {
+        const entry = await service.createGuestEntry(dto);
+        patchState(store, {
+          guestlists: store.guestlists().map(gl =>
+            gl.id === guestlistId
+              ? { ...gl, entries: [...(gl.entries ?? []), entry].sort((a, b) => a.guest_name.localeCompare(b.guest_name, 'fr')) }
+              : gl
+          ),
+          saving: false,
+        });
+      } catch (e: any) {
+        patchState(store, { saving: false, error: e.message });
+      }
+    },
+    async removeGuestEntry(guestlistId: string, entryId: string) {
+      patchState(store, { saving: true });
+      try {
+        await service.deleteGuestEntry(entryId);
+        patchState(store, {
+          guestlists: store.guestlists().map(gl =>
+            gl.id === guestlistId
+              ? { ...gl, entries: (gl.entries ?? []).filter(e => e.id !== entryId) }
+              : gl
+          ),
+          saving: false,
+        });
+      } catch (e: any) {
+        patchState(store, { saving: false, error: e.message });
+      }
+    },
+    async toggleGuestCheckedIn(guestlistId: string, entryId: string) {
+      const gl = store.guestlists().find(g => g.id === guestlistId);
+      const entry = gl?.entries?.find(e => e.id === entryId);
+      if (!entry) return;
+      patchState(store, { saving: true });
+      try {
+        const updated = await service.updateGuestEntry(entryId, { is_checked_in: !entry.is_checked_in });
+        patchState(store, {
+          guestlists: store.guestlists().map(g =>
+            g.id === guestlistId
+              ? { ...g, entries: (g.entries ?? []).map(e => e.id === entryId ? { ...e, ...updated } : e) }
+              : g
+          ),
+          saving: false,
+        });
       } catch (e: any) {
         patchState(store, { saving: false, error: e.message });
       }

@@ -91,7 +91,31 @@
         </div>
       </mat-tab>
 
-      <!-- Tab 4: Notes & Stratégie -->
+      <!-- Tab 4: Guestlists -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">list_alt</mat-icon>
+          Guestlists
+          @if (store.guestlistSummary().totalGuests > 0) {
+            <span class="tab-badge">{{ store.guestlistSummary().totalGuests }}</span>
+          }
+        </ng-template>
+        <div class="tab-content">
+          <app-guestlist-panel
+            [guestlists]="store.guestlists()"
+            [lineup]="store.lineup()"
+            [summary]="store.guestlistSummary()"
+            (createGuestlist)="onCreateGuestlist()"
+            (addEntry)="onAddGuestEntry($event)"
+            (removeEntry)="onRemoveGuestEntry($event)"
+            (toggleCheckedIn)="onToggleGuestCheckedIn($event)"
+            (editGuestlist)="onEditGuestlist($event)"
+            (removeGuestlist)="onRemoveGuestlist($event)"
+          />
+        </div>
+      </mat-tab>
+
+      <!-- Tab 5: Notes & Stratégie -->
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon class="tab-icon">notes</mat-icon>

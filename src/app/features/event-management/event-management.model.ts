@@ -126,6 +126,48 @@ export interface BudgetSummary {
   revenuesPending: number;
 }
 
+// ── Guestlist ──
+export interface EventGuestlist {
+  id: string;
+  event_id: string;
+  lineup_id: string | null;
+  artist_name: string;
+  quota: number;
+  created_at: string;
+  entries: GuestlistEntry[];
+}
+
+export interface GuestlistEntry {
+  id: string;
+  guestlist_id: string;
+  guest_name: string;
+  accompagnants: number;
+  remarks: string | null;
+  is_checked_in: boolean;
+  created_at: string;
+}
+
+export interface CreateGuestlistDto {
+  event_id: string;
+  lineup_id?: string | null;
+  artist_name: string;
+  quota?: number;
+}
+
+export interface CreateGuestEntryDto {
+  guestlist_id: string;
+  guest_name: string;
+  accompagnants?: number;
+  remarks?: string;
+}
+
+export interface GuestlistSummary {
+  totalGuestlists: number;
+  totalGuests: number;
+  totalCheckedIn: number;
+  totalCapacity: number;
+}
+
 // ── Managed event (extended with notes/strategy) ──
 export interface ManagedEvent {
   id: string;
