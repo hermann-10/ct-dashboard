@@ -29,6 +29,32 @@
     </div>
   </header>
 
+  <!-- Countdown -->
+  @if (nextEvent(); as next) {
+    <section class="countdown-section">
+      <h2 class="countdown-label">{{ next.name }}</h2>
+      <p class="countdown-venue">{{ next.venue }}, {{ next.city }}</p>
+      <div class="countdown-grid">
+        <div class="countdown-unit">
+          <span class="countdown-value">{{ countdown().days }}</span>
+          <span class="countdown-unit-label">jours</span>
+        </div>
+        <div class="countdown-unit">
+          <span class="countdown-value">{{ countdown().hours }}</span>
+          <span class="countdown-unit-label">heures</span>
+        </div>
+        <div class="countdown-unit">
+          <span class="countdown-value">{{ countdown().minutes }}</span>
+          <span class="countdown-unit-label">min</span>
+        </div>
+        <div class="countdown-unit">
+          <span class="countdown-value">{{ countdown().seconds }}</span>
+          <span class="countdown-unit-label">sec</span>
+        </div>
+      </div>
+    </section>
+  }
+
   <!-- Events Section -->
   <section class="events-section">
     <h2 class="section-title">Prochains événements</h2>
@@ -71,6 +97,30 @@
       }
     }
   </section>
+
+  <!-- Past Events Gallery -->
+  @if (pastEvents().length > 0) {
+    <section class="gallery-section">
+      <h2 class="section-title">Événements passés</h2>
+      <div class="gallery-grid">
+        @for (event of pastEvents(); track event.id) {
+          <div class="gallery-item">
+            @if (event.image_url) {
+              <img [src]="event.image_url" [alt]="event.name" class="gallery-img" loading="lazy" />
+            } @else {
+              <div class="gallery-placeholder">
+                <span class="gallery-emoji">{{ event.image_emoji }}</span>
+              </div>
+            }
+            <div class="gallery-overlay">
+              <span class="gallery-name">{{ event.name }}</span>
+              <span class="gallery-date">{{ event.date | date:'d MMM yyyy' }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
 
   <!-- Footer -->
   <footer class="footer">

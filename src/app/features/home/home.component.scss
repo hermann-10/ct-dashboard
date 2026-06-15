@@ -104,6 +104,56 @@ h1 {
   }
 }
 
+// Countdown
+.countdown-section {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: white;
+}
+
+.countdown-label {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+}
+
+.countdown-venue {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin: 0 0 1rem;
+}
+
+.countdown-grid {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.countdown-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.countdown-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  background: linear-gradient(135deg, #ff6d00, #ff9100);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.countdown-unit-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.6;
+  margin-top: 0.25rem;
+}
+
 // Events
 .events-section {
   max-width: 600px;
@@ -239,6 +289,73 @@ h1 {
   padding: 2rem;
   color: #888;
   p { margin: 0.25rem 0; }
+}
+
+// Gallery
+.gallery-section {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.gallery-item {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 1;
+  cursor: pointer;
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: scale(1.03);
+    .gallery-overlay { opacity: 1; }
+  }
+}
+
+.gallery-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gallery-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e65100, #ff6d00);
+  font-size: 3rem;
+}
+
+.gallery-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.75rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  color: white;
+  opacity: 0;
+  transition: opacity 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.gallery-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.gallery-date {
+  font-size: 0.75rem;
+  opacity: 0.7;
 }
 
 // Footer

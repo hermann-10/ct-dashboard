@@ -2,6 +2,12 @@
   "buildCommand": "npx ng build --configuration production",
   "outputDirectory": "dist/ct-dashboard/browser",
   "framework": null,
+  "crons": [
+    {
+      "path": "/api/check-notifications",
+      "schedule": "0 8 * * *"
+    }
+  ],
   "redirects": [
     { "source": "/go/:slug", "destination": "/api/go?slug=:slug", "permanent": false }
   ],

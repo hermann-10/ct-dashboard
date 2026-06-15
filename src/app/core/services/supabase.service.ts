@@ -43,32 +43,40 @@ export class SupabaseService {
     return data ?? [];
   }
 
-  async getClicksCount(eventSlug?: string): Promise<number> {
+  async getClicksCount(eventSlug?: string, startDate?: string, endDate?: string): Promise<number> {
     let query = this.supabase.from('clicks').select('*', { count: 'exact', head: true });
     if (eventSlug) query = query.eq('event_slug', eventSlug);
+    if (startDate) query = query.gte('created_at', startDate);
+    if (endDate) query = query.lte('created_at', endDate);
     const { count } = await query;
     return count ?? 0;
   }
 
-  async getUniqueVisitors(eventSlug?: string): Promise<number> {
+  async getUniqueVisitors(eventSlug?: string, startDate?: string, endDate?: string): Promise<number> {
     let query = this.supabase.from('clicks').select('ip_hash');
     if (eventSlug) query = query.eq('event_slug', eventSlug);
+    if (startDate) query = query.gte('created_at', startDate);
+    if (endDate) query = query.lte('created_at', endDate);
     const { data } = await query;
     return new Set((data ?? []).map(d => d.ip_hash)).size;
   }
 
-  async getDeviceBreakdown(eventSlug?: string) {
+  async getDeviceBreakdown(eventSlug?: string, startDate?: string, endDate?: string) {
     let query = this.supabase.from('clicks').select('device');
     if (eventSlug) query = query.eq('event_slug', eventSlug);
+    if (startDate) query = query.gte('created_at', startDate);
+    if (endDate) query = query.lte('created_at', endDate);
     const { data } = await query;
     const counts: Record<string, number> = {};
     (data ?? []).forEach(d => { counts[d.device] = (counts[d.device] || 0) + 1; });
     return Object.entries(counts).map(([device, count]) => ({ device, count }));
   }
 
-  async getUtmBreakdown(eventSlug?: string) {
+  async getUtmBreakdown(eventSlug?: string, startDate?: string, endDate?: string) {
     let query = this.supabase.from('clicks').select('utm_source, utm_medium, utm_campaign');
     if (eventSlug) query = query.eq('event_slug', eventSlug);
+    if (startDate) query = query.gte('created_at', startDate);
+    if (endDate) query = query.lte('created_at', endDate);
     const { data } = await query;
     const sources: Record<string, number> = {};
     (data ?? []).forEach(d => {
@@ -78,9 +86,11 @@ export class SupabaseService {
     return Object.entries(sources).map(([source, count]) => ({ source, count })).sort((a, b) => b.count - a.count);
   }
 
-  async getClicksTimeline(eventSlug?: string) {
+  async getClicksTimeline(eventSlug?: string, startDate?: string, endDate?: string) {
     let query = this.supabase.from('clicks').select('created_at');
     if (eventSlug) query = query.eq('event_slug', eventSlug);
+    if (startDate) query = query.gte('created_at', startDate);
+    if (endDate) query = query.lte('created_at', endDate);
     query = query.order('created_at', { ascending: true });
     const { data } = await query;
     const byDay: Record<string, number> = {};
@@ -350,5 +360,69 @@ export class SupabaseService {
 
   async deleteSetting(key: string): Promise<void> {
     await this.supabase.from('settings').delete().eq('key', key);
+  }
+
+  // ── Notifications ──
+  async getNotifications(unreadOnly = false): Promise<any[]> {
+    let query = this.supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(50);
+    if (unreadOnly) query = query.eq('is_read', false);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async getUnreadCount(): Promise<number> {
+    const { count } = await this.supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_read', false);
+    return count ?? 0;
+  }
+
+  async markNotificationRead(id: string): Promise<void> {
+    await this.supabase.from('notifications').update({ is_read: true }).eq('id', id);
+  }
+
+  async markAllNotificationsRead(): Promise<void> {
+    await this.supabase.from('notifications').update({ is_read: true }).eq('is_read', false);
+  }
+
+  async deleteNotification(id: string): Promise<void> {
+    await this.supabase.from('notifications').delete().eq('id', id);
+  }
+
+  // ── Notification Rules ──
+  async getNotificationRules(): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('notification_rules')
+      .select('*, events!notification_rules_event_id_fkey(name, slug)')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async createNotificationRule(rule: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('notification_rules')
+      .insert(rule)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async updateNotificationRule(id: string, changes: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('notification_rules')
+      .update({ ...changes, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteNotificationRule(id: string): Promise<void> {
+    await this.supabase.from('notification_rules').delete().eq('id', id);
   }
 }

@@ -31,6 +31,11 @@ export const ADMIN_ROUTES: Routes = [
         loadChildren: () =>
           import('../settings/settings.routes').then(m => m.SETTINGS_ROUTES),
       },
+      {
+        path: 'notifications',
+        loadChildren: () =>
+          import('../notifications/notification.routes').then(m => m.NOTIFICATION_ROUTES),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

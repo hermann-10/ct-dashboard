@@ -26,28 +26,32 @@ export class DashboardService {
     );
   }
 
-  async getStats(eventSlug?: string): Promise<DashboardStats> {
-    const totalClicks = await this.supabase.getClicksCount(eventSlug);
-    const uniqueVisitors = await this.supabase.getUniqueVisitors(eventSlug);
+  async getStats(eventSlug?: string, startDate?: string, endDate?: string): Promise<DashboardStats> {
+    const totalClicks = await this.supabase.getClicksCount(eventSlug, startDate, endDate);
+    const uniqueVisitors = await this.supabase.getUniqueVisitors(eventSlug, startDate, endDate);
     const events = await this.supabase.getEvents();
     const totalEvents = events.length;
     const conversionRate = totalClicks > 0 ? (uniqueVisitors / totalClicks) * 100 : 0;
     return { totalClicks, uniqueVisitors, totalEvents, conversionRate };
   }
 
-  async getClicks(eventSlug?: string): Promise<ClickRecord[]> {
-    return this.supabase.getClicks(eventSlug ? { eventSlug } : undefined);
+  async getClicks(eventSlug?: string, startDate?: string, endDate?: string): Promise<ClickRecord[]> {
+    const filters: { eventSlug?: string; startDate?: string; endDate?: string } = {};
+    if (eventSlug) filters.eventSlug = eventSlug;
+    if (startDate) filters.startDate = startDate;
+    if (endDate) filters.endDate = endDate;
+    return this.supabase.getClicks(Object.keys(filters).length ? filters : undefined);
   }
 
-  async getDeviceBreakdown(eventSlug?: string): Promise<DeviceBreakdown[]> {
-    return this.supabase.getDeviceBreakdown(eventSlug);
+  async getDeviceBreakdown(eventSlug?: string, startDate?: string, endDate?: string): Promise<DeviceBreakdown[]> {
+    return this.supabase.getDeviceBreakdown(eventSlug, startDate, endDate);
   }
 
-  async getUtmBreakdown(eventSlug?: string): Promise<UtmBreakdown[]> {
-    return this.supabase.getUtmBreakdown(eventSlug);
+  async getUtmBreakdown(eventSlug?: string, startDate?: string, endDate?: string): Promise<UtmBreakdown[]> {
+    return this.supabase.getUtmBreakdown(eventSlug, startDate, endDate);
   }
 
-  async getTimeline(eventSlug?: string): Promise<TimelinePoint[]> {
-    return this.supabase.getClicksTimeline(eventSlug);
+  async getTimeline(eventSlug?: string, startDate?: string, endDate?: string): Promise<TimelinePoint[]> {
+    return this.supabase.getClicksTimeline(eventSlug, startDate, endDate);
   }
 }

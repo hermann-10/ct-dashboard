@@ -19,6 +19,20 @@
         <h2>{{ event.name }}</h2>
         <p class="event-meta">{{ event.date }} · {{ event.venue }}, {{ event.city }}</p>
       </div>
+      <button
+        mat-flat-button
+        color="primary"
+        [disabled]="exporting()"
+        (click)="onExportPdf()"
+        class="export-btn"
+      >
+        @if (exporting()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          <mat-icon>picture_as_pdf</mat-icon>
+        }
+        Export PDF
+      </button>
     </div>
 
     <mat-tab-group animationDuration="200ms" dynamicHeight>

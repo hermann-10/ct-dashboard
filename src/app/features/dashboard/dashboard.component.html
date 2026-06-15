@@ -26,7 +26,28 @@
         <button mat-icon-button (click)="onRefresh()" matTooltip="Actualiser">
           <mat-icon>refresh</mat-icon>
         </button>
+        <app-notification-center />
       </div>
+    </div>
+
+    <div class="filters-row">
+      <mat-button-toggle-group [value]="activePeriod()" hideSingleSelectionIndicator>
+        @for (period of periods; track period.label) {
+          <mat-button-toggle [value]="period.label" (change)="onPeriodChange(period.label, period.days)">
+            {{ period.label }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+
+      <mat-form-field appearance="outline" class="date-range-field">
+        <mat-label>Periode personnalisee</mat-label>
+        <mat-date-range-input [rangePicker]="picker">
+          <input matStartDate placeholder="Debut" (dateChange)="onCustomStart($event.value)">
+          <input matEndDate placeholder="Fin" (dateChange)="onCustomEnd($event.value)">
+        </mat-date-range-input>
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-date-range-picker #picker />
+      </mat-form-field>
     </div>
 
     <app-kpi-cards [stats]="store.stats()" />

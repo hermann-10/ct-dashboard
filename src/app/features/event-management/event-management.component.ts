@@ -7,6 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { EventManagementStore } from './event-management.store';
+import { PdfExportService } from './pdf-export.service';
 import { EventCharge, EventRevenue, EventLineup } from './event-management.model';
 import {
   BudgetOverviewComponent,
@@ -37,6 +38,9 @@ export class EventManagementComponent implements OnInit {
   readonly store = inject(EventManagementStore);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
+  private readonly pdfExport = inject(PdfExportService);
+
+  exporting = signal(false);
 
   ngOnInit(): void {
     const slug = this.route.snapshot.paramMap.get('slug');
@@ -153,5 +157,25 @@ export class EventManagementComponent implements OnInit {
   // ── Notes ──
   onSaveNotes(data: { notes: string | null; strategy: string | null }): void {
     this.store.saveNotes(data.notes, data.strategy);
+  }
+
+  // ── PDF Export ──
+  async onExportPdf(): Promise<void> {
+    const event = this.store.event();
+    if (!event) return;
+    this.exporting.set(true);
+    try {
+      await this.pdfExport.exportEventPdf(
+        event,
+        this.store.charges(),
+        this.store.revenues(),
+        this.store.lineup(),
+        this.store.budget(),
+      );
+    } catch (e) {
+      console.error('PDF export failed', e);
+    } finally {
+      this.exporting.set(false);
+    }
   }
 }
