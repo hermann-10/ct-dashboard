@@ -65,10 +65,13 @@ export const EventManagementStore = signalStore(
   })),
   withMethods((store, service = inject(EventManagementService)) => ({
     // ── Load all data for an event ──
-    async loadEvent(slug: string) {
+    async loadEvent(slugOrId: string) {
       patchState(store, { loading: true, error: null });
       try {
-        const event = await service.getEventBySlug(slug);
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+        const event = isUuid
+          ? await service.getEventById(slugOrId)
+          : await service.getEventBySlug(slugOrId);
         const [charges, revenues, lineup, guestlists] = await Promise.all([
           service.getCharges(event.id),
           service.getRevenues(event.id),

@@ -16,6 +16,10 @@ export class EventManagementService {
     return this.supabase.getEventBySlug(slug);
   }
 
+  async getEventById(id: string): Promise<ManagedEvent> {
+    return this.supabase.getEventById(id);
+  }
+
   async updateEventNotes(id: string, notes: string | null, strategy: string | null): Promise<ManagedEvent> {
     return this.supabase.updateEventNotes(id, notes, strategy);
   }
