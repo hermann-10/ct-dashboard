@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-const supabase = createClient(
-  'https://ogeokiczbzpdwcdthpnp.supabase.co',
-  'sb_publishable_-eSVqLLI6WgDOEoagAt7Zw_R58yXm6q'
-);
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ogeokiczbzpdwcdthpnp.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || 'sb_publishable_-eSVqLLI6WgDOEoagAt7Zw_R58yXm6q';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function hashIp(ip) {
   if (!ip) return 'unknown';
