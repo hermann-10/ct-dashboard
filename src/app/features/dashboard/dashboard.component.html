@@ -16,23 +16,27 @@
         <h2>Vue d'ensemble</h2>
       </div>
       <div class="header-actions">
-        <mat-button-toggle-group [value]="activePeriod()" hideSingleSelectionIndicator class="period-toggle">
+        <!-- Period pills -->
+        <div class="period-pills">
           @for (period of periods; track period.label) {
-            <mat-button-toggle [value]="period.label" (change)="onPeriodChange(period.label, period.days)">
+            <button class="pill"
+                    [class.active]="activePeriod() === period.label"
+                    (click)="onPeriodChange(period.label, period.days)">
               {{ period.label }}
-            </mat-button-toggle>
+            </button>
           }
-        </mat-button-toggle-group>
+        </div>
 
-        <mat-form-field appearance="outline" class="event-filter">
-          <mat-label>Événement</mat-label>
-          <mat-select [value]="store.selectedEventSlug() ?? ''" (selectionChange)="onEventFilter($event.value)">
-            <mat-option value="">Tous</mat-option>
+        <!-- Event filter -->
+        <div class="event-filter-wrap">
+          <mat-icon class="filter-icon">filter_list</mat-icon>
+          <mat-select [value]="store.selectedEventSlug()" panelWidth="auto" (selectionChange)="onEventFilter($event.value)" class="event-select" placeholder="Tous les événements">
+            <mat-option [value]="null">Tous les événements</mat-option>
             @for (event of store.events(); track event.slug) {
               <mat-option [value]="event.slug">{{ event.name }}</mat-option>
             }
           </mat-select>
-        </mat-form-field>
+        </div>
 
         <button mat-icon-button (click)="onRefresh()" matTooltip="Actualiser" class="refresh-btn">
           <mat-icon>refresh</mat-icon>

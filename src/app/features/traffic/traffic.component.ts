@@ -12,9 +12,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
@@ -29,9 +27,7 @@ Chart.register(...registerables);
   imports: [
     MatButtonModule,
     MatIconModule,
-    MatButtonToggleModule,
     MatSelectModule,
-    MatFormFieldModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
     DatePipe,
@@ -56,35 +52,35 @@ Chart.register(...registerables);
       <div class="traffic-header">
         <div class="header-left">
           <h2>Analyse du Trafic</h2>
-          <p class="header-subtitle">Vue detaillee des clics et visites</p>
+          <p class="header-subtitle">Vue détaillée des clics et visites</p>
         </div>
         <div class="header-actions">
-          <mat-form-field appearance="outline" class="event-filter">
-            <mat-label>Filtrer par evenement</mat-label>
-            <mat-select [value]="store.selectedEventSlug() ?? ''" (selectionChange)="onEventFilter($event.value)">
-              <mat-option value="">Tous les evenements</mat-option>
+          <!-- Period pills -->
+          <div class="period-pills">
+            @for (period of periods; track period.label) {
+              <button class="pill"
+                      [class.active]="activePeriod() === period.label"
+                      (click)="onPeriodChange(period.label, period.days)">
+                {{ period.label }}
+              </button>
+            }
+          </div>
+
+          <!-- Event filter -->
+          <div class="event-filter-wrap">
+            <mat-icon class="filter-icon">filter_list</mat-icon>
+            <mat-select [value]="store.selectedEventSlug()" panelWidth="auto" (selectionChange)="onEventFilter($event.value)" class="event-select" placeholder="Tous les événements">
+              <mat-option [value]="null">Tous les événements</mat-option>
               @for (event of store.events(); track event.slug) {
                 <mat-option [value]="event.slug">{{ event.name }}</mat-option>
               }
             </mat-select>
-          </mat-form-field>
-          <button mat-icon-button (click)="onRefresh()" matTooltip="Actualiser les donnees">
+          </div>
+
+          <button mat-icon-button (click)="onRefresh()" matTooltip="Actualiser" class="refresh-btn">
             <mat-icon>refresh</mat-icon>
           </button>
         </div>
-      </div>
-
-      <!-- Period filters -->
-      <div class="filters-row">
-        <mat-button-toggle-group [value]="activePeriod()" hideSingleSelectionIndicator>
-          @for (period of periods; track period.label) {
-            <mat-button-toggle
-              [value]="period.label"
-              (change)="onPeriodChange(period.label, period.days)">
-              {{ period.label }}
-            </mat-button-toggle>
-          }
-        </mat-button-toggle-group>
       </div>
 
       <!-- KPI Cards -->
@@ -318,7 +314,7 @@ Chart.register(...registerables);
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.5rem;
       flex-wrap: wrap;
       gap: 0.75rem;
     }
@@ -340,23 +336,134 @@ Chart.register(...registerables);
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.625rem;
     }
 
-    .event-filter {
-      width: 260px;
+    /* ── Period pills ── */
+    .period-pills {
+      display: flex;
+      background: var(--hm-border-light);
+      border-radius: var(--hm-radius-full);
+      padding: 3px;
+      gap: 2px;
+    }
 
-      ::ng-deep .mat-mdc-form-field-subscript-wrapper {
-        display: none;
+    .pill {
+      border: none;
+      background: transparent;
+      padding: 0.3rem 0.875rem;
+      border-radius: var(--hm-radius-full);
+      font-family: var(--hm-font-sans);
+      font-size: var(--hm-text-xs);
+      font-weight: 500;
+      color: var(--hm-text-secondary);
+      cursor: pointer;
+      transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
+      line-height: 1.4;
+
+      &:hover:not(.active) {
+        color: var(--hm-text-primary);
+        background: rgba(255, 255, 255, 0.6);
+      }
+
+      &.active {
+        background: var(--hm-brand-primary);
+        color: var(--hm-text-inverse);
+        box-shadow: 0 1px 3px rgba(108, 92, 231, 0.3);
       }
     }
 
-    /* ── Filters ── */
-    .filters-row {
+    /* ── Event filter ── */
+    .event-filter-wrap {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
+      gap: 0.375rem;
+      background: var(--hm-surface);
+      border: 1px solid var(--hm-border);
+      border-radius: var(--hm-radius-sm);
+      padding: 0 0.75rem;
+      height: 34px;
+      min-width: 200px;
+      max-width: 280px;
+      cursor: pointer;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+
+      &:hover {
+        border-color: var(--hm-brand-primary-light);
+      }
+
+      &:focus-within {
+        border-color: var(--hm-brand-primary);
+        box-shadow: var(--hm-shadow-glow);
+      }
+    }
+
+    .filter-icon {
+      font-size: 16px !important;
+      width: 16px !important;
+      height: 16px !important;
+      color: var(--hm-text-tertiary);
+      flex-shrink: 0;
+    }
+
+    .event-select {
+      flex: 1;
+      min-width: 0;
+
+      ::ng-deep {
+        .mat-mdc-select-trigger {
+          height: 32px;
+        }
+        .mat-mdc-select-value {
+          font-size: var(--hm-text-sm);
+          color: var(--hm-text-primary);
+        }
+        .mat-mdc-select-placeholder {
+          font-size: var(--hm-text-sm);
+          color: var(--hm-text-tertiary);
+        }
+        .mat-mdc-select-arrow-wrapper .mat-mdc-select-arrow {
+          color: var(--hm-text-tertiary);
+        }
+        .mat-mdc-select-panel {
+          min-width: 320px;
+          border-radius: var(--hm-radius-sm) !important;
+          box-shadow: var(--hm-shadow-lg) !important;
+        }
+        .mat-mdc-option {
+          font-size: var(--hm-text-sm);
+          min-height: 40px;
+
+          .mdc-list-item__primary-text {
+            white-space: normal;
+            line-height: 1.3;
+          }
+        }
+      }
+    }
+
+    /* ── Refresh button ── */
+    .refresh-btn {
+      color: var(--hm-text-tertiary);
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--hm-border);
+      border-radius: var(--hm-radius-sm);
+      background: var(--hm-surface);
+      transition: all 150ms ease;
+
+      &:hover {
+        color: var(--hm-brand-primary);
+        border-color: var(--hm-brand-primary-light);
+        background: var(--hm-surface-hover);
+      }
+
+      mat-icon {
+        font-size: 17px;
+        width: 17px;
+        height: 17px;
+      }
     }
 
     /* ── KPI Grid ── */
@@ -782,8 +889,14 @@ Chart.register(...registerables);
         align-items: flex-start;
       }
 
-      .event-filter {
+      .header-actions {
+        flex-wrap: wrap;
         width: 100%;
+      }
+
+      .event-filter-wrap {
+        flex: 1;
+        max-width: none;
       }
 
       .two-col {
@@ -1011,10 +1124,10 @@ export class TrafficComponent implements OnInit, OnDestroy {
     }
   }
 
-  onEventFilter(slug: string): void {
+  onEventFilter(slug: string | null): void {
     const startDate = this.store.startDate() ?? undefined;
     const endDate = this.store.endDate() ?? undefined;
-    this.store.loadAll({ eventSlug: slug || undefined, startDate, endDate });
+    this.store.loadAll({ eventSlug: slug ?? undefined, startDate, endDate });
   }
 
   onRefresh(): void {

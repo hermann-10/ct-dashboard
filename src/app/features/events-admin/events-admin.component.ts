@@ -1,14 +1,14 @@
-import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { EventsAdminStore } from './events-admin.store';
 import { EventDialogComponent, EventDialogData } from './components/event-dialog/event-dialog.component';
 import { EventRecord } from './events-admin.model';
@@ -18,14 +18,14 @@ import { EventRecord } from './events-admin.model';
   standalone: true,
   imports: [
     DatePipe,
-    MatTableModule,
     MatButtonModule,
     MatIconModule,
-    MatChipsModule,
     MatSlideToggleModule,
     MatDialogModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    MatFormFieldModule,
+    MatInputModule,
   ],
   templateUrl: './events-admin.component.html',
   styleUrl: './events-admin.component.scss',
@@ -36,7 +36,20 @@ export class EventsAdminComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
 
-  displayedColumns = ['emoji', 'name', 'date', 'venue', 'city', 'published', 'actions'];
+  viewMode = signal<'list' | 'cards'>('cards');
+  searchTerm = signal('');
+
+  filteredEvents = computed(() => {
+    const term = this.searchTerm().toLowerCase().trim();
+    const events = this.store.events();
+    if (!term) return events;
+    return events.filter(e =>
+      e.name.toLowerCase().includes(term) ||
+      e.slug.toLowerCase().includes(term) ||
+      e.venue.toLowerCase().includes(term) ||
+      e.city.toLowerCase().includes(term)
+    );
+  });
 
   ngOnInit(): void {
     this.store.loadAll();

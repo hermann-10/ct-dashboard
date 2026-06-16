@@ -5,8 +5,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { DashboardStore } from './dashboard.store';
 import { AuthStore } from '../auth/auth.store';
 import { KpiCardsComponent } from './components/kpi-cards';
@@ -25,8 +23,6 @@ import { NotificationCenterComponent } from '../notifications';
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatSelectModule,
-    MatFormFieldModule,
-    MatButtonToggleModule,
     KpiCardsComponent,
     ClicksChartComponent,
     DeviceBreakdownComponent,
@@ -74,10 +70,10 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  onEventFilter(slug: string): void {
+  onEventFilter(slug: string | null): void {
     const startDate = this.store.startDate() ?? undefined;
     const endDate = this.store.endDate() ?? undefined;
-    this.store.loadAll({ eventSlug: slug || undefined, startDate, endDate });
+    this.store.loadAll({ eventSlug: slug ?? undefined, startDate, endDate });
   }
 
   onViewEvent(slug: string): void {

@@ -106,10 +106,10 @@
 }
 
 .card-avatar {
-  height: 140px;
+  aspect-ratio: 1 / 1;
   background-color: var(--hm-text-primary);
   background-size: cover;
-  background-position: center;
+  background-position: center top;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -260,7 +260,7 @@
   }
 
   .card-avatar {
-    height: 120px;
+    aspect-ratio: 1 / 1;
   }
 }
 
