@@ -1,5 +1,4 @@
-import { Component, input, output, signal, effect, computed, ElementRef, viewChild, ChangeDetectionStrategy } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
+import { Component, input, signal, effect, computed, ElementRef, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -9,74 +8,78 @@ import { TimelinePoint, EventTimelineData } from '../../dashboard.model';
 Chart.register(...registerables);
 
 const EVENT_COLORS = [
-  { bg: 'rgba(99, 102, 241, 0.7)', border: '#6366f1' },   // indigo
-  { bg: 'rgba(236, 72, 153, 0.7)', border: '#ec4899' },    // pink
-  { bg: 'rgba(34, 197, 94, 0.7)', border: '#22c55e' },     // green
-  { bg: 'rgba(245, 158, 11, 0.7)', border: '#f59e0b' },    // amber
-  { bg: 'rgba(6, 182, 212, 0.7)', border: '#06b6d4' },     // cyan
-  { bg: 'rgba(168, 85, 247, 0.7)', border: '#a855f7' },    // purple
-  { bg: 'rgba(239, 68, 68, 0.7)', border: '#ef4444' },     // red
-  { bg: 'rgba(20, 184, 166, 0.7)', border: '#14b8a6' },    // teal
+  { line: '#6C5CE7', fill: 'rgba(108, 92, 231, 0.12)' },
+  { line: '#EC4899', fill: 'rgba(236, 72, 153, 0.10)' },
+  { line: '#10B981', fill: 'rgba(16, 185, 129, 0.10)' },
+  { line: '#F59E0B', fill: 'rgba(245, 158, 11, 0.10)' },
+  { line: '#06B6D4', fill: 'rgba(6, 182, 212, 0.10)' },
+  { line: '#A855F7', fill: 'rgba(168, 85, 247, 0.10)' },
+  { line: '#EF4444', fill: 'rgba(239, 68, 68, 0.10)' },
+  { line: '#14B8A6', fill: 'rgba(20, 184, 166, 0.10)' },
 ];
 
-const PAGE_SIZE = 14; // Show 14 days per page
+const PAGE_SIZE = 14;
 
 @Component({
   selector: 'app-clicks-chart',
   standalone: true,
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule],
   template: `
-    <mat-card class="chart-card">
-      <mat-card-header>
-        <mat-card-title>Clics par jour</mat-card-title>
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">Clics par jour</span>
         <div class="chart-nav">
           <span class="date-range-label">{{ dateRangeLabel() }}</span>
-          <button mat-icon-button
-            (click)="onPrev()"
-            [disabled]="!canGoPrev()"
-            matTooltip="Période précédente">
+          <button mat-icon-button (click)="onPrev()" [disabled]="!canGoPrev()" matTooltip="Période précédente">
             <mat-icon>chevron_left</mat-icon>
           </button>
-          <button mat-icon-button
-            (click)="onNext()"
-            [disabled]="!canGoNext()"
-            matTooltip="Période suivante">
+          <button mat-icon-button (click)="onNext()" [disabled]="!canGoNext()" matTooltip="Période suivante">
             <mat-icon>chevron_right</mat-icon>
           </button>
         </div>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="chart-container">
-          <canvas #chartCanvas></canvas>
-        </div>
-        @if (timeline().length === 0) {
-          <p class="no-data">Aucune donnée disponible</p>
-        }
-      </mat-card-content>
-    </mat-card>
+      </div>
+      <div class="chart-container">
+        <canvas #chartCanvas></canvas>
+      </div>
+      @if (timeline().length === 0) {
+        <p class="no-data">Aucune donnée disponible</p>
+      }
+    </div>
   `,
   styles: `
-    .chart-card { padding: 1rem; }
-    .chart-container { position: relative; height: 300px; }
-    .no-data { text-align: center; opacity: 0.5; padding: 2rem; }
-
-    mat-card-header {
+    .chart-card {
+      background: var(--hm-surface, #fff);
+      border: 1px solid var(--hm-border, #E5E7EB);
+      border-radius: var(--hm-radius-md, 12px);
+      padding: 1.25rem;
+    }
+    .chart-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 0.5rem;
+      margin-bottom: 1rem;
     }
-
+    .chart-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--hm-text-primary, #1E1B4B);
+    }
     .chart-nav {
       display: flex;
       align-items: center;
       gap: 0.25rem;
     }
-
     .date-range-label {
-      font-size: 0.8rem;
-      opacity: 0.6;
+      font-size: 0.75rem;
+      color: var(--hm-text-tertiary, #9CA3AF);
       white-space: nowrap;
+    }
+    .chart-container { position: relative; height: 280px; }
+    .no-data {
+      text-align: center;
+      color: var(--hm-text-tertiary, #9CA3AF);
+      font-size: var(--hm-text-sm, 0.8125rem);
+      padding: 2rem;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -88,9 +91,8 @@ export class ClicksChartComponent {
   private canvas = viewChild<ElementRef<HTMLCanvasElement>>('chartCanvas');
   private chart: Chart | null = null;
 
-  pageOffset = signal(0); // 0 = last page (most recent data)
+  pageOffset = signal(0);
 
-  // Total number of data points
   private totalDays = computed(() => {
     const et = this.eventTimeline();
     return et ? et.dates.length : this.timeline().length;
@@ -98,7 +100,6 @@ export class ClicksChartComponent {
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.totalDays() / PAGE_SIZE)));
 
-  // Current page index from the end
   canGoPrev = computed(() => {
     const offset = this.pageOffset();
     const total = this.totalDays();
@@ -123,7 +124,7 @@ export class ClicksChartComponent {
       const data = this.timeline();
       const et = this.eventTimeline();
       const el = this.canvas();
-      const _offset = this.pageOffset(); // track reactivity
+      const _offset = this.pageOffset();
       if (!el) return;
 
       if (this.chart) this.chart.destroy();
@@ -169,47 +170,72 @@ export class ClicksChartComponent {
       return {
         label: ds.name,
         data: ds.data.slice(start, end),
-        backgroundColor: color.bg,
-        borderColor: color.border,
-        borderWidth: 1,
-        borderRadius: 4,
+        borderColor: color.line,
+        backgroundColor: color.fill,
+        borderWidth: 2,
+        fill: true,
+        tension: 0.35,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: color.line,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
       };
     });
 
     this.chart = new Chart(canvas, {
-      type: 'bar',
+      type: 'line',
       data: { labels, datasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: {
             display: et.datasets.length > 1,
             position: 'bottom',
-            labels: { boxWidth: 12, padding: 12, font: { size: 11 } },
+            labels: {
+              usePointStyle: true,
+              pointStyle: 'circle',
+              boxWidth: 6,
+              padding: 16,
+              font: { size: 11, family: 'Roboto' },
+            },
           },
           tooltip: {
             mode: 'index',
             intersect: false,
+            backgroundColor: '#1E1B4B',
+            titleFont: { size: 12, family: 'Roboto' },
+            bodyFont: { size: 11, family: 'Roboto' },
+            padding: 10,
+            cornerRadius: 8,
             callbacks: {
-              title: (items: TooltipItem<'bar'>[]) => {
+              title: (items: TooltipItem<'line'>[]) => {
                 if (items.length === 0) return '';
                 const idx = items[0].dataIndex;
                 const date = visibleDates[idx];
                 return new Date(date).toLocaleDateString('fr-CH', {
-                  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+                  weekday: 'long', day: 'numeric', month: 'long',
                 });
               },
-              afterBody: (items: TooltipItem<'bar'>[]) => {
+              afterBody: (items: TooltipItem<'line'>[]) => {
                 const total = items.reduce((sum, item) => sum + (item.raw as number), 0);
-                return [`\nTotal: ${total} clic${total > 1 ? 's' : ''}`];
+                return [`Total: ${total} clic${total > 1 ? 's' : ''}`];
               },
             },
           },
         },
         scales: {
-          x: { stacked: true },
-          y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } },
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 10, family: 'Roboto' }, color: '#9CA3AF' },
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, font: { size: 10, family: 'Roboto' }, color: '#9CA3AF' },
+            grid: { color: '#F3F4F6' },
+          },
         },
       },
     });
@@ -221,38 +247,58 @@ export class ClicksChartComponent {
     const labels = this.formatLabels(sliced.map(d => d.date));
 
     this.chart = new Chart(canvas, {
-      type: 'bar',
+      type: 'line',
       data: {
         labels,
         datasets: [{
           label: 'Clics',
           data: sliced.map(d => d.count),
-          backgroundColor: 'rgba(99, 102, 241, 0.7)',
-          borderColor: '#6366f1',
-          borderWidth: 1,
-          borderRadius: 4,
+          borderColor: '#6C5CE7',
+          backgroundColor: 'rgba(108, 92, 231, 0.12)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          pointBackgroundColor: '#6C5CE7',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
         }],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: { display: false },
           tooltip: {
+            backgroundColor: '#1E1B4B',
+            titleFont: { size: 12, family: 'Roboto' },
+            bodyFont: { size: 11, family: 'Roboto' },
+            padding: 10,
+            cornerRadius: 8,
             callbacks: {
-              title: (items: TooltipItem<'bar'>[]) => {
+              title: (items: TooltipItem<'line'>[]) => {
                 if (items.length === 0) return '';
                 const idx = items[0].dataIndex;
                 const date = sliced[idx].date;
                 return new Date(date).toLocaleDateString('fr-CH', {
-                  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+                  weekday: 'long', day: 'numeric', month: 'long',
                 });
               },
             },
           },
         },
         scales: {
-          y: { beginAtZero: true, ticks: { stepSize: 1 } },
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 10, family: 'Roboto' }, color: '#9CA3AF' },
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, font: { size: 10, family: 'Roboto' }, color: '#9CA3AF' },
+            grid: { color: '#F3F4F6' },
+          },
         },
       },
     });

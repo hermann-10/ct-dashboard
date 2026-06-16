@@ -1,72 +1,136 @@
 import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
-import { MatIconModule } from '@angular/material/icon';
+import { RouterLink } from '@angular/router';
 import { UtmBreakdown } from '../../dashboard.model';
+
+const SOURCE_COLORS: Record<string, string> = {
+  meta: '#6C5CE7',
+  facebook: '#1877F2',
+  instagram: '#E4405F',
+  google: '#4285F4',
+  direct: '#10B981',
+  email: '#F59E0B',
+};
 
 @Component({
   selector: 'app-utm-table',
   standalone: true,
-  imports: [MatCardModule, MatTableModule, MatIconModule],
+  imports: [RouterLink],
   template: `
-    <mat-card class="utm-card">
-      <mat-card-header>
-        <mat-card-title>Sources de trafic</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        @if (sources().length > 0) {
-          <table mat-table [dataSource]="sources()" class="full-width">
-            <ng-container matColumnDef="source">
-              <th mat-header-cell *matHeaderCellDef>Source</th>
-              <td mat-cell *matCellDef="let row">
-                <div class="source-cell">
-                  <mat-icon class="source-icon">{{ getIcon(row.source) }}</mat-icon>
-                  {{ row.source }}
-                </div>
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="count">
-              <th mat-header-cell *matHeaderCellDef>Clics</th>
-              <td mat-cell *matCellDef="let row">{{ row.count }}</td>
-            </ng-container>
-            <ng-container matColumnDef="percent">
-              <th mat-header-cell *matHeaderCellDef>%</th>
-              <td mat-cell *matCellDef="let row">{{ getPercent(row.count) }}%</td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="columns"></tr>
-            <tr mat-row *matRowDef="let row; columns: columns;"></tr>
-          </table>
-        } @else {
-          <p class="no-data">Aucune source identifiée</p>
-        }
-      </mat-card-content>
-    </mat-card>
+    <div class="utm-card">
+      <span class="card-title">Sources de trafic</span>
+      @if (sourcesWithPercent().length > 0) {
+        <div class="source-list">
+          @for (src of sourcesWithPercent(); track src.source) {
+            <div class="source-item">
+              <div class="source-header">
+                <span class="source-name">{{ src.source }}</span>
+                <span class="source-percent">{{ src.percent }}%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" [style.width.%]="src.percent" [style.background]="getColor(src.source)"></div>
+              </div>
+              <span class="source-count">{{ src.count }} clic{{ src.count > 1 ? 's' : '' }}</span>
+            </div>
+          }
+        </div>
+        <div class="card-footer">
+          <a routerLink="/admin/traffic" class="detail-link">Voir le détail traffic →</a>
+        </div>
+      } @else {
+        <p class="no-data">Aucune source identifiée</p>
+      }
+    </div>
   `,
   styles: `
-    .utm-card { padding: 1rem; }
-    .full-width { width: 100%; }
-    .source-cell { display: flex; align-items: center; gap: 0.5rem; }
-    .source-icon { font-size: 1.2rem; width: 1.2rem; height: 1.2rem; opacity: 0.6; }
-    .no-data { text-align: center; opacity: 0.5; padding: 2rem; }
+    .utm-card {
+      background: var(--hm-surface, #fff);
+      border: 1px solid var(--hm-border, #E5E7EB);
+      border-radius: var(--hm-radius-md, 12px);
+      padding: 1.25rem;
+    }
+    .card-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--hm-text-primary, #1E1B4B);
+      display: block;
+      margin-bottom: 1rem;
+    }
+    .source-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+    }
+    .source-item {}
+    .source-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.25rem;
+    }
+    .source-name {
+      font-size: 0.8125rem;
+      color: var(--hm-text-secondary, #6B7280);
+      font-weight: 500;
+    }
+    .source-percent {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--hm-text-primary, #1E1B4B);
+    }
+    .progress-track {
+      height: 4px;
+      background: var(--hm-border-light, #F3F4F6);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+    .source-count {
+      font-size: 0.6875rem;
+      color: var(--hm-text-tertiary, #9CA3AF);
+      margin-top: 0.125rem;
+      display: block;
+    }
+    .card-footer {
+      margin-top: 1rem;
+      text-align: center;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--hm-border-light, #F3F4F6);
+    }
+    .detail-link {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--hm-brand-primary, #6C5CE7);
+      cursor: pointer;
+      text-decoration: none;
+      &:hover { text-decoration: underline; }
+    }
+    .no-data {
+      text-align: center;
+      color: var(--hm-text-tertiary, #9CA3AF);
+      font-size: var(--hm-text-sm, 0.8125rem);
+      padding: 2rem;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UtmTableComponent {
   sources = input<UtmBreakdown[]>([]);
-  columns = ['source', 'count', 'percent'];
 
-  private total = computed(() => this.sources().reduce((s, r) => s + r.count, 0));
+  sourcesWithPercent = computed(() => {
+    const data = this.sources();
+    const total = data.reduce((s, r) => s + r.count, 0);
+    return data.map(d => ({
+      source: d.source,
+      count: d.count,
+      percent: total > 0 ? Math.round((d.count / total) * 100) : 0,
+    }));
+  });
 
-  getPercent(count: number): string {
-    const t = this.total();
-    return t > 0 ? ((count / t) * 100).toFixed(1) : '0';
-  }
-
-  getIcon(source: string): string {
-    const map: Record<string, string> = {
-      meta: 'campaign', facebook: 'facebook', instagram: 'photo_camera',
-      google: 'search', direct: 'link', email: 'email',
-    };
-    return map[source.toLowerCase()] || 'public';
+  getColor(source: string): string {
+    return SOURCE_COLORS[source.toLowerCase()] || '#6C5CE7';
   }
 }

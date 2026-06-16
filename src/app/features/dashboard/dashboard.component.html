@@ -12,42 +12,33 @@
     </div>
   } @else {
     <div class="dashboard-header">
-      <h2>Dashboard</h2>
+      <div class="header-left">
+        <h2>Vue d'ensemble</h2>
+      </div>
       <div class="header-actions">
+        <mat-button-toggle-group [value]="activePeriod()" hideSingleSelectionIndicator class="period-toggle">
+          @for (period of periods; track period.label) {
+            <mat-button-toggle [value]="period.label" (change)="onPeriodChange(period.label, period.days)">
+              {{ period.label }}
+            </mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+
         <mat-form-field appearance="outline" class="event-filter">
-          <mat-label>Filtrer par événement</mat-label>
+          <mat-label>Événement</mat-label>
           <mat-select [value]="store.selectedEventSlug() ?? ''" (selectionChange)="onEventFilter($event.value)">
-            <mat-option value="">Tous les événements</mat-option>
+            <mat-option value="">Tous</mat-option>
             @for (event of store.events(); track event.slug) {
               <mat-option [value]="event.slug">{{ event.name }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
-        <button mat-icon-button (click)="onRefresh()" matTooltip="Actualiser">
+
+        <button mat-icon-button (click)="onRefresh()" matTooltip="Actualiser" class="refresh-btn">
           <mat-icon>refresh</mat-icon>
         </button>
         <app-notification-center />
       </div>
-    </div>
-
-    <div class="filters-row">
-      <mat-button-toggle-group [value]="activePeriod()" hideSingleSelectionIndicator>
-        @for (period of periods; track period.label) {
-          <mat-button-toggle [value]="period.label" (change)="onPeriodChange(period.label, period.days)">
-            {{ period.label }}
-          </mat-button-toggle>
-        }
-      </mat-button-toggle-group>
-
-      <mat-form-field appearance="outline" class="date-range-field">
-        <mat-label>Periode personnalisee</mat-label>
-        <mat-date-range-input [rangePicker]="picker">
-          <input matStartDate placeholder="Debut" (dateChange)="onCustomStart($event.value)">
-          <input matEndDate placeholder="Fin" (dateChange)="onCustomEnd($event.value)">
-        </mat-date-range-input>
-        <mat-datepicker-toggle matIconSuffix [for]="picker" />
-        <mat-date-range-picker #picker />
-      </mat-form-field>
     </div>
 
     <app-kpi-cards [stats]="store.stats()" />

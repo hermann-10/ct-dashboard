@@ -1,73 +1,145 @@
-import { Component, input, effect, ElementRef, viewChild, ChangeDetectionStrategy } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
-import { Chart, registerables } from 'chart.js';
+import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import { DeviceBreakdown } from '../../dashboard.model';
 
-Chart.register(...registerables);
-
-const COLORS: Record<string, string> = {
-  mobile: '#6366f1',
-  desktop: '#10b981',
-  tablet: '#f59e0b',
-  unknown: '#94a3b8',
+const DEVICE_CONFIG: Record<string, { icon: string; color: string; label: string }> = {
+  mobile: { icon: 'smartphone', color: '#6C5CE7', label: 'Mobile' },
+  desktop: { icon: 'computer', color: '#10B981', label: 'Desktop' },
+  tablet: { icon: 'tablet', color: '#F59E0B', label: 'Tablette' },
+  unknown: { icon: 'device_unknown', color: '#94A3B8', label: 'Autre' },
 };
 
 @Component({
   selector: 'app-device-breakdown',
   standalone: true,
-  imports: [MatCardModule],
+  imports: [MatIconModule],
   template: `
-    <mat-card class="chart-card">
-      <mat-card-header>
-        <mat-card-title>Appareils</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="chart-container">
-          <canvas #chartCanvas></canvas>
+    <div class="device-card">
+      <span class="card-title">Appareils</span>
+      @if (devices().length > 0) {
+        <div class="device-list">
+          @for (item of devicesWithPercent(); track item.device) {
+            <div class="device-row">
+              <div class="device-info">
+                <div class="device-icon" [style.background]="getConfig(item.device).color + '12'">
+                  <mat-icon [style.color]="getConfig(item.device).color">{{ getConfig(item.device).icon }}</mat-icon>
+                </div>
+                <div class="device-text">
+                  <span class="device-label">{{ getConfig(item.device).label }}</span>
+                  <span class="device-count">{{ item.count }} clic{{ item.count > 1 ? 's' : '' }}</span>
+                </div>
+              </div>
+              <span class="device-percent">{{ item.percent }}%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" [style.width.%]="item.percent" [style.background]="getConfig(item.device).color"></div>
+            </div>
+          }
         </div>
-        @if (devices().length === 0) {
-          <p class="no-data">Aucune donnée</p>
-        }
-      </mat-card-content>
-    </mat-card>
+      } @else {
+        <p class="no-data">Aucune donnée</p>
+      }
+    </div>
   `,
   styles: `
-    .chart-card { padding: 1rem; }
-    .chart-container { position: relative; height: 250px; max-width: 300px; margin: 0 auto; }
-    .no-data { text-align: center; opacity: 0.5; padding: 2rem; }
+    .device-card {
+      background: var(--hm-surface, #fff);
+      border: 1px solid var(--hm-border, #E5E7EB);
+      border-radius: var(--hm-radius-md, 12px);
+      padding: 1.25rem;
+      height: 100%;
+    }
+    .card-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--hm-text-primary, #1E1B4B);
+      display: block;
+      margin-bottom: 1rem;
+    }
+    .device-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .device-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .device-info {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+    .device-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+    .device-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .device-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--hm-text-primary, #1E1B4B);
+    }
+    .device-count {
+      font-size: 0.6875rem;
+      color: var(--hm-text-tertiary, #9CA3AF);
+    }
+    .device-percent {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--hm-text-primary, #1E1B4B);
+    }
+    .progress-track {
+      height: 4px;
+      background: var(--hm-border-light, #F3F4F6);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: -0.25rem;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+    .no-data {
+      text-align: center;
+      color: var(--hm-text-tertiary, #9CA3AF);
+      font-size: var(--hm-text-sm, 0.8125rem);
+      padding: 2rem;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DeviceBreakdownComponent {
   devices = input<DeviceBreakdown[]>([]);
-  private canvas = viewChild<ElementRef<HTMLCanvasElement>>('chartCanvas');
-  private chart: Chart | null = null;
 
-  constructor() {
-    effect(() => {
-      const data = this.devices();
-      const el = this.canvas();
-      if (!el || data.length === 0) return;
-      if (this.chart) this.chart.destroy();
+  devicesWithPercent = computed(() => {
+    const data = this.devices();
+    const total = data.reduce((s, d) => s + d.count, 0);
+    return data
+      .map(d => ({
+        device: d.device,
+        count: d.count,
+        percent: total > 0 ? Math.round((d.count / total) * 100) : 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+  });
 
-      this.chart = new Chart(el.nativeElement, {
-        type: 'doughnut',
-        data: {
-          labels: data.map(d => d.device),
-          datasets: [{
-            data: data.map(d => d.count),
-            backgroundColor: data.map(d => COLORS[d.device] || COLORS['unknown']),
-            borderWidth: 0,
-          }],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom', labels: { padding: 16 } },
-          },
-        },
-      });
-    });
+  getConfig(device: string) {
+    return DEVICE_CONFIG[device] || DEVICE_CONFIG['unknown'];
   }
 }

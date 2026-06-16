@@ -1,3 +1,7 @@
+.dashboard-content {
+  padding: 1.5rem;
+}
+
 .dashboard-header {
   display: flex;
   justify-content: space-between;
@@ -5,11 +9,13 @@
   margin-bottom: 1.25rem;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
 
+.header-left {
   h2 {
     margin: 0;
     font-family: var(--hm-font-sans);
-    font-size: var(--hm-text-2xl);
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--hm-text-primary);
     letter-spacing: -0.02em;
@@ -22,34 +28,47 @@
   gap: 0.5rem;
 }
 
+.period-toggle {
+  ::ng-deep {
+    .mat-button-toggle-appearance-standard {
+      height: 32px;
+    }
+    .mat-button-toggle-label-content {
+      line-height: 32px;
+      padding: 0 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+  }
+}
+
 .event-filter {
-  width: 280px;
+  width: 180px;
 
-  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
-    display: none;
+  ::ng-deep {
+    .mat-mdc-form-field-subscript-wrapper { display: none; }
+    .mat-mdc-text-field-wrapper { height: 36px; }
+    .mat-mdc-form-field-flex { height: 36px; }
+    .mat-mdc-form-field-infix {
+      padding-top: 6px !important;
+      padding-bottom: 6px !important;
+      min-height: unset;
+    }
+    .mdc-floating-label { top: 18px; }
+    .mat-mdc-select-value { font-size: 0.8125rem; }
   }
 }
 
-.filters-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
+.refresh-btn {
+  color: var(--hm-text-secondary);
+  width: 32px;
+  height: 32px;
 
-.date-range-field {
-  width: 280px;
-
-  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
-    display: none;
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
   }
-}
-
-.dashboard-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 1.5rem;
 }
 
 .loading-overlay {
@@ -83,25 +102,27 @@
 
 .charts-row {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 1.25rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: 5fr 2fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .tables-row {
   display: grid;
   grid-template-columns: 3fr 2fr;
-  gap: 1.25rem;
+  gap: 0.75rem;
 }
 
 // ── Responsive ──
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .charts-row,
   .tables-row {
     grid-template-columns: 1fr;
   }
+}
 
+@media (max-width: 768px) {
   .event-filter {
     width: 100%;
   }
@@ -111,12 +132,7 @@
     align-items: flex-start;
   }
 
-  .filters-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .date-range-field {
-    width: 100%;
+  .header-actions {
+    flex-wrap: wrap;
   }
 }

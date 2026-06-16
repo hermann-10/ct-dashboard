@@ -12,6 +12,11 @@ export const ADMIN_ROUTES: Routes = [
           import('../dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES),
       },
       {
+        path: 'traffic',
+        loadChildren: () =>
+          import('../traffic/traffic.routes').then(m => m.TRAFFIC_ROUTES),
+      },
+      {
         path: 'events',
         loadChildren: () =>
           import('../events-admin/events-admin.routes').then(m => m.EVENTS_ADMIN_ROUTES),

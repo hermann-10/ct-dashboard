@@ -1,14 +1,11 @@
 import { Component, inject, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { DashboardStore } from './dashboard.store';
 import { AuthStore } from '../auth/auth.store';
@@ -23,15 +20,12 @@ import { NotificationCenterComponent } from '../notifications';
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    MatToolbarModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatSelectModule,
     MatFormFieldModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
     MatButtonToggleModule,
     KpiCardsComponent,
     ClicksChartComponent,
@@ -51,7 +45,6 @@ export class DashboardComponent implements OnInit {
 
   userEmail = this.auth.user;
 
-  // Preset periods
   readonly periods = [
     { label: '7j', days: 7 },
     { label: '30j', days: 30 },
@@ -59,9 +52,6 @@ export class DashboardComponent implements OnInit {
     { label: 'Tout', days: 0 },
   ];
   activePeriod = signal('Tout');
-
-  private customStart: Date | null = null;
-  private customEnd: Date | null = null;
 
   ngOnInit(): void {
     this.store.loadAll();
@@ -84,23 +74,6 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  onCustomStart(date: Date | null): void {
-    this.customStart = date;
-  }
-
-  onCustomEnd(date: Date | null): void {
-    this.customEnd = date;
-    if (this.customStart && this.customEnd) {
-      this.activePeriod.set('custom');
-      const slug = this.store.selectedEventSlug() ?? undefined;
-      this.store.loadAll({
-        eventSlug: slug,
-        startDate: this.customStart.toISOString(),
-        endDate: this.customEnd.toISOString(),
-      });
-    }
-  }
-
   onEventFilter(slug: string): void {
     const startDate = this.store.startDate() ?? undefined;
     const endDate = this.store.endDate() ?? undefined;
@@ -116,9 +89,5 @@ export class DashboardComponent implements OnInit {
     const startDate = this.store.startDate() ?? undefined;
     const endDate = this.store.endDate() ?? undefined;
     this.store.loadAll({ eventSlug: slug, startDate, endDate });
-  }
-
-  onLogout(): void {
-    this.auth.logout();
   }
 }
