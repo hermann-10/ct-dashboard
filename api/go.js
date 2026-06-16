@@ -1,9 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
 const supabase = createClient(
   'https://ogeokiczbzpdwcdthpnp.supabase.co',
   'sb_publishable_-eSVqLLI6WgDOEoagAt7Zw_R58yXm6q'
 );
+
+function hashIp(ip) {
+  if (!ip) return 'unknown';
+  return crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
+}
+
+function detectDevice(ua) {
+  if (!ua) return 'unknown';
+  ua = ua.toLowerCase();
+  if (/tablet|ipad|playbook|silk/.test(ua)) return 'tablet';
+  if (/mobile|iphone|ipod|android.*mobile|opera m(ob|in)/.test(ua)) return 'mobile';
+  return 'desktop';
+}
 
 export default async function handler(req, res) {
   const { slug } = req.query;
@@ -35,10 +49,45 @@ export default async function handler(req, res) {
       if (setting) pixelId = setting.value;
     } catch {}
 
-    // Get UTM params for pixel tracking
+    // Get UTM params
     const utmSource = req.query.utm_source || '';
     const utmMedium = req.query.utm_medium || '';
     const utmCampaign = req.query.utm_campaign || '';
+    const utmContent = req.query.utm_content || '';
+    const fbclid = req.query.fbclid || '';
+    const fbAdId = req.query.fb_ad_id || '';
+    const fbAdsetId = req.query.fb_adset_id || '';
+    const fbCampaignId = req.query.fb_campaign_id || '';
+
+    // Record click in database
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim()
+      || req.headers['x-real-ip']
+      || req.socket?.remoteAddress
+      || '';
+    const userAgent = req.headers['user-agent'] || '';
+    const referrer = req.headers['referer'] || req.headers['referrer'] || '';
+
+    try {
+      await supabase.from('clicks').insert({
+        event_slug: slug,
+        event_name: event.name,
+        ip_hash: hashIp(ip),
+        user_agent: userAgent,
+        device: detectDevice(userAgent),
+        referrer,
+        utm_source: utmSource || null,
+        utm_medium: utmMedium || null,
+        utm_campaign: utmCampaign || null,
+        utm_content: utmContent || null,
+        fbclid: fbclid || null,
+        fb_ad_id: fbAdId || null,
+        fb_adset_id: fbAdsetId || null,
+        fb_campaign_id: fbCampaignId || null,
+      });
+    } catch (clickErr) {
+      console.error('Click recording failed:', clickErr);
+      // Don't block the redirect if click recording fails
+    }
 
     // Return HTML page with pixel + delayed redirect
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
