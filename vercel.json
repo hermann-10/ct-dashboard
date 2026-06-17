@@ -1,6 +1,6 @@
 {
   "buildCommand": "npx ng build --configuration production",
-  "outputDirectory": "dist/ct-dashboard/browser",
+  "outputDirectory": "dist/hervio-ops/browser",
   "framework": null,
   "crons": [
     {
