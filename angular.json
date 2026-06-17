@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "ct-dashboard": {
+    "hervio-ops": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
