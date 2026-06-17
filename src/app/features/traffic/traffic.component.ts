@@ -1081,7 +1081,7 @@ export class TrafficComponent implements OnInit, OnDestroy {
               ticks: {
                 font: { size: 11 },
                 color: '#9CA3AF',
-                stepSize: 1,
+                precision: 0,
               },
             },
           },

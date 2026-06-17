@@ -24,8 +24,10 @@
       <div class="header-info">
         <h2>{{ artist.name }}</h2>
         <div class="header-meta">
-          @if (artist.genre) {
-            <span class="chip genre">{{ artist.genre }}</span>
+          @if (artist.genres.length) {
+            @for (g of artist.genres; track g) {
+              <span class="chip genre">{{ g }}</span>
+            }
           }
           <span class="chip role">{{ getRoleLabel(artist.role) }}</span>
           @if (artist.city) {

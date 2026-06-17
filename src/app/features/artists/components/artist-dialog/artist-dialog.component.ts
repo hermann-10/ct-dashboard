@@ -8,7 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ARTIST_ROLES, ArtistRole } from '../../../event-management/event-management.model';
-import { Artist, CreateArtistDto } from '../../artists.model';
+import { Artist, CreateArtistDto, MUSIC_GENRES } from '../../artists.model';
 import { SupabaseService } from '../../../../core/services/supabase.service';
 
 interface DialogData {
@@ -39,8 +39,12 @@ interface DialogData {
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Genre musical</mat-label>
-          <input matInput [ngModel]="genre()" (ngModelChange)="genre.set($event)" placeholder="Ex: Afro House, Techno" />
+          <mat-label>Genres musicaux</mat-label>
+          <mat-select multiple [ngModel]="selectedGenres()" (ngModelChange)="selectedGenres.set($event)">
+            @for (g of musicGenres; track g) {
+              <mat-option [value]="g">{{ g }}</mat-option>
+            }
+          </mat-select>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -221,9 +225,10 @@ export class ArtistDialogComponent {
   readonly data: DialogData = inject(MAT_DIALOG_DATA);
   private readonly supabase = inject(SupabaseService);
   readonly roles = ARTIST_ROLES;
+  readonly musicGenres = MUSIC_GENRES;
 
   name = signal(this.data.artist?.name ?? '');
-  genre = signal(this.data.artist?.genre ?? '');
+  selectedGenres = signal<string[]>(this.data.artist?.genres ?? []);
   role = signal<ArtistRole>(this.data.artist?.role ?? 'dj');
   email = signal(this.data.artist?.email ?? '');
   phone = signal(this.data.artist?.phone ?? '');
@@ -299,7 +304,7 @@ export class ArtistDialogComponent {
 
     const dto: CreateArtistDto = {
       name: this.name().trim(),
-      genre: this.genre().trim(),
+      genres: this.selectedGenres(),
       role: this.role(),
       email: this.email().trim(),
       phone: this.phone().trim(),

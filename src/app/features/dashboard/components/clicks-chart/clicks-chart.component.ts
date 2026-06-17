@@ -233,7 +233,7 @@ export class ClicksChartComponent {
           },
           y: {
             beginAtZero: true,
-            ticks: { stepSize: 1, font: { size: 10, family: 'Roboto' }, color: '#9CA3AF' },
+            ticks: { font: { size: 10, family: 'Roboto' }, color: '#9CA3AF', precision: 0 },
             grid: { color: '#F3F4F6' },
           },
         },
@@ -296,7 +296,7 @@ export class ClicksChartComponent {
           },
           y: {
             beginAtZero: true,
-            ticks: { stepSize: 1, font: { size: 10, family: 'Roboto' }, color: '#9CA3AF' },
+            ticks: { font: { size: 10, family: 'Roboto' }, color: '#9CA3AF', precision: 0 },
             grid: { color: '#F3F4F6' },
           },
         },

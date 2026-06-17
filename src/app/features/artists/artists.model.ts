@@ -1,10 +1,41 @@
 import { ArtistRole } from '../event-management/event-management.model';
 
 // ── Domain model ──
+// ── Predefined music genres ──
+export const MUSIC_GENRES = [
+  'Afro',
+  'Amapiano',
+  'Commercial',
+  'Dancehall',
+  'Deep House',
+  'Disco',
+  'Drill',
+  'Drum & Bass',
+  'Dubstep',
+  'Electro',
+  'Funk',
+  'Hip-Hop',
+  'House',
+  'Kompa',
+  'Latin',
+  'Minimal',
+  'Pop',
+  'R&B',
+  'Reggaeton',
+  'Shatta',
+  'Tech House',
+  'Techno',
+  'Trance',
+  'Trap',
+  'Zouk',
+] as const;
+
+export type MusicGenre = typeof MUSIC_GENRES[number];
+
 export interface Artist {
   id: string;
   name: string;
-  genre: string;
+  genres: string[];
   role: ArtistRole;
   email: string;
   phone: string;
@@ -44,7 +75,7 @@ export interface ArtistStats {
 // ── DTOs ──
 export interface CreateArtistDto {
   name: string;
-  genre?: string;
+  genres?: string[];
   role?: ArtistRole;
   email?: string;
   phone?: string;

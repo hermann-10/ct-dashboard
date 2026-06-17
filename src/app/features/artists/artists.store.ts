@@ -38,8 +38,8 @@ export const ArtistsStore = signalStore(
 
   withComputed((state) => ({
     genres: computed(() => {
-      const all = state.artists().map(a => a.genre).filter(Boolean);
-      return [...new Set(all)].sort();
+      const all = state.artists().flatMap(a => a.genres ?? []).filter(Boolean);
+      return [...new Set(all)].sort((a, b) => a.localeCompare(b, 'fr'));
     }),
 
     filteredArtists: computed(() => {
@@ -51,12 +51,12 @@ export const ArtistsStore = signalStore(
       if (term) {
         list = list.filter(a =>
           a.name.toLowerCase().includes(term) ||
-          a.genre.toLowerCase().includes(term) ||
+          (a.genres ?? []).some(g => g.toLowerCase().includes(term)) ||
           a.city.toLowerCase().includes(term)
         );
       }
       if (genre) {
-        list = list.filter(a => a.genre === genre);
+        list = list.filter(a => (a.genres ?? []).includes(genre));
       }
       if (role) {
         list = list.filter(a => a.role === role);

@@ -17,7 +17,7 @@ interface ArtistOption {
   id: string;
   name: string;
   role: string;
-  genre: string;
+  genres: string[];
   city: string;
 }
 
@@ -71,7 +71,7 @@ export interface LineupDialogData {
                   <div>
                     <div style="font-weight: 600;">{{ artist.name }}</div>
                     <div style="font-size: 0.75rem; color: #888;">
-                      {{ artist.genre }}
+                      {{ artist.genres.join(', ') }}
                       @if (artist.city) { · {{ artist.city }} }
                     </div>
                   </div>
@@ -217,7 +217,7 @@ export class LineupDialogComponent implements OnInit {
         id: a.id,
         name: a.name,
         role: a.role ?? '',
-        genre: a.genre ?? '',
+        genres: a.genres ?? [],
         city: a.city ?? '',
       })));
     } catch { /* ignore */ }
@@ -263,7 +263,7 @@ export class LineupDialogComponent implements OnInit {
         id: newArtist.id,
         name: newArtist.name,
         role: newArtist.role ?? '',
-        genre: newArtist.genre ?? '',
+        genres: newArtist.genres ?? [],
         city: newArtist.city ?? '',
       };
       this.allArtists.update(list => [...list, option]);

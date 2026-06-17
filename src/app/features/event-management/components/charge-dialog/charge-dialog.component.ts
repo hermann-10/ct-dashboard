@@ -15,7 +15,7 @@ import { ChargeCategory, CHARGE_CATEGORIES, EventCharge } from '../../event-mana
 interface ArtistOption {
   id: string;
   name: string;
-  genre: string;
+  genres: string[];
   city: string;
 }
 
@@ -76,9 +76,9 @@ export interface ChargeDialogData {
                     <mat-icon style="font-size: 18px; width: 18px; height: 18px; color: var(--hm-brand-primary, #6C5CE7);">person</mat-icon>
                     <div>
                       <div style="font-weight: 600;">{{ artist.name }}</div>
-                      @if (artist.genre || artist.city) {
+                      @if (artist.genres.length || artist.city) {
                         <div style="font-size: 0.75rem; color: #888;">
-                          {{ artist.genre }}
+                          {{ artist.genres.join(', ') }}
                           @if (artist.city) { · {{ artist.city }} }
                         </div>
                       }
@@ -214,7 +214,7 @@ export class ChargeDialogComponent implements OnInit {
       this.allArtists.set(artists.map((a: any) => ({
         id: a.id,
         name: a.name,
-        genre: a.genre ?? '',
+        genres: a.genres ?? [],
         city: a.city ?? '',
       })));
     } catch { /* ignore */ }
@@ -244,7 +244,7 @@ export class ChargeDialogComponent implements OnInit {
       const option: ArtistOption = {
         id: newArtist.id,
         name: newArtist.name,
-        genre: newArtist.genre ?? '',
+        genres: newArtist.genres ?? [],
         city: newArtist.city ?? '',
       };
       this.allArtists.update(list => [...list, option]);

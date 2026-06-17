@@ -102,11 +102,34 @@ export class SupabaseService {
       const slug = d.event_slug || 'unknown';
       byDayEvent[day][slug] = (byDayEvent[day][slug] || 0) + 1;
     });
-    return Object.entries(byDay).map(([date, count]) => ({
-      date,
-      count,
-      byEvent: byDayEvent[date] ?? {},
-    }));
+
+    // Fill missing dates so the chart draws a continuous line
+    const days = Object.keys(byDay).sort();
+    if (days.length === 0) return [];
+
+    const today = new Date().toISOString().substring(0, 10);
+    // Always show at least 7 days so a single data point still renders a curve
+    const minStart = new Date();
+    minStart.setDate(minStart.getDate() - 6);
+    const minStartIso = minStart.toISOString().substring(0, 10);
+
+    const autoStart = days[0] < minStartIso ? days[0] : minStartIso;
+    const rangeStart = startDate ? startDate.substring(0, 10) : autoStart;
+    const rangeEnd = endDate ? endDate.substring(0, 10) : today;
+
+    const result: { date: string; count: number; byEvent: Record<string, number> }[] = [];
+    const cursor = new Date(rangeStart);
+    const end = new Date(rangeEnd);
+    while (cursor <= end) {
+      const iso = cursor.toISOString().substring(0, 10);
+      result.push({
+        date: iso,
+        count: byDay[iso] ?? 0,
+        byEvent: byDayEvent[iso] ?? {},
+      });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return result;
   }
 
   // Events CRUD
