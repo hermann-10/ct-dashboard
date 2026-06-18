@@ -26,32 +26,20 @@
   margin-bottom: 0.5rem;
 }
 
-// ── Header — immersive hero ──
+// ── Header — clean gradient bar ──
 .gl-header {
   position: relative;
-  background-color: #1E1B4B;
-  background-size: cover;
-  background-position: center;
-  min-height: 200px;
+  background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
   display: flex;
   align-items: flex-end;
   overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(30, 27, 75, 0.1) 0%, rgba(30, 27, 75, 0.85) 100%);
-    z-index: 1;
-  }
 }
 
 .gl-header-overlay {
   position: relative;
-  z-index: 2;
   width: 100%;
   padding: 2.5rem 2rem 1.75rem;
-  max-width: 680px;
+  max-width: 1080px;
   margin: 0 auto;
 }
 
@@ -76,9 +64,9 @@
 
 // ── Body ──
 .gl-body {
-  max-width: 680px;
+  max-width: 1080px;
   margin: -1.5rem auto 0;
-  padding: 0 1.5rem 2rem;
+  padding: 0 2rem 2rem;
   position: relative;
   z-index: 3;
 }
@@ -182,13 +170,12 @@
 .gl-add-form {
   background: var(--hm-surface);
   border-radius: var(--hm-radius-lg);
-  padding: 1.5rem;
-  margin-bottom: 1.25rem;
+  padding: 2rem;
   border: 1px solid var(--hm-border);
   box-shadow: var(--hm-shadow-sm);
 
   h3 {
-    margin: 0 0 1rem;
+    margin: 0 0 1.25rem;
     font-size: var(--hm-text-base);
     font-weight: 600;
     color: var(--hm-text-primary);
@@ -207,8 +194,8 @@
 
 .gl-form-fields {
   display: grid;
-  grid-template-columns: 2fr 80px 1fr;
-  gap: 0.75rem;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 1rem;
   align-items: start;
 }
 
@@ -224,6 +211,32 @@
   font-weight: 600 !important;
   font-size: var(--hm-text-sm) !important;
   letter-spacing: 0 !important;
+}
+
+// ── Content row — form left, flyer right ──
+.gl-content-row {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1.5rem;
+  align-items: start;
+  margin-bottom: 1.25rem;
+}
+
+.gl-content-left {
+  min-width: 0;
+}
+
+.gl-flyer-col {
+  position: sticky;
+  top: 1.5rem;
+}
+
+.gl-flyer-img {
+  width: 60%;
+  border-radius: var(--hm-radius-lg);
+  box-shadow: var(--hm-shadow-lg);
+  object-fit: cover;
+  border: 1px solid rgba(108, 92, 231, 0.1);
 }
 
 // ── Full banner ──
@@ -374,9 +387,23 @@
 }
 
 // ── Responsive ──
+@media (max-width: 860px) {
+  .gl-content-row {
+    grid-template-columns: 1fr;
+  }
+  .gl-flyer-col {
+    position: static;
+    order: -1; // flyer above form on tablet/mobile
+  }
+  .gl-flyer-img {
+    max-height: 320px;
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
 @media (max-width: 520px) {
   .gl-body { padding: 0 1rem 2rem; margin-top: -1rem; }
-  .gl-header { min-height: 160px; }
   .gl-header-overlay { padding: 2rem 1.25rem 1.25rem; }
   .gl-event-name { font-size: var(--hm-text-xl); }
   .gl-form-fields {
@@ -393,5 +420,8 @@
       padding-left: 0;
       padding-right: 0;
     }
+  }
+  .gl-flyer-img {
+    max-height: 240px;
   }
 }

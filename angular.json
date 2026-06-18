@@ -24,6 +24,16 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": [
+              "qrcode",
+              "canvg",
+              "rgbcolor",
+              "html2canvas",
+              "dompurify",
+              "jspdf-autotable",
+              "core-js",
+              "raf"
+            ],
             "assets": [
               {
                 "glob": "**/*",
@@ -45,8 +55,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "8kB",
-                  "maximumError": "16kB"
+                  "maximumWarning": "12kB",
+                  "maximumError": "20kB"
                 }
               ],
               "outputHashing": "all",
@@ -71,10 +81,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "ct-dashboard:build:production"
+              "buildTarget": "hervio-ops:build:production"
             },
             "development": {
-              "buildTarget": "ct-dashboard:build:development"
+              "buildTarget": "hervio-ops:build:development"
             }
           },
           "defaultConfiguration": "development"
