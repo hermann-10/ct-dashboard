@@ -85,6 +85,29 @@ export class SupabaseService {
     return data ?? [];
   }
 
+  // ── Email: Send QR code to guest ──
+  async sendGuestQrEmail(payload: {
+    guest_name: string;
+    guest_email: string;
+    checkin_token: string;
+    event_name: string;
+    event_date: string;
+    event_venue: string;
+    event_city: string;
+    artist_name: string;
+    event_image_url?: string;
+  }): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data, error } = await this.supabase.functions.invoke('send-guestlist-qr', {
+        body: payload,
+      });
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message ?? 'Erreur d\'envoi' };
+    }
+  }
+
   // Dashboard queries
   async getClicks(filters?: { eventSlug?: string; startDate?: string; endDate?: string }) {
     let query = this.supabase.from('clicks').select('*').order('created_at', { ascending: false });

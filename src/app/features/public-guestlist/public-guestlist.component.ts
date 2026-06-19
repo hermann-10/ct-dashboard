@@ -158,6 +158,11 @@ export class PublicGuestlistComponent implements OnInit {
       if (entry.checkin_token) {
         await this.generateQrCodes([entry]);
       }
+
+      // Send QR code email (fire-and-forget, don't block the UI)
+      if (email && entry.checkin_token) {
+        this.sendQrEmail(entry, gl, email);
+      }
     } catch {
       this.showNotification('error', 'Erreur lors de l\'ajout. Réessayez.');
     } finally {
@@ -203,6 +208,29 @@ export class PublicGuestlistComponent implements OnInit {
       }
     }
     this.qrCodes.set(currentMap);
+  }
+
+  /** Send QR code via email (fire-and-forget) */
+  private async sendQrEmail(entry: GuestEntry, gl: GuestlistData, email: string): Promise<void> {
+    try {
+      const result = await this.supabase.sendGuestQrEmail({
+        guest_name: entry.guest_name,
+        guest_email: email,
+        checkin_token: entry.checkin_token!,
+        event_name: gl.event.name,
+        event_date: gl.event.date,
+        event_venue: gl.event.venue,
+        event_city: gl.event.city,
+        artist_name: gl.artist_name,
+        event_image_url: gl.event.image_url ?? undefined,
+      });
+      if (result.success) {
+        this.showNotification('success', `QR code envoyé à ${email}`);
+      }
+      // Silently ignore email errors — guest is already added
+    } catch {
+      // Don't show error — the guest was added successfully
+    }
   }
 
   private showNotification(type: 'success' | 'error', message: string): void {

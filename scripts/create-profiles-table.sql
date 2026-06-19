@@ -59,6 +59,12 @@ ON CONFLICT (id) DO NOTHING;
 -- 5. Enable RLS
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies first (idempotent re-run)
+DROP POLICY IF EXISTS "Admins can view all profiles" ON profiles;
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
+DROP POLICY IF EXISTS "Admins can update profiles" ON profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
+
 -- Admins can see all profiles
 CREATE POLICY "Admins can view all profiles"
   ON profiles FOR SELECT
