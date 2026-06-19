@@ -75,6 +75,20 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline">
+                <mat-label>Email</mat-label>
+                <mat-icon matPrefix>mail_outline</mat-icon>
+                <input
+                  matInput
+                  type="email"
+                  [ngModel]="newGuestEmail()"
+                  (ngModelChange)="newGuestEmail.set($event)"
+                  placeholder="Pour recevoir le QR code"
+                />
+              </mat-form-field>
+            </div>
+
+            <div class="gl-form-fields-row2">
+              <mat-form-field appearance="outline">
                 <mat-label>+ accompagnant(s)</mat-label>
                 <input
                   matInput
@@ -147,17 +161,22 @@
               />
             }
             <div class="gl-guest-info">
-              <span class="gl-guest-name">{{ entry.guest_name }}</span>
-              @if (entry.accompagnants > 0) {
-                <span class="gl-accomp">+{{ entry.accompagnants }}</span>
+              <div class="gl-guest-main">
+                <span class="gl-guest-name">{{ entry.guest_name }}</span>
+                @if (entry.accompagnants > 0) {
+                  <span class="gl-accomp">+{{ entry.accompagnants }}</span>
+                }
+                @if (entry.is_checked_in) {
+                  <span class="gl-checked-badge">
+                    <mat-icon>check</mat-icon> Arrivé
+                  </span>
+                }
+              </div>
+              @if (entry.email) {
+                <span class="gl-guest-email">{{ entry.email }}</span>
               }
               @if (entry.remarks) {
                 <span class="gl-remarks">{{ entry.remarks }}</span>
-              }
-              @if (entry.is_checked_in) {
-                <span class="gl-checked-badge">
-                  <mat-icon>check</mat-icon> Arrivé
-                </span>
               }
             </div>
             @if (!entry.is_checked_in) {

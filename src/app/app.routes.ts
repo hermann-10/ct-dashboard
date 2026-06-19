@@ -11,6 +11,14 @@ export const routes: Routes = [
     loadChildren: () => import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES),
   },
   {
+    path: 'register',
+    loadChildren: () => import('./features/auth/auth.routes').then(m => m.REGISTER_ROUTES),
+  },
+  {
+    path: 'forgot-password',
+    loadChildren: () => import('./features/auth/auth.routes').then(m => m.FORGOT_PASSWORD_ROUTES),
+  },
+  {
     path: 'admin',
     canActivate: [authGuard],
     loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES),

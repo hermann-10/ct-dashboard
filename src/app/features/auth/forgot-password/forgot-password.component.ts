@@ -10,7 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthStore } from '../auth.store';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-forgot-password',
   standalone: true,
   imports: [
     FormsModule,
@@ -22,22 +22,21 @@ import { AuthStore } from '../auth.store';
     MatIconModule,
     MatProgressSpinnerModule,
   ],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.scss',
+  templateUrl: './forgot-password.component.html',
+  styleUrl: './forgot-password.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoginComponent implements OnInit {
+export class ForgotPasswordComponent implements OnInit {
   readonly store = inject(AuthStore);
 
   email = signal('');
-  password = signal('');
-  hidePassword = signal(true);
 
   ngOnInit(): void {
     this.store.clearMessages();
   }
 
   onSubmit(): void {
-    this.store.login(this.email(), this.password());
+    if (!this.email().trim() || this.store.loading()) return;
+    this.store.resetPassword(this.email());
   }
 }

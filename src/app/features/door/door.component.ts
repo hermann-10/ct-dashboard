@@ -13,6 +13,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 interface GuestEntry {
   id: string;
   guest_name: string;
+  email: string | null;
   accompagnants: number;
   remarks: string | null;
   is_checked_in: boolean;

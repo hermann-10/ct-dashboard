@@ -47,6 +47,11 @@ export const ADMIN_ROUTES: Routes = [
           import('../newsletter/newsletter.routes').then(m => m.NEWSLETTER_ROUTES),
       },
       {
+        path: 'users',
+        loadChildren: () =>
+          import('../users/users.routes').then(m => m.USERS_ROUTES),
+      },
+      {
         path: 'settings',
         loadChildren: () =>
           import('../settings/settings.routes').then(m => m.SETTINGS_ROUTES),

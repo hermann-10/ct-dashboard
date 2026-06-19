@@ -1,0 +1,73 @@
+<div class="register-wrapper">
+  <mat-card class="register-card">
+    <mat-card-header>
+      <mat-card-title>
+        <img src="/hm_dev_logo.png" alt="HM-Events" class="register-logo" />
+        Créer un compte
+      </mat-card-title>
+      <mat-card-subtitle>Inscrivez-vous pour gérer vos événements</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      @if (store.error()) {
+        <div class="error-banner">
+          <mat-icon>error_outline</mat-icon>
+          {{ store.error() }}
+        </div>
+      }
+
+      @if (store.successMessage()) {
+        <div class="success-banner">
+          <mat-icon>check_circle_outline</mat-icon>
+          {{ store.successMessage() }}
+        </div>
+      } @else {
+        <form (ngSubmit)="onSubmit()">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nom complet</mat-label>
+            <input matInput [ngModel]="fullName()" (ngModelChange)="fullName.set($event)" name="fullName" required />
+            <mat-icon matPrefix>person</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" [ngModel]="email()" (ngModelChange)="email.set($event)" name="email" required />
+            <mat-icon matPrefix>email</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Mot de passe</mat-label>
+            <input matInput [type]="hidePassword() ? 'password' : 'text'" [ngModel]="password()" (ngModelChange)="password.set($event)" name="password" required />
+            <mat-icon matPrefix>lock</mat-icon>
+            <mat-hint>6 caractères minimum</mat-hint>
+            <button mat-icon-button matSuffix type="button" (click)="hidePassword.set(!hidePassword())">
+              <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Confirmer le mot de passe</mat-label>
+            <input matInput [type]="hidePassword() ? 'password' : 'text'" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" name="confirmPassword" required />
+            <mat-icon matPrefix>lock_outline</mat-icon>
+            @if (confirmPassword() && !passwordsMatch) {
+              <mat-error>Les mots de passe ne correspondent pas</mat-error>
+            }
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" type="submit" class="full-width register-btn" [disabled]="!canSubmit">
+            @if (store.loading()) {
+              <mat-spinner diameter="20" />
+            } @else {
+              Créer mon compte
+            }
+          </button>
+        </form>
+      }
+
+      <div class="auth-links">
+        <span>Déjà un compte ?</span>
+        <a routerLink="/login" class="auth-link">Se connecter</a>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

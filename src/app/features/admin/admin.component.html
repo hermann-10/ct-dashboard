@@ -6,7 +6,7 @@
     <img src="/hm_dev_logo.png" alt="HM-Events" class="toolbar-logo" />
     <span class="toolbar-title">HM Events App</span>
     <span class="spacer"></span>
-    <span class="user-email">{{ userEmail()?.email }}</span>
+    <span class="user-email">{{ displayName() || userEmail()?.email }}</span>
     <button mat-icon-button (click)="onLogout()" matTooltip="Déconnexion">
       <mat-icon>logout</mat-icon>
     </button>
@@ -38,6 +38,10 @@
         <a mat-list-item routerLink="/admin/newsletter" routerLinkActive="active-link">
           <mat-icon matListItemIcon>mail_outline</mat-icon>
           <span matListItemTitle>Newsletter</span>
+        </a>
+        <a mat-list-item routerLink="/admin/users" routerLinkActive="active-link">
+          <mat-icon matListItemIcon>people</mat-icon>
+          <span matListItemTitle>Utilisateurs</span>
         </a>
         <a mat-list-item routerLink="/admin/settings" routerLinkActive="active-link">
           <mat-icon matListItemIcon>settings</mat-icon>

@@ -10,7 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthStore } from '../auth.store';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-register',
   standalone: true,
   imports: [
     FormsModule,
@@ -22,22 +22,39 @@ import { AuthStore } from '../auth.store';
     MatIconModule,
     MatProgressSpinnerModule,
   ],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.scss',
+  templateUrl: './register.component.html',
+  styleUrl: './register.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoginComponent implements OnInit {
+export class RegisterComponent implements OnInit {
   readonly store = inject(AuthStore);
 
+  fullName = signal('');
   email = signal('');
   password = signal('');
+  confirmPassword = signal('');
   hidePassword = signal(true);
 
   ngOnInit(): void {
     this.store.clearMessages();
   }
 
+  get passwordsMatch(): boolean {
+    return this.password() === this.confirmPassword();
+  }
+
+  get canSubmit(): boolean {
+    return !!(
+      this.fullName().trim() &&
+      this.email().trim() &&
+      this.password().length >= 6 &&
+      this.passwordsMatch &&
+      !this.store.loading()
+    );
+  }
+
   onSubmit(): void {
-    this.store.login(this.email(), this.password());
+    if (!this.canSubmit) return;
+    this.store.register(this.email(), this.password(), this.fullName());
   }
 }

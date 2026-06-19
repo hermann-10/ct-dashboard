@@ -1,0 +1,127 @@
+<div class="users-page">
+  <div class="page-header">
+    <div class="header-info">
+      <h2>Utilisateurs</h2>
+      <p class="subtitle">{{ store.userCount() }} utilisateurs enregistrés</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        placeholder="Rechercher un utilisateur..."
+        [ngModel]="store.searchTerm()"
+        (ngModelChange)="onSearch($event)"
+      />
+      @if (store.searchTerm()) {
+        <button matSuffix mat-icon-button (click)="onSearch('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Rôle</mat-label>
+      <mat-select [ngModel]="store.filterRole()" (ngModelChange)="onFilterRole($event)">
+        <mat-option value="">Tous</mat-option>
+        @for (role of roleOptions; track role.value) {
+          <mat-option [value]="role.value">{{ role.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Plan</mat-label>
+      <mat-select [ngModel]="store.filterPlan()" (ngModelChange)="onFilterPlan($event)">
+        <mat-option value="">Tous</mat-option>
+        @for (plan of planOptions; track plan.value) {
+          <mat-option [value]="plan.value">{{ plan.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- Loading -->
+  @if (store.loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40" />
+      <p>Chargement des utilisateurs...</p>
+    </div>
+  } @else if (store.error()) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ store.error() }}</p>
+    </div>
+  } @else {
+    <!-- Users Grid -->
+    <div class="users-grid">
+      @for (user of store.filteredUsers(); track user.id) {
+        <div class="user-card">
+          <div class="card-top">
+            <div class="card-avatar" [style.background-image]="user.avatar_url ? 'url(' + user.avatar_url + ')' : ''">
+              @if (!user.avatar_url) {
+                <span class="initials">{{ getInitials(user.full_name) }}</span>
+              }
+            </div>
+            <div class="card-identity">
+              <h3 class="card-name">{{ user.full_name || 'Sans nom' }}</h3>
+              <p class="card-email">{{ user.email }}</p>
+            </div>
+          </div>
+
+          <div class="card-badges">
+            <span class="badge" [class]="getRoleBadgeClass(user.role)">
+              {{ roleLabels[user.role] || user.role }}
+            </span>
+            <span class="badge" [class]="getPlanBadgeClass(user.plan)">
+              {{ planLabels[user.plan] || user.plan }}
+            </span>
+          </div>
+
+          <div class="card-details">
+            @if (user.company) {
+              <div class="detail-row">
+                <mat-icon>business</mat-icon>
+                <span>{{ user.company }}</span>
+              </div>
+            }
+            <div class="detail-row">
+              <mat-icon>login</mat-icon>
+              <span>Dernière connexion : {{ formatDateTime(user.last_sign_in_at) }}</span>
+            </div>
+            <div class="detail-row">
+              <mat-icon>calendar_today</mat-icon>
+              <span>Inscrit le {{ formatDate(user.created_at) }}</span>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <div class="active-toggle">
+              <mat-slide-toggle
+                [checked]="user.is_active"
+                (change)="toggleActive(user)"
+                color="primary"
+                matTooltip="{{ user.is_active ? 'Désactiver' : 'Activer' }} ce compte"
+              />
+              <span class="toggle-label" [class.active]="user.is_active">
+                {{ user.is_active ? 'Actif' : 'Inactif' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state">
+          <mat-icon>person_search</mat-icon>
+          @if (store.searchTerm() || store.filterRole() || store.filterPlan()) {
+            <p>Aucun utilisateur ne correspond aux filtres.</p>
+          } @else {
+            <p>Aucun utilisateur enregistré.</p>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

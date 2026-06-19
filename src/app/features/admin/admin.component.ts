@@ -28,6 +28,7 @@ export class AdminComponent {
   private readonly auth = inject(AuthStore);
 
   userEmail = this.auth.user;
+  displayName = this.auth.displayName;
   sidenavOpened = signal(true);
 
   onToggleSidenav(): void {

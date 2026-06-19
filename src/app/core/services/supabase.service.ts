@@ -28,8 +28,61 @@ export class SupabaseService {
     return data.session;
   }
 
+  async signUp(email: string, password: string, fullName: string): Promise<{ user: User | null; error: Error | null }> {
+    const { data, error } = await this.supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName } },
+    });
+    return { user: data?.user ?? null, error: error as Error | null };
+  }
+
+  async resetPassword(email: string): Promise<{ error: Error | null }> {
+    const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
+    });
+    return { error: error as Error | null };
+  }
+
   onAuthStateChange(callback: (event: string, session: Session | null) => void) {
     return this.supabase.auth.onAuthStateChange(callback);
+  }
+
+  /** Get the current authenticated user's ID */
+  async getCurrentUserId(): Promise<string | null> {
+    const { data } = await this.supabase.auth.getUser();
+    return data.user?.id ?? null;
+  }
+
+  // ── Profiles ──
+  async getProfile(userId: string): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async updateProfile(userId: string, changes: any): Promise<any> {
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .update({ ...changes, updated_at: new Date().toISOString() })
+      .eq('id', userId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async getProfiles(): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
   }
 
   // Dashboard queries
@@ -454,12 +507,13 @@ export class SupabaseService {
     if (error) throw error;
   }
 
-  async createGuestlistEntry(dto: { guestlist_id: string; guest_name: string; accompagnants?: number; remarks?: string }): Promise<any> {
+  async createGuestlistEntry(dto: { guestlist_id: string; guest_name: string; email?: string; accompagnants?: number; remarks?: string }): Promise<any> {
     const { data, error } = await this.supabase
       .from('guestlist_entries')
       .insert({
         guestlist_id: dto.guestlist_id,
         guest_name: dto.guest_name,
+        email: dto.email ?? null,
         accompagnants: dto.accompagnants ?? 0,
         remarks: dto.remarks ?? null,
       })

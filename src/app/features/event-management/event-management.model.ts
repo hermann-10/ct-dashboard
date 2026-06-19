@@ -144,6 +144,7 @@ export interface GuestlistEntry {
   id: string;
   guestlist_id: string;
   guest_name: string;
+  email: string | null;
   accompagnants: number;
   remarks: string | null;
   is_checked_in: boolean;
@@ -162,6 +163,7 @@ export interface CreateGuestlistDto {
 export interface CreateGuestEntryDto {
   guestlist_id: string;
   guest_name: string;
+  email?: string;
   accompagnants?: number;
   remarks?: string;
 }

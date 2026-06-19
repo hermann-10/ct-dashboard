@@ -14,6 +14,7 @@ import QRCode from 'qrcode';
 interface GuestEntry {
   id: string;
   guest_name: string;
+  email: string | null;
   accompagnants: number;
   remarks: string | null;
   is_checked_in: boolean;
@@ -65,6 +66,7 @@ export class PublicGuestlistComponent implements OnInit {
 
   // Form fields
   newGuestName = signal('');
+  newGuestEmail = signal('');
   newAccompagnants = signal(0);
   newRemarks = signal('');
 
@@ -128,9 +130,11 @@ export class PublicGuestlistComponent implements OnInit {
 
     this.saving.set(true);
     try {
+      const email = this.newGuestEmail().trim() || undefined;
       const entry = await this.supabase.createGuestlistEntry({
         guestlist_id: gl.id,
         guest_name: name,
+        email,
         accompagnants: this.newAccompagnants(),
         remarks: this.newRemarks().trim() || undefined,
       });
@@ -145,6 +149,7 @@ export class PublicGuestlistComponent implements OnInit {
 
       // Reset form
       this.newGuestName.set('');
+      this.newGuestEmail.set('');
       this.newAccompagnants.set(0);
       this.newRemarks.set('');
 

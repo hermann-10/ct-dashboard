@@ -194,9 +194,17 @@
 
 .gl-form-fields {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 1rem;
   align-items: start;
+}
+
+.gl-form-fields-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+  margin-top: -0.25rem;
 }
 
 .gl-add-btn {
@@ -312,10 +320,24 @@
 .gl-guest-info {
   flex: 1;
   display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.gl-guest-main {
+  display: flex;
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
-  min-width: 0;
+}
+
+.gl-guest-email {
+  font-size: var(--hm-text-xs);
+  color: var(--hm-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .gl-guest-name {
@@ -406,7 +428,8 @@
   .gl-body { padding: 0 1rem 2rem; margin-top: -1rem; }
   .gl-header-overlay { padding: 2rem 1.25rem 1.25rem; }
   .gl-event-name { font-size: var(--hm-text-xl); }
-  .gl-form-fields {
+  .gl-form-fields,
+  .gl-form-fields-row2 {
     grid-template-columns: 1fr;
   }
   .gl-artist-header {
