@@ -480,12 +480,14 @@ export class SupabaseService {
     return data;
   }
 
-  async toggleDoorCheckin(entryId: string, isCheckedIn: boolean): Promise<void> {
+  async toggleDoorCheckin(entryId: string, isCheckedIn: boolean): Promise<{ checked_in_at: string | null }> {
+    const checkedInAt = isCheckedIn ? new Date().toISOString() : null;
     const { error } = await this.supabase
       .from('guestlist_entries')
-      .update({ is_checked_in: isCheckedIn })
+      .update({ is_checked_in: isCheckedIn, checked_in_at: checkedInAt })
       .eq('id', entryId);
     if (error) throw error;
+    return { checked_in_at: checkedInAt };
   }
 
   async deleteGuestlistEntry(id: string): Promise<void> {

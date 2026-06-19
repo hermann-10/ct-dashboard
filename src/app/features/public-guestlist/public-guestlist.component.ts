@@ -99,6 +99,9 @@ export class PublicGuestlistComponent implements OnInit {
   private async loadGuestlist(token: string): Promise<void> {
     try {
       const data = await this.supabase.getGuestlistByToken(token);
+      data.entries.sort((a: GuestEntry, b: GuestEntry) =>
+        a.guest_name.localeCompare(b.guest_name, 'fr')
+      );
       this.guestlist.set(data);
       await this.generateQrCodes(data.entries);
     } catch {

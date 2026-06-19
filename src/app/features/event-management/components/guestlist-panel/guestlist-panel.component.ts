@@ -168,6 +168,9 @@ interface FlatGuest {
                   <span class="td-status">
                     @if (g.entry.is_checked_in) {
                       <mat-icon class="icon-checked">check_circle</mat-icon>
+                      @if (g.entry.checked_in_at) {
+                        <span class="checkin-time">{{ formatCheckinTime(g.entry.checked_in_at) }}</span>
+                      }
                     } @else {
                       <mat-icon class="icon-pending">radio_button_unchecked</mat-icon>
                     }
@@ -378,6 +381,17 @@ interface FlatGuest {
 
     .td-status {
       text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+    }
+
+    .checkin-time {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #22c55e;
+      white-space: nowrap;
     }
 
     .accomp-badge {
@@ -582,6 +596,13 @@ export class GuestlistPanelComponent {
   private showNotification(msg: string): void {
     this.notification.set(msg);
     setTimeout(() => this.notification.set(''), 2500);
+  }
+
+  formatCheckinTime(isoDate: string): string {
+    return new Date(isoDate).toLocaleTimeString('fr-CH', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   onExportPdf(): void {

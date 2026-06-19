@@ -147,6 +147,7 @@ export interface GuestlistEntry {
   accompagnants: number;
   remarks: string | null;
   is_checked_in: boolean;
+  checked_in_at: string | null;
   checkin_token: string;
   created_at: string;
 }

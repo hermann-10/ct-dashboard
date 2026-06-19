@@ -113,7 +113,15 @@
                   <span class="row-accomp">+{{ g.entry.accompagnants }}</span>
                 }
               </div>
-              <span class="row-artist">{{ g.artistName }}</span>
+              <div class="row-meta">
+                <span class="row-artist">{{ g.artistName }}</span>
+                @if (g.entry.is_checked_in && g.entry.checked_in_at) {
+                  <span class="row-checkin-time">
+                    <mat-icon>schedule</mat-icon>
+                    {{ formatCheckinTime(g.entry.checked_in_at) }}
+                  </span>
+                }
+              </div>
             </div>
           </div>
         }

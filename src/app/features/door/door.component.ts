@@ -16,6 +16,7 @@ interface GuestEntry {
   accompagnants: number;
   remarks: string | null;
   is_checked_in: boolean;
+  checked_in_at: string | null;
 }
 
 interface Guestlist {
@@ -147,11 +148,18 @@ export class DoorComponent implements OnInit {
     }
   }
 
+  formatCheckinTime(isoDate: string): string {
+    return new Date(isoDate).toLocaleTimeString('fr-CH', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
   async toggleCheckedIn(guest: FlatGuest): Promise<void> {
     this.togglingId.set(guest.entry.id);
     try {
       const newValue = !guest.entry.is_checked_in;
-      await this.supabase.toggleDoorCheckin(guest.entry.id, newValue);
+      const { checked_in_at } = await this.supabase.toggleDoorCheckin(guest.entry.id, newValue);
       // Update local state
       this.guestlists.update(lists =>
         lists.map(gl =>
@@ -159,7 +167,7 @@ export class DoorComponent implements OnInit {
             ? {
                 ...gl,
                 entries: gl.entries.map(e =>
-                  e.id === guest.entry.id ? { ...e, is_checked_in: newValue } : e
+                  e.id === guest.entry.id ? { ...e, is_checked_in: newValue, checked_in_at } : e
                 ),
               }
             : gl
