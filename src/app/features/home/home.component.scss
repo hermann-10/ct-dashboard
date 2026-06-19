@@ -46,19 +46,13 @@
   width: 90px;
   height: 90px;
   min-width: 90px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  flex-shrink: 0;
 
   .logo-img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
   }
 }
 
@@ -320,7 +314,7 @@ h1 {
 
 @media (max-width: 480px) {
   h1 { font-size: 1.4rem; }
-  .logo-circle { width: 70px; height: 70px; font-size: 1.4rem; }
+  .logo-circle { width: 70px; height: 70px; min-width: 70px; }
 }
 
 .loading-state {
