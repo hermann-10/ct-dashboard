@@ -107,12 +107,14 @@
               }
             </div>
             <div class="row-info">
-              <span class="row-name">{{ g.entry.guest_name }}</span>
-              @if (g.entry.accompagnants > 0) {
-                <span class="row-accomp">+{{ g.entry.accompagnants }}</span>
-              }
+              <div class="row-name-line">
+                <span class="row-name">{{ g.entry.guest_name }}</span>
+                @if (g.entry.accompagnants > 0) {
+                  <span class="row-accomp">+{{ g.entry.accompagnants }}</span>
+                }
+              </div>
+              <span class="row-artist">{{ g.artistName }}</span>
             </div>
-            <span class="row-artist">{{ g.artistName }}</span>
           </div>
         }
       </div>
