@@ -36,6 +36,10 @@ const initialState: AuthState = {
   initialized: false,
 };
 
+// Promise that resolves once init() completes (used by authGuard)
+let _initResolve: () => void;
+const _initPromise = new Promise<void>((r) => (_initResolve = r));
+
 export const AuthStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
@@ -47,11 +51,17 @@ export const AuthStore = signalStore(
   })),
 
   withMethods((store, supabase = inject(SupabaseService), router = inject(Router)) => ({
+    /** Returns a promise that resolves when init() has finished. */
+    whenInitialized(): Promise<void> {
+      return store.initialized() ? Promise.resolve() : _initPromise;
+    },
+
     async init() {
       const session = await supabase.getSession();
       if (session?.user) {
         const user: AuthUser = { id: session.user.id, email: session.user.email ?? '' };
         patchState(store, { user, initialized: true });
+        _initResolve();
         // Load profile
         try {
           const profile = await supabase.getProfile(session.user.id);
@@ -61,6 +71,7 @@ export const AuthStore = signalStore(
         }
       } else {
         patchState(store, { initialized: true });
+        _initResolve();
       }
 
       supabase.onAuthStateChange(async (_event, session) => {
