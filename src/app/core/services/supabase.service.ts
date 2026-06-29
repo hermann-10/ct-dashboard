@@ -7,7 +7,18 @@ export class SupabaseService {
   private readonly supabase: SupabaseClient;
 
   constructor() {
-    this.supabase = createClient(environment.supabaseUrl, environment.supabaseAnonKey);
+    this.supabase = createClient(environment.supabaseUrl, environment.supabaseAnonKey, {
+      auth: {
+        // Bypass the Web Locks API to prevent deadlocks in Supabase JS v2.
+        // The navigator.locks-based lock can stall indefinitely when the
+        // stored session is expired and needs refreshing during initialisation.
+        lock: async <R>(
+          _name: string,
+          _acquireTimeout: number,
+          fn: () => Promise<R>,
+        ): Promise<R> => await fn(),
+      },
+    });
   }
 
   get client(): SupabaseClient {
