@@ -57,27 +57,37 @@ export const AuthStore = signalStore(
     },
 
     async init() {
-      const session = await supabase.getSession();
-      if (session?.user) {
-        const user: AuthUser = { id: session.user.id, email: session.user.email ?? '' };
-        patchState(store, { user, initialized: true });
+      try {
+        const session = await supabase.getSession();
+        if (session?.user) {
+          const user: AuthUser = { id: session.user.id, email: session.user.email ?? '' };
+          patchState(store, { user, initialized: true });
+        } else {
+          patchState(store, { initialized: true });
+        }
+      } catch {
+        // getSession failed (network, bad config…) — mark as initialized anyway
+        patchState(store, { initialized: true });
+      } finally {
+        // Always resolve so the auth guard never hangs
         _initResolve();
-        // Load profile
+      }
+
+      // Load profile in background (non-blocking)
+      const user = store.user();
+      if (user) {
         try {
-          const profile = await supabase.getProfile(session.user.id);
+          const profile = await supabase.getProfile(user.id);
           patchState(store, { profile: profile as AuthProfile });
         } catch {
           // Profile may not exist yet
         }
-      } else {
-        patchState(store, { initialized: true });
-        _initResolve();
       }
 
       supabase.onAuthStateChange(async (_event, session) => {
         if (session?.user) {
-          const user: AuthUser = { id: session.user.id, email: session.user.email ?? '' };
-          patchState(store, { user });
+          const authUser: AuthUser = { id: session.user.id, email: session.user.email ?? '' };
+          patchState(store, { user: authUser });
           try {
             const profile = await supabase.getProfile(session.user.id);
             patchState(store, { profile: profile as AuthProfile });
