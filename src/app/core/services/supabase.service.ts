@@ -1,22 +1,37 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject, ApplicationRef } from '@angular/core';
 import { createClient, SupabaseClient, Session, User } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class SupabaseService {
+  private readonly appRef = inject(ApplicationRef);
   private readonly supabase: SupabaseClient;
 
   constructor() {
+    // ─────────────────────────────────────────────────────────
+    // Zoneless Angular fix: Supabase uses native fetch() which
+    // resolves outside Angular's change detection awareness.
+    // We wrap fetch so that every Supabase response (auth,
+    // reads, writes, storage, functions) triggers a CD cycle.
+    // ─────────────────────────────────────────────────────────
+    const appRef = this.appRef;
+    const nativeFetch = globalThis.fetch.bind(globalThis);
+
     this.supabase = createClient(environment.supabaseUrl, environment.supabaseAnonKey, {
       auth: {
         // Bypass the Web Locks API to prevent deadlocks in Supabase JS v2.
-        // The navigator.locks-based lock can stall indefinitely when the
-        // stored session is expired and needs refreshing during initialisation.
         lock: async <R>(
           _name: string,
           _acquireTimeout: number,
           fn: () => Promise<R>,
         ): Promise<R> => await fn(),
+      },
+      global: {
+        fetch: async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+          const res = await nativeFetch(input, init);
+          appRef.tick();
+          return res;
+        },
       },
     });
   }
@@ -54,6 +69,8 @@ export class SupabaseService {
       headers,
       body: body ? JSON.stringify(body) : undefined,
     });
+
+    this.appRef.tick(); // trigger CD after direct fetch
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: res.statusText }));
@@ -332,6 +349,8 @@ export class SupabaseService {
       body: file,
     });
 
+    this.appRef.tick(); // trigger CD after direct fetch
+
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: res.statusText }));
       throw new Error(err.error || err.message || `Storage upload failed: ${res.status}`);
@@ -356,6 +375,8 @@ export class SupabaseService {
       },
       body: JSON.stringify({ prefixes: paths }),
     });
+
+    this.appRef.tick(); // trigger CD after direct fetch
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: res.statusText }));
@@ -532,6 +553,7 @@ export class SupabaseService {
   async extractOgImage(ticketUrl: string): Promise<string | null> {
     try {
       const res = await fetch(`/api/og-image?url=${encodeURIComponent(ticketUrl)}`);
+      this.appRef.tick(); // trigger CD after direct fetch
       if (!res.ok) return null;
       const data = await res.json();
       return data.image_url ?? null;
