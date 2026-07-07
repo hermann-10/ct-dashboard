@@ -113,19 +113,30 @@ export const AuthStore = signalStore(
 
     async login(email: string, password: string) {
       patchState(store, { loading: true, error: null, successMessage: null });
-      const { user, error } = await supabase.signIn(email, password);
-      if (error) {
-        patchState(store, { loading: false, error: error.message });
-      } else if (user) {
+      try {
+        const { user, error } = await supabase.signIn(email, password);
+        if (error) {
+          patchState(store, { loading: false, error: error.message });
+          return;
+        }
+        if (!user) {
+          patchState(store, { loading: false, error: 'Aucun utilisateur retourné.' });
+          return;
+        }
         const authUser: AuthUser = { id: user.id, email: user.email ?? '' };
         patchState(store, { user: authUser, loading: false });
         try {
           const profile = await supabase.getProfile(user.id);
           patchState(store, { profile: profile as AuthProfile });
         } catch {
-          // Ignore
+          // Profile load failed — continue with navigation anyway
         }
         router.navigate(['/admin/dashboard']);
+      } catch (e: any) {
+        patchState(store, {
+          loading: false,
+          error: e?.message ?? 'Erreur de connexion inattendue.',
+        });
       }
     },
 
