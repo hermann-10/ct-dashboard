@@ -311,16 +311,63 @@ export class SupabaseService {
     return this.updateEvent(id, { is_published: isPublished });
   }
 
+  // ─────────────────────────────────────────────────────────
+  // Direct Storage upload — bypasses the Supabase JS Storage
+  // client which can hang on uploads in zoneless Angular.
+  // ─────────────────────────────────────────────────────────
+  private async _storageUpload(bucket: string, path: string, file: File): Promise<string> {
+    const { data: sessionData } = await this.supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token ?? '';
+
+    const url = `${environment.supabaseUrl}/storage/v1/object/${bucket}/${path}`;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'apikey': environment.supabaseAnonKey,
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': file.type || 'application/octet-stream',
+        'x-upsert': 'true',
+      },
+      body: file,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(err.error || err.message || `Storage upload failed: ${res.status}`);
+    }
+
+    // Build the public URL directly
+    return `${environment.supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
+  }
+
+  private async _storageDelete(bucket: string, paths: string[]): Promise<void> {
+    const { data: sessionData } = await this.supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token ?? '';
+
+    const url = `${environment.supabaseUrl}/storage/v1/object/${bucket}`;
+
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'apikey': environment.supabaseAnonKey,
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prefixes: paths }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(err.error || err.message || `Storage delete failed: ${res.status}`);
+    }
+  }
+
   // Storage - upload flyer
   async uploadFlyer(file: File, slug: string): Promise<string> {
     const ext = file.name.split('.').pop() ?? 'jpg';
     const path = `${slug}-${Date.now()}.${ext}`;
-    const { error } = await this.supabase.storage
-      .from('event-flyers')
-      .upload(path, file, { upsert: true, contentType: file.type });
-    if (error) throw error;
-    const { data } = this.supabase.storage.from('event-flyers').getPublicUrl(path);
-    return data.publicUrl;
+    return this._storageUpload('event-flyers', path, file);
   }
 
   // Storage - upload artist photo
@@ -328,12 +375,7 @@ export class SupabaseService {
     const slug = artistName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const ext = file.name.split('.').pop() ?? 'jpg';
     const path = `${slug}-${Date.now()}.${ext}`;
-    const { error } = await this.supabase.storage
-      .from('artist-photos')
-      .upload(path, file, { upsert: true, contentType: file.type });
-    if (error) throw error;
-    const { data } = this.supabase.storage.from('artist-photos').getPublicUrl(path);
-    return data.publicUrl;
+    return this._storageUpload('artist-photos', path, file);
   }
 
   // ── Event Charges CRUD ──
@@ -482,7 +524,7 @@ export class SupabaseService {
   async deleteFlyer(url: string): Promise<void> {
     const path = url.split('/event-flyers/')[1];
     if (path) {
-      await this.supabase.storage.from('event-flyers').remove([path]);
+      await this._storageDelete('event-flyers', [path]);
     }
   }
 
