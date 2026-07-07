@@ -94,7 +94,8 @@ export const BarStore = signalStore(
         patchState(store, { filterCategory: cat });
       },
 
-      async loadProducts(): Promise<void> {
+      async loadProducts(force = false): Promise<void> {
+        if (!force && store.products().length > 0) return;
         patchState(store, { loading: true, error: null });
         try {
           const data = await supabase.getProducts();

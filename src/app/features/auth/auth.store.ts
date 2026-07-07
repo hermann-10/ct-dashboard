@@ -1,5 +1,5 @@
 import { signalStore, withState, withComputed, withMethods, patchState } from '@ngrx/signals';
-import { inject, computed, ApplicationRef } from '@angular/core';
+import { inject, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
 
@@ -50,7 +50,7 @@ export const AuthStore = signalStore(
     displayName: computed(() => state.profile()?.full_name || state.user()?.email || ''),
   })),
 
-  withMethods((store, supabase = inject(SupabaseService), router = inject(Router), appRef = inject(ApplicationRef)) => ({
+  withMethods((store, supabase = inject(SupabaseService), router = inject(Router)) => ({
     /** Returns a promise that resolves when init() has finished. */
     whenInitialized(): Promise<void> {
       return store.initialized() ? Promise.resolve() : _initPromise;
@@ -66,12 +66,9 @@ export const AuthStore = signalStore(
           patchState(store, { initialized: true });
         }
       } catch {
-        // getSession failed (network, bad config…) — mark as initialized anyway
         patchState(store, { initialized: true });
       } finally {
-        // Always resolve so the auth guard never hangs
         _initResolve();
-        appRef.tick();
       }
 
       // Load profile in background (non-blocking)
@@ -80,7 +77,6 @@ export const AuthStore = signalStore(
         try {
           const profile = await supabase.getProfile(user.id);
           patchState(store, { profile: profile as AuthProfile });
-          appRef.tick();
         } catch {
           // Profile may not exist yet
         }
@@ -99,7 +95,6 @@ export const AuthStore = signalStore(
         } else {
           patchState(store, { user: null, profile: null });
         }
-        appRef.tick();
       });
     },
 
@@ -123,7 +118,6 @@ export const AuthStore = signalStore(
         }
         router.navigate(['/admin/dashboard']);
       }
-      appRef.tick();
     },
 
     async register(email: string, password: string, fullName: string) {
@@ -137,7 +131,6 @@ export const AuthStore = signalStore(
           successMessage: 'Inscription réussie ! Vérifiez votre email pour confirmer votre compte.',
         });
       }
-      appRef.tick();
     },
 
     async resetPassword(email: string) {
@@ -151,13 +144,11 @@ export const AuthStore = signalStore(
           successMessage: 'Un email de réinitialisation a été envoyé. Vérifiez votre boîte de réception.',
         });
       }
-      appRef.tick();
     },
 
     async logout() {
       await supabase.signOut();
       patchState(store, { user: null, profile: null });
-      appRef.tick();
       router.navigate(['/login']);
     },
   }))

@@ -6,30 +6,57 @@ import { EventConfig, ClickRecord, DeviceBreakdown, UtmBreakdown, TimelinePoint,
 export class DashboardService {
   private readonly supabase = inject(SupabaseService);
 
-  /** Load all events from Supabase (with click counts) */
+  /**
+   * Load all events with click stats.
+   * Fetches all clicks once and computes per-event stats client-side
+   * instead of making 2N API calls (was N+1 pattern).
+   */
   async getEvents(): Promise<EventConfig[]> {
-    const events = await this.supabase.getEvents();
-    return Promise.all(
-      events.map(async (evt: any) => {
-        const totalClicks = await this.supabase.getClicksCount(evt.slug);
-        const uniqueVisitors = await this.supabase.getUniqueVisitors(evt.slug);
-        return {
-          slug: evt.slug,
-          name: evt.name,
-          destination: evt.ticket_url ?? '',
-          date: evt.date,
-          trackingUrl: `https://hm-events.ch/api/go?slug=${evt.slug}`,
-          totalClicks,
-          uniqueVisitors,
-        };
-      })
-    );
+    // 2 queries total (instead of 2N+1)
+    const [events, allClicks] = await Promise.all([
+      this.supabase.getEvents(),
+      this.supabase.getClicks(),
+    ]);
+
+    // Build per-slug click counts in one pass
+    const clicksBySlug = new Map<string, { total: number; ips: Set<string> }>();
+    for (const click of allClicks) {
+      const slug = click.event_slug ?? '';
+      let entry = clicksBySlug.get(slug);
+      if (!entry) {
+        entry = { total: 0, ips: new Set() };
+        clicksBySlug.set(slug, entry);
+      }
+      entry.total++;
+      if (click.ip_hash) entry.ips.add(click.ip_hash);
+    }
+
+    return events.map((evt: any) => {
+      const stats = clicksBySlug.get(evt.slug);
+      return {
+        slug: evt.slug,
+        name: evt.name,
+        destination: evt.ticket_url ?? '',
+        date: evt.date,
+        trackingUrl: `https://hm-events.ch/api/go?slug=${evt.slug}`,
+        totalClicks: stats?.total ?? 0,
+        uniqueVisitors: stats?.ips.size ?? 0,
+      };
+    });
   }
 
-  async getStats(eventSlug?: string, startDate?: string, endDate?: string): Promise<DashboardStats> {
+  /**
+   * Get aggregated stats. Takes the already-loaded events to avoid
+   * a redundant fetch (was calling getEvents() again just for .length).
+   */
+  async getStatsFromEvents(
+    events: EventConfig[],
+    eventSlug?: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<DashboardStats> {
     const totalClicks = await this.supabase.getClicksCount(eventSlug, startDate, endDate);
     const uniqueVisitors = await this.supabase.getUniqueVisitors(eventSlug, startDate, endDate);
-    const events = await this.supabase.getEvents();
     const totalEvents = events.length;
     const conversionRate = totalClicks > 0 ? (uniqueVisitors / totalClicks) * 100 : 0;
     return { totalClicks, uniqueVisitors, totalEvents, conversionRate };

@@ -98,7 +98,8 @@ export const ArtistsStore = signalStore(
         patchState(store, { filterRole: role });
       },
 
-      async loadArtists(): Promise<void> {
+      async loadArtists(force = false): Promise<void> {
+        if (!force && store.artists().length > 0) return;
         patchState(store, { loading: true, error: null });
         try {
           const data = await supabase.getArtists();

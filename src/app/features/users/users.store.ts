@@ -72,7 +72,8 @@ export const UsersStore = signalStore(
         patchState(store, { filterPlan: plan });
       },
 
-      async loadUsers(): Promise<void> {
+      async loadUsers(force = false): Promise<void> {
+        if (!force && store.users().length > 0) return;
         patchState(store, { loading: true, error: null });
         try {
           const data = await supabase.getProfiles();

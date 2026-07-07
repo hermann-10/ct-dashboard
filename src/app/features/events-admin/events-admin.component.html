@@ -69,7 +69,7 @@
             <!-- Card image -->
             <div class="card-cover" [class.has-image]="!!event.image_url">
               @if (event.image_url) {
-                <img [src]="event.image_url" [alt]="event.name" class="cover-img" />
+                <img [src]="event.image_url" [alt]="event.name" class="cover-img" loading="lazy" />
               } @else {
                 <span class="cover-emoji">{{ event.image_emoji || '🎵' }}</span>
               }
@@ -142,7 +142,7 @@
             <!-- Thumbnail -->
             <div class="list-thumb">
               @if (event.image_url) {
-                <img [src]="event.image_url" [alt]="event.name" />
+                <img [src]="event.image_url" [alt]="event.name" loading="lazy" />
               } @else {
                 <span class="thumb-emoji">{{ event.image_emoji || '🎵' }}</span>
               }

@@ -15,7 +15,7 @@
     <div class="door-header-bg"></div>
     <div class="door-header-content">
       @if (ev.image_url) {
-        <img [src]="ev.image_url" [alt]="ev.name" class="door-flyer" />
+        <img [src]="ev.image_url" [alt]="ev.name" class="door-flyer" loading="lazy" />
       }
       <div class="door-header-info">
         <p class="door-event-name">{{ ev.name }}</p>

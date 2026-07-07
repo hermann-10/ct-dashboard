@@ -50,7 +50,14 @@ export const DashboardStore = signalStore(
     }),
   })),
   withMethods((store, service = inject(DashboardService)) => ({
-    async loadAll(params?: { eventSlug?: string; startDate?: string; endDate?: string }) {
+    async loadAll(params?: { eventSlug?: string; startDate?: string; endDate?: string; force?: boolean }) {
+      // Skip re-fetch if data exists and no filter change (cache)
+      const filtersChanged =
+        params?.eventSlug !== undefined ||
+        params?.startDate !== undefined ||
+        params?.endDate !== undefined;
+      if (!params?.force && !filtersChanged && store.stats() !== null) return;
+
       patchState(store, { loading: true, error: null });
       if (params?.eventSlug !== undefined) {
         patchState(store, { selectedEventSlug: params.eventSlug || null });
@@ -65,9 +72,12 @@ export const DashboardStore = signalStore(
       const startDate = params?.startDate ?? store.startDate() ?? undefined;
       const endDate = params?.endDate ?? store.endDate() ?? undefined;
       try {
-        const [events, stats, recentClicks, deviceBreakdown, utmBreakdown, timeline] = await Promise.all([
-          service.getEvents(),
-          service.getStats(slug, startDate, endDate),
+        // Fetch events first (optimized — no N+1)
+        const events = await service.getEvents();
+
+        // Then fetch stats + analytics in parallel, passing events to avoid redundant fetch
+        const [stats, recentClicks, deviceBreakdown, utmBreakdown, timeline] = await Promise.all([
+          service.getStatsFromEvents(events, slug, startDate, endDate),
           service.getClicks(slug, startDate, endDate),
           service.getDeviceBreakdown(slug, startDate, endDate),
           service.getUtmBreakdown(slug, startDate, endDate),

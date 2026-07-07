@@ -115,7 +115,8 @@ export const NewsletterStore = signalStore(
         patchState(store, { filterStatus: status });
       },
 
-      async loadAll(): Promise<void> {
+      async loadAll(force = false): Promise<void> {
+        if (!force && store.contacts().length > 0) return;
         patchState(store, { loading: true, error: null });
         try {
           const [contacts, newsletters] = await Promise.all([

@@ -43,7 +43,7 @@
         <div class="event-card">
           <div class="event-card-top">
             @if (event.image_url) {
-              <img [src]="event.image_url" [alt]="event.name" class="event-flyer" />
+              <img [src]="event.image_url" [alt]="event.name" class="event-flyer" loading="lazy" />
             }
             <div class="event-info">
               <div class="event-date-badge">
