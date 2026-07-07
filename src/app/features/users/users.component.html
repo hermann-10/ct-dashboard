@@ -63,21 +63,68 @@
           <div class="card-top">
             <div class="card-avatar" [style.background-image]="user.avatar_url ? 'url(' + user.avatar_url + ')' : ''">
               @if (!user.avatar_url) {
-                <span class="initials">{{ getInitials(user.full_name) }}</span>
+                <span class="initials">{{ getInitials(user) }}</span>
               }
             </div>
             <div class="card-identity">
-              <h3 class="card-name">{{ user.full_name || 'Sans nom' }}</h3>
+              @if (editingUserId() === user.id) {
+                <div class="inline-edit">
+                  <input
+                    class="edit-name-input"
+                    [value]="editingName()"
+                    (input)="editingName.set($any($event.target).value)"
+                    (keydown.enter)="saveEditName(user.id)"
+                    (keydown.escape)="cancelEditName()"
+                    placeholder="Nom complet"
+                    autofocus
+                  />
+                  <button mat-icon-button (click)="saveEditName(user.id)" matTooltip="Enregistrer" class="edit-action-btn">
+                    <mat-icon>check</mat-icon>
+                  </button>
+                  <button mat-icon-button (click)="cancelEditName()" matTooltip="Annuler" class="edit-action-btn">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              } @else {
+                <h3 class="card-name">{{ getUserDisplayName(user) }}</h3>
+              }
               <p class="card-email">{{ user.email }}</p>
             </div>
+
+            <!-- Actions menu -->
+            <button mat-icon-button [matMenuTriggerFor]="userMenu" class="card-menu-btn" matTooltip="Actions" aria-label="Actions utilisateur">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #userMenu="matMenu">
+              <button mat-menu-item (click)="startEditName(user)">
+                <mat-icon>edit</mat-icon>
+                <span>Modifier le nom</span>
+              </button>
+              <button mat-menu-item [matMenuTriggerFor]="roleMenu">
+                <mat-icon>admin_panel_settings</mat-icon>
+                <span>Changer le rôle</span>
+              </button>
+            </mat-menu>
+            <mat-menu #roleMenu="matMenu">
+              @for (role of roleOptions; track role.value) {
+                <button mat-menu-item (click)="onChangeRole(user, $any(role.value))">
+                  @if (getUserRole(user) === role.value) {
+                    <mat-icon>check</mat-icon>
+                  } @else {
+                    <mat-icon></mat-icon>
+                  }
+                  <span>{{ role.label }}</span>
+                </button>
+              }
+            </mat-menu>
           </div>
 
           <div class="card-badges">
-            <span class="badge" [class]="getRoleBadgeClass(user.role)">
-              {{ roleLabels[user.role] || user.role }}
+            <span class="badge" [class]="getRoleBadgeClass(user)">
+              {{ roleLabels[getUserRole(user)] || getUserRole(user) }}
             </span>
-            <span class="badge" [class]="getPlanBadgeClass(user.plan)">
-              {{ planLabels[user.plan] || user.plan }}
+            <span class="badge" [class]="getPlanBadgeClass(user.plan || 'free')">
+              {{ planLabels[user.plan || 'free'] || user.plan || 'free' }}
             </span>
           </div>
 
@@ -101,13 +148,13 @@
           <div class="card-footer">
             <div class="active-toggle">
               <mat-slide-toggle
-                [checked]="user.is_active"
+                [checked]="user.is_active !== false"
                 (change)="toggleActive(user)"
                 color="primary"
-                matTooltip="{{ user.is_active ? 'Désactiver' : 'Activer' }} ce compte"
+                matTooltip="{{ user.is_active !== false ? 'Désactiver' : 'Activer' }} ce compte"
               />
-              <span class="toggle-label" [class.active]="user.is_active">
-                {{ user.is_active ? 'Actif' : 'Inactif' }}
+              <span class="toggle-label" [class.active]="user.is_active !== false">
+                {{ user.is_active !== false ? 'Actif' : 'Inactif' }}
               </span>
             </div>
           </div>

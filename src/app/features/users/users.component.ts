@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,8 +10,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { UsersStore } from './users.store';
-import { UserProfile, ROLE_LABELS, PLAN_LABELS } from './users.model';
+import { UserProfile, ROLE_LABELS, PLAN_LABELS, resolveDisplayName, resolveRole } from './users.model';
 
 @Component({
   selector: 'app-users',
@@ -28,6 +29,7 @@ import { UserProfile, ROLE_LABELS, PLAN_LABELS } from './users.model';
     MatTooltipModule,
     MatMenuModule,
     MatSlideToggleModule,
+    MatSnackBarModule,
   ],
   providers: [UsersStore],
   templateUrl: './users.component.html',
@@ -36,6 +38,7 @@ import { UserProfile, ROLE_LABELS, PLAN_LABELS } from './users.model';
 })
 export class UsersComponent implements OnInit {
   readonly store = inject(UsersStore);
+  private readonly snackBar = inject(MatSnackBar);
   readonly roleLabels = ROLE_LABELS;
   readonly planLabels = PLAN_LABELS;
 
@@ -49,6 +52,10 @@ export class UsersComponent implements OnInit {
     { value: 'pro', label: 'Pro' },
     { value: 'enterprise', label: 'Enterprise' },
   ];
+
+  // Inline name editing
+  editingUserId = signal<string | null>(null);
+  editingName = signal('');
 
   ngOnInit(): void {
     this.store.loadUsers();
@@ -70,7 +77,50 @@ export class UsersComponent implements OnInit {
     await this.store.updateUser(user.id, { is_active: !user.is_active });
   }
 
-  getInitials(name: string): string {
+  async onChangeRole(user: UserProfile, newRole: 'admin' | 'user'): Promise<void> {
+    if (resolveRole(user) === newRole) return;
+    // Update both role and is_admin to support both DB schemas
+    const ok = await this.store.updateUser(user.id, { role: newRole, is_admin: newRole === 'admin' });
+    if (ok) {
+      this.snackBar.open(
+        `${resolveDisplayName(user) || user.email} est maintenant ${ROLE_LABELS[newRole]}`,
+        'OK',
+        { duration: 3000 },
+      );
+    }
+  }
+
+  startEditName(user: UserProfile): void {
+    this.editingUserId.set(user.id);
+    this.editingName.set(resolveDisplayName(user));
+  }
+
+  cancelEditName(): void {
+    this.editingUserId.set(null);
+    this.editingName.set('');
+  }
+
+  async saveEditName(userId: string): Promise<void> {
+    const name = this.editingName().trim();
+    if (!name) return;
+    const ok = await this.store.updateUser(userId, { full_name: name });
+    if (ok) {
+      this.snackBar.open('Nom mis à jour', 'OK', { duration: 2000 });
+    }
+    this.editingUserId.set(null);
+    this.editingName.set('');
+  }
+
+  getUserDisplayName(user: UserProfile): string {
+    return resolveDisplayName(user) || 'Sans nom';
+  }
+
+  getUserRole(user: UserProfile): 'admin' | 'user' {
+    return resolveRole(user);
+  }
+
+  getInitials(user: UserProfile): string {
+    const name = resolveDisplayName(user);
     if (!name) return '?';
     return name
       .split(' ')
@@ -81,8 +131,8 @@ export class UsersComponent implements OnInit {
       .toUpperCase();
   }
 
-  getRoleBadgeClass(role: string): string {
-    return role === 'admin' ? 'badge-role-admin' : 'badge-role-user';
+  getRoleBadgeClass(user: UserProfile): string {
+    return resolveRole(user) === 'admin' ? 'badge-role-admin' : 'badge-role-user';
   }
 
   getPlanBadgeClass(plan: string): string {

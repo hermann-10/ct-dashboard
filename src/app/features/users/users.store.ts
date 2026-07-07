@@ -7,7 +7,7 @@ import {
   patchState,
 } from '@ngrx/signals';
 import { SupabaseService } from '../../core/services/supabase.service';
-import { UserProfile, UpdateProfileDto } from './users.model';
+import { UserProfile, UpdateProfileDto, resolveDisplayName, resolveRole } from './users.model';
 
 interface UsersState {
   users: UserProfile[];
@@ -39,16 +39,16 @@ export const UsersStore = signalStore(
 
       if (term) {
         list = list.filter(u =>
-          u.full_name.toLowerCase().includes(term) ||
+          resolveDisplayName(u).toLowerCase().includes(term) ||
           u.email.toLowerCase().includes(term) ||
           (u.company ?? '').toLowerCase().includes(term)
         );
       }
       if (role) {
-        list = list.filter(u => u.role === role);
+        list = list.filter(u => resolveRole(u) === role);
       }
       if (plan) {
-        list = list.filter(u => u.plan === plan);
+        list = list.filter(u => (u.plan || 'free') === plan);
       }
       return list;
     }),

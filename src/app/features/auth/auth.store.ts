@@ -11,11 +11,14 @@ export interface AuthUser {
 export interface AuthProfile {
   id: string;
   email: string;
-  full_name: string;
-  role: 'admin' | 'user';
-  plan: 'free' | 'pro' | 'enterprise';
-  company: string;
-  avatar_url: string;
+  full_name?: string;
+  first_name?: string;
+  last_name?: string;
+  role?: 'admin' | 'user';
+  is_admin?: boolean;
+  plan?: 'free' | 'pro' | 'enterprise';
+  company?: string;
+  avatar_url?: string;
 }
 
 interface AuthState {
@@ -46,8 +49,18 @@ export const AuthStore = signalStore(
 
   withComputed((state) => ({
     isAuthenticated: computed(() => !!state.user()),
-    isAdmin: computed(() => state.profile()?.role === 'admin'),
-    displayName: computed(() => state.profile()?.full_name || state.user()?.email || ''),
+    isAdmin: computed(() => {
+      const p = state.profile();
+      if (!p) return false;
+      // Support both DB schemas: role text column OR is_admin boolean
+      return p.role === 'admin' || p.is_admin === true;
+    }),
+    displayName: computed(() => {
+      const p = state.profile();
+      if (!p) return state.user()?.email || '';
+      // Support both: full_name OR first_name + last_name
+      return p.full_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || state.user()?.email || '';
+    }),
   })),
 
   withMethods((store, supabase = inject(SupabaseService), router = inject(Router)) => ({

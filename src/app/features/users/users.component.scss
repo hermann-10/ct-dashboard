@@ -91,12 +91,60 @@
   }
 }
 
-// ── Card top: avatar + identity ──
+// ── Card top: avatar + identity + menu ──
 .card-top {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
+}
+
+.card-menu-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--hm-text-tertiary);
+
+  &:hover {
+    color: var(--hm-text-primary);
+  }
+}
+
+// ── Inline name editing ──
+.inline-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.edit-name-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.25rem 0.5rem;
+  font-size: var(--hm-text-base, 1rem);
+  font-weight: 600;
+  color: var(--hm-text-primary);
+  background: var(--hm-surface);
+  border: 1.5px solid var(--hm-brand-primary, #6C5CE7);
+  border-radius: var(--hm-radius-sm, 4px);
+  outline: none;
+  font-family: inherit;
+
+  &::placeholder {
+    color: var(--hm-text-tertiary);
+    font-weight: 400;
+  }
+}
+
+.edit-action-btn {
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+
+  mat-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+  }
 }
 
 .card-avatar {
