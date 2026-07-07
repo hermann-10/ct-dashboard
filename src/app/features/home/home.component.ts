@@ -54,7 +54,7 @@ export class HomeComponent implements OnInit {
     if (!isPlatformBrowser(this.platformId)) return;
     try {
       const pixelId = await this.supabase.getSetting('fb_pixel_id');
-      if (!pixelId) return;
+      if (!pixelId || !/^\d+$/.test(pixelId)) return; // Strict numeric validation to prevent XSS
       // Inject Facebook Pixel
       const script = document.createElement('script');
       script.innerHTML = `
@@ -76,7 +76,7 @@ export class HomeComponent implements OnInit {
       img.height = 1;
       img.width = 1;
       img.style.display = 'none';
-      img.src = `https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`;
+      img.src = `https://www.facebook.com/tr?id=${encodeURIComponent(pixelId)}&ev=PageView&noscript=1`;
       noscript.appendChild(img);
       document.body.appendChild(noscript);
     } catch {

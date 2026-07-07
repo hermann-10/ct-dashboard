@@ -61,7 +61,14 @@ export const AuthStore = signalStore(
         const session = await supabase.getSession();
         if (session?.user) {
           const user: AuthUser = { id: session.user.id, email: session.user.email ?? '' };
-          patchState(store, { user, initialized: true });
+          // Load profile BEFORE marking initialized so authGuard can check role
+          let profile: AuthProfile | null = null;
+          try {
+            profile = await supabase.getProfile(user.id) as AuthProfile;
+          } catch {
+            // Profile may not exist yet
+          }
+          patchState(store, { user, profile, initialized: true });
         } else {
           patchState(store, { initialized: true });
         }
@@ -69,17 +76,6 @@ export const AuthStore = signalStore(
         patchState(store, { initialized: true });
       } finally {
         _initResolve();
-      }
-
-      // Load profile in background (non-blocking)
-      const user = store.user();
-      if (user) {
-        try {
-          const profile = await supabase.getProfile(user.id);
-          patchState(store, { profile: profile as AuthProfile });
-        } catch {
-          // Profile may not exist yet
-        }
       }
 
       supabase.onAuthStateChange(async (_event, session) => {

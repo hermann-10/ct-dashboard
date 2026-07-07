@@ -6,8 +6,17 @@ export const authGuard: CanActivateFn = async () => {
   const auth = inject(AuthStore);
   const router = inject(Router);
 
-  // Wait for auth initialization before checking the session
+  // Wait for auth initialization (includes profile load) before checking
   await auth.whenInitialized();
 
-  return auth.user() ? true : router.createUrlTree(['/login']);
+  if (!auth.user()) {
+    return router.createUrlTree(['/login']);
+  }
+
+  // Only admin role can access protected routes
+  if (!auth.isAdmin()) {
+    return router.createUrlTree(['/login']);
+  }
+
+  return true;
 };

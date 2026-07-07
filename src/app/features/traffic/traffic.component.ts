@@ -90,7 +90,7 @@ Chart.register(...registerables);
             <mat-icon>ads_click</mat-icon>
           </div>
           <div class="kpi-content">
-            <span class="kpi-value">{{ store.stats()?.totalClicks ?? 0 | number }}</span>
+            <span class="kpi-value">{{ (store.stats()?.totalClicks ?? 0) | number }}</span>
             <span class="kpi-label">Total Clics</span>
           </div>
         </div>
@@ -100,7 +100,7 @@ Chart.register(...registerables);
             <mat-icon>group</mat-icon>
           </div>
           <div class="kpi-content">
-            <span class="kpi-value">{{ store.stats()?.uniqueVisitors ?? 0 | number }}</span>
+            <span class="kpi-value">{{ (store.stats()?.uniqueVisitors ?? 0) | number }}</span>
             <span class="kpi-label">Visiteurs Uniques</span>
           </div>
         </div>

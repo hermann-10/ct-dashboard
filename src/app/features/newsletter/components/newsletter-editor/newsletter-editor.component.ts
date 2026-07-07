@@ -79,7 +79,7 @@ interface EditorData {
           </mat-form-field>
         </mat-tab>
         <mat-tab label="Prévisualisation">
-          <div class="preview-frame" [innerHTML]="htmlContent()"></div>
+          <iframe class="preview-frame" [attr.srcdoc]="htmlContent()" sandbox=""></iframe>
         </mat-tab>
       </mat-tab-group>
     </mat-dialog-content>
@@ -120,13 +120,10 @@ interface EditorData {
     .preview-frame {
       border: 1px solid #e5e7eb;
       border-radius: 8px;
-      padding: 1rem;
+      width: 100%;
       min-height: 200px;
       max-height: 400px;
-      overflow-y: auto;
       margin-top: 0.5rem;
-      font-family: sans-serif;
-      font-size: 0.9rem;
     }
     mat-dialog-content { max-height: 75vh; }
   `],

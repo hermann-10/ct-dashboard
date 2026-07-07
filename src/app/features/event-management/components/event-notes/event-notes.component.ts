@@ -106,10 +106,10 @@ export class EventNotesComponent {
   constructor() {
     effect(() => {
       this.localNotes.set(this.notes() ?? '');
-    });
+    }, { allowSignalWrites: true });
     effect(() => {
       this.localStrategy.set(this.strategy() ?? '');
-    });
+    }, { allowSignalWrites: true });
   }
 
   onSave(): void {

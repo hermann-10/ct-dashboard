@@ -736,10 +736,11 @@ export class SupabaseService {
     if (error || !data) return null;
 
     // Mark as checked in
-    await this.supabase
+    const { error: updateError } = await this.supabase
       .from('guestlist_entries')
       .update({ is_checked_in: true })
       .eq('id', data.id);
+    if (updateError) throw updateError;
 
     return { entry: { ...data, is_checked_in: true }, artistName: (data as any).guestlist?.artist_name ?? '' };
   }
