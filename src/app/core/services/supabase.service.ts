@@ -21,6 +21,49 @@ export class SupabaseService {
     });
   }
 
+  // ─────────────────────────────────────────────────────────
+  // Direct REST helper — bypasses the Supabase JS PostgREST
+  // client which can hang on mutations in zoneless Angular.
+  // Reads still go through the Supabase client (they work).
+  // ─────────────────────────────────────────────────────────
+  private async _rest<T = any>(
+    method: 'POST' | 'PATCH' | 'DELETE',
+    table: string,
+    body?: Record<string, any>,
+    queryParams?: string,
+  ): Promise<T> {
+    const { data: sessionData } = await this.supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token ?? '';
+
+    const url = `${environment.supabaseUrl}/rest/v1/${table}${queryParams ? `?${queryParams}` : ''}`;
+
+    const headers: Record<string, string> = {
+      'apikey': environment.supabaseAnonKey,
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+    };
+
+    // For POST/PATCH we want a single object back (equivalent to .single())
+    if (method !== 'DELETE') {
+      headers['Accept'] = 'application/vnd.pgrst.object+json';
+    }
+
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(err.message || err.details || `REST ${method} ${table} failed: ${res.status}`);
+    }
+
+    if (method === 'DELETE') return undefined as T;
+    return res.json() as Promise<T>;
+  }
+
   get client(): SupabaseClient {
     return this.supabase;
   }
@@ -253,25 +296,15 @@ export class SupabaseService {
   }
 
   async createEvent(event: any): Promise<any> {
-    const { data, error } = await this.supabase.from('events').insert(event).select().single();
-    if (error) throw error;
-    return data;
+    return this._rest('POST', 'events', event);
   }
 
   async updateEvent(id: string, changes: any): Promise<any> {
-    const { data, error } = await this.supabase
-      .from('events')
-      .update({ ...changes, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+    return this._rest('PATCH', 'events', { ...changes, updated_at: new Date().toISOString() }, `id=eq.${id}`);
   }
 
   async deleteEvent(id: string): Promise<void> {
-    const { error } = await this.supabase.from('events').delete().eq('id', id);
-    if (error) throw error;
+    await this._rest('DELETE', 'events', undefined, `id=eq.${id}`);
   }
 
   async toggleEventPublished(id: string, isPublished: boolean): Promise<any> {
