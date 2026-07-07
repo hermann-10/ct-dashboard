@@ -146,7 +146,7 @@ export class UsersComponent implements OnInit {
     }
   }
 
-  formatDate(dateStr: string | null): string {
+  formatDate(dateStr: string | null | undefined): string {
     if (!dateStr) return 'Jamais';
     const date = new Date(dateStr);
     return date.toLocaleDateString('fr-FR', {
@@ -156,7 +156,7 @@ export class UsersComponent implements OnInit {
     });
   }
 
-  formatDateTime(dateStr: string | null): string {
+  formatDateTime(dateStr: string | null | undefined): string {
     if (!dateStr) return 'Jamais';
     const date = new Date(dateStr);
     return date.toLocaleDateString('fr-FR', {
