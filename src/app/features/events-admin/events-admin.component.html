@@ -34,8 +34,8 @@
     </div>
   </div>
 
-  <!-- Loading -->
-  @if (store.loading()) {
+  <!-- Loading (only blocks when no events loaded yet) -->
+  @if (store.loading() && store.events().length === 0) {
     <div class="loading-state">
       <mat-spinner diameter="40" />
       <p>Chargement...</p>
@@ -46,7 +46,7 @@
       <p>{{ store.error() }}</p>
       <button mat-flat-button color="primary" (click)="store.loadAll()">Réessayer</button>
     </div>
-  } @else if (filteredEvents().length === 0) {
+  } @else if (!store.loading() && filteredEvents().length === 0) {
     <div class="empty-state">
       <mat-icon>event_busy</mat-icon>
       @if (searchTerm()) {
@@ -56,6 +56,10 @@
       }
     </div>
   } @else {
+
+    @if (store.loading()) {
+      <mat-progress-bar mode="indeterminate" class="top-loader" />
+    }
 
     <!-- ═══ CARD VIEW ═══ -->
     @if (viewMode() === 'cards') {

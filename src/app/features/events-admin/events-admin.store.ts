@@ -1,5 +1,5 @@
 import { signalStore, withState, withMethods, withComputed, patchState } from '@ngrx/signals';
-import { inject, computed } from '@angular/core';
+import { inject, computed, ApplicationRef } from '@angular/core';
 import { EventsAdminService } from './events-admin.service';
 import { EventRecord, CreateEventDto, UpdateEventDto } from './events-admin.model';
 
@@ -25,79 +25,92 @@ export const EventsAdminStore = signalStore(
       return state.events().filter(e => e.date >= today).length;
     }),
   })),
-  withMethods((store, service = inject(EventsAdminService)) => ({
-    async loadAll() {
-      patchState(store, { loading: true, error: null });
-      try {
-        const events = await service.getAll();
-        patchState(store, { events, loading: false });
-      } catch (e: any) {
-        patchState(store, { loading: false, error: e.message });
-      }
-    },
-    async create(dto: CreateEventDto) {
-      patchState(store, { loading: true, error: null });
-      try {
-        const created = await service.create(dto);
-        patchState(store, { events: [...store.events(), created], loading: false });
-      } catch (e: any) {
-        patchState(store, { loading: false, error: e.message });
-      }
-    },
-    async update(id: string, dto: UpdateEventDto) {
-      patchState(store, { loading: true, error: null });
-      try {
-        const updated = await service.update(id, dto);
-        patchState(store, {
-          events: store.events().map(e => e.id === id ? updated : e),
-          loading: false,
-        });
-      } catch (e: any) {
-        patchState(store, { loading: false, error: e.message });
-      }
-    },
-    async remove(id: string) {
-      patchState(store, { loading: true, error: null });
-      try {
-        await service.delete(id);
-        patchState(store, {
-          events: store.events().filter(e => e.id !== id),
-          loading: false,
-        });
-      } catch (e: any) {
-        patchState(store, { loading: false, error: e.message });
-      }
-    },
-    async togglePublished(id: string) {
-      const event = store.events().find(e => e.id === id);
-      if (!event) return;
-      try {
-        const updated = await service.togglePublished(id, !event.is_published);
-        patchState(store, {
-          events: store.events().map(e => e.id === id ? updated : e),
-        });
-      } catch (e: any) {
-        patchState(store, { error: e.message });
-      }
-    },
-    async fetchMissingFlyers() {
-      const missing = store.events().filter(e => !e.image_url && e.ticket_url);
-      if (!missing.length) return;
-      patchState(store, { loading: true });
-      for (const event of missing) {
+  withMethods((store, service = inject(EventsAdminService), appRef = inject(ApplicationRef)) => {
+    // Force change detection after async Supabase calls.
+    // Supabase uses native fetch(), which resolves outside Angular's
+    // awareness in zoneless mode. This ensures the UI updates.
+    const tick = () => appRef.tick();
+
+    return {
+      async loadAll() {
+        patchState(store, { loading: true, error: null });
         try {
-          const imageUrl = await service.extractOgImage(event.ticket_url!);
-          if (imageUrl) {
-            const updated = await service.updateImageUrl(event.id, imageUrl);
-            patchState(store, {
-              events: store.events().map(e => e.id === event.id ? updated : e),
-            });
-          }
-        } catch {
-          // Skip this event silently
+          const events = await service.getAll();
+          patchState(store, { events, loading: false });
+        } catch (e: any) {
+          patchState(store, { loading: false, error: e.message });
         }
-      }
-      patchState(store, { loading: false });
-    },
-  }))
+        tick();
+      },
+      async create(dto: CreateEventDto) {
+        patchState(store, { loading: true, error: null });
+        try {
+          const created = await service.create(dto);
+          patchState(store, { events: [...store.events(), created], loading: false });
+        } catch (e: any) {
+          patchState(store, { loading: false, error: e.message });
+        }
+        tick();
+      },
+      async update(id: string, dto: UpdateEventDto) {
+        patchState(store, { loading: true, error: null });
+        try {
+          const updated = await service.update(id, dto);
+          patchState(store, {
+            events: store.events().map(e => e.id === id ? updated : e),
+            loading: false,
+          });
+        } catch (e: any) {
+          patchState(store, { loading: false, error: e.message });
+        }
+        tick();
+      },
+      async remove(id: string) {
+        patchState(store, { loading: true, error: null });
+        try {
+          await service.delete(id);
+          patchState(store, {
+            events: store.events().filter(e => e.id !== id),
+            loading: false,
+          });
+        } catch (e: any) {
+          patchState(store, { loading: false, error: e.message });
+        }
+        tick();
+      },
+      async togglePublished(id: string) {
+        const event = store.events().find(e => e.id === id);
+        if (!event) return;
+        try {
+          const updated = await service.togglePublished(id, !event.is_published);
+          patchState(store, {
+            events: store.events().map(e => e.id === id ? updated : e),
+          });
+        } catch (e: any) {
+          patchState(store, { error: e.message });
+        }
+        tick();
+      },
+      async fetchMissingFlyers() {
+        const missing = store.events().filter(e => !e.image_url && e.ticket_url);
+        if (!missing.length) return;
+        patchState(store, { loading: true });
+        for (const event of missing) {
+          try {
+            const imageUrl = await service.extractOgImage(event.ticket_url!);
+            if (imageUrl) {
+              const updated = await service.updateImageUrl(event.id, imageUrl);
+              patchState(store, {
+                events: store.events().map(e => e.id === event.id ? updated : e),
+              });
+            }
+          } catch {
+            // Skip this event silently
+          }
+        }
+        patchState(store, { loading: false });
+        tick();
+      },
+    };
+  })
 );
