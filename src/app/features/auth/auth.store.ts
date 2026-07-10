@@ -70,36 +70,42 @@ export const AuthStore = signalStore(
     },
 
     async init() {
+      console.log('[AUTH] init() starting');
       try {
         const session = await supabase.getSession();
+        console.log('[AUTH] init session:', session ? 'exists' : 'none');
         if (session?.user) {
           const user: AuthUser = { id: session.user.id, email: session.user.email ?? '' };
-          // Load profile BEFORE marking initialized so authGuard can check role
           let profile: AuthProfile | null = null;
           try {
             profile = await supabase.getProfile(user.id) as AuthProfile;
-          } catch {
-            // Profile may not exist yet
+            console.log('[AUTH] init profile loaded:', profile?.role, profile?.is_admin);
+          } catch (e) {
+            console.warn('[AUTH] init profile load failed', e);
           }
           patchState(store, { user, profile, initialized: true });
         } else {
           patchState(store, { initialized: true });
         }
-      } catch {
+      } catch (e) {
+        console.error('[AUTH] init error', e);
         patchState(store, { initialized: true });
       } finally {
         _initResolve();
+        console.log('[AUTH] init() done, initialized =', store.initialized());
       }
 
       supabase.onAuthStateChange(async (_event, session) => {
+        console.log('[AUTH] onAuthStateChange event:', _event, 'user:', session?.user?.id);
         if (session?.user) {
           const authUser: AuthUser = { id: session.user.id, email: session.user.email ?? '' };
           patchState(store, { user: authUser });
           try {
             const profile = await supabase.getProfile(session.user.id);
+            console.log('[AUTH] onAuthStateChange profile:', profile?.role, profile?.is_admin);
             patchState(store, { profile: profile as AuthProfile });
-          } catch {
-            // Ignore
+          } catch (e) {
+            console.warn('[AUTH] onAuthStateChange profile failed', e);
           }
         } else {
           patchState(store, { user: null, profile: null });
@@ -112,9 +118,12 @@ export const AuthStore = signalStore(
     },
 
     async login(email: string, password: string) {
+      console.log('[AUTH] login() called with', email);
       patchState(store, { loading: true, error: null, successMessage: null });
       try {
+        console.log('[AUTH] calling signIn...');
         const { user, error } = await supabase.signIn(email, password);
+        console.log('[AUTH] signIn returned', { userId: user?.id, error: error?.message });
         if (error) {
           patchState(store, { loading: false, error: error.message });
           return;
@@ -125,14 +134,18 @@ export const AuthStore = signalStore(
         }
         const authUser: AuthUser = { id: user.id, email: user.email ?? '' };
         patchState(store, { user: authUser, loading: false });
+        console.log('[AUTH] loading profile...');
         try {
           const profile = await supabase.getProfile(user.id);
+          console.log('[AUTH] profile loaded', profile);
           patchState(store, { profile: profile as AuthProfile });
-        } catch {
-          // Profile load failed — continue with navigation anyway
+        } catch (pe) {
+          console.warn('[AUTH] profile load failed', pe);
         }
+        console.log('[AUTH] navigating to /admin/dashboard');
         router.navigate(['/admin/dashboard']);
       } catch (e: any) {
+        console.error('[AUTH] login catch error', e);
         patchState(store, {
           loading: false,
           error: e?.message ?? 'Erreur de connexion inattendue.',

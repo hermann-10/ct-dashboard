@@ -38,6 +38,7 @@ export class LoginComponent implements OnInit {
   }
 
   onSubmit(): void {
+    console.log('[LOGIN] onSubmit() email=', this.email(), 'pwd length=', this.password().length);
     this.store.login(this.email(), this.password());
   }
 }
