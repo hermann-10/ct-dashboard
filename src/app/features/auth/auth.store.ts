@@ -43,6 +43,11 @@ const initialState: AuthState = {
 let _initResolve: () => void;
 const _initPromise = new Promise<void>((r) => (_initResolve = r));
 
+// Timestamp of last profile load — prevents redundant fetches
+// from onAuthStateChange (TOKEN_REFRESHED fires every ~hour)
+let _lastProfileLoadMs = 0;
+const PROFILE_CACHE_MS = 30_000; // skip reload if loaded < 30s ago
+
 export const AuthStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
@@ -70,42 +75,46 @@ export const AuthStore = signalStore(
     },
 
     async init() {
-      console.log('[AUTH] init() starting');
       try {
         const session = await supabase.getSession();
-        console.log('[AUTH] init session:', session ? 'exists' : 'none');
         if (session?.user) {
           const user: AuthUser = { id: session.user.id, email: session.user.email ?? '' };
           let profile: AuthProfile | null = null;
           try {
             profile = await supabase.getProfile(user.id) as AuthProfile;
-            console.log('[AUTH] init profile loaded:', profile?.role, profile?.is_admin);
-          } catch (e) {
-            console.warn('[AUTH] init profile load failed', e);
+            _lastProfileLoadMs = Date.now();
+          } catch {
+            // Profile may not exist yet
           }
           patchState(store, { user, profile, initialized: true });
         } else {
           patchState(store, { initialized: true });
         }
-      } catch (e) {
-        console.error('[AUTH] init error', e);
+      } catch {
         patchState(store, { initialized: true });
       } finally {
         _initResolve();
-        console.log('[AUTH] init() done, initialized =', store.initialized());
       }
 
       supabase.onAuthStateChange(async (_event, session) => {
-        console.log('[AUTH] onAuthStateChange event:', _event, 'user:', session?.user?.id);
+        // Skip INITIAL_SESSION — init() already handled it
+        if (_event === 'INITIAL_SESSION') return;
+
         if (session?.user) {
           const authUser: AuthUser = { id: session.user.id, email: session.user.email ?? '' };
           patchState(store, { user: authUser });
-          try {
-            const profile = await supabase.getProfile(session.user.id);
-            console.log('[AUTH] onAuthStateChange profile:', profile?.role, profile?.is_admin);
-            patchState(store, { profile: profile as AuthProfile });
-          } catch (e) {
-            console.warn('[AUTH] onAuthStateChange profile failed', e);
+
+          // Only reload profile if cache is stale (avoids redundant
+          // fetches on every TOKEN_REFRESHED which fires ~hourly)
+          const now = Date.now();
+          if (now - _lastProfileLoadMs > PROFILE_CACHE_MS) {
+            try {
+              const profile = await supabase.getProfile(session.user.id);
+              _lastProfileLoadMs = Date.now();
+              patchState(store, { profile: profile as AuthProfile });
+            } catch {
+              // Ignore — keep existing profile
+            }
           }
         } else {
           patchState(store, { user: null, profile: null });
@@ -118,12 +127,9 @@ export const AuthStore = signalStore(
     },
 
     async login(email: string, password: string) {
-      console.log('[AUTH] login() called with', email);
       patchState(store, { loading: true, error: null, successMessage: null });
       try {
-        console.log('[AUTH] calling signIn...');
         const { user, error } = await supabase.signIn(email, password);
-        console.log('[AUTH] signIn returned', { userId: user?.id, error: error?.message });
         if (error) {
           patchState(store, { loading: false, error: error.message });
           return;
@@ -134,18 +140,15 @@ export const AuthStore = signalStore(
         }
         const authUser: AuthUser = { id: user.id, email: user.email ?? '' };
         patchState(store, { user: authUser, loading: false });
-        console.log('[AUTH] loading profile...');
         try {
           const profile = await supabase.getProfile(user.id);
-          console.log('[AUTH] profile loaded', profile);
+          _lastProfileLoadMs = Date.now();
           patchState(store, { profile: profile as AuthProfile });
-        } catch (pe) {
-          console.warn('[AUTH] profile load failed', pe);
+        } catch {
+          // Profile load failed — continue without profile
         }
-        console.log('[AUTH] navigating to /admin/dashboard');
         router.navigate(['/admin/dashboard']);
       } catch (e: any) {
-        console.error('[AUTH] login catch error', e);
         patchState(store, {
           loading: false,
           error: e?.message ?? 'Erreur de connexion inattendue.',
@@ -155,32 +158,50 @@ export const AuthStore = signalStore(
 
     async register(email: string, password: string, fullName: string) {
       patchState(store, { loading: true, error: null, successMessage: null });
-      const { user, error } = await supabase.signUp(email, password, fullName);
-      if (error) {
-        patchState(store, { loading: false, error: error.message });
-      } else {
+      try {
+        const { user, error } = await supabase.signUp(email, password, fullName);
+        if (error) {
+          patchState(store, { loading: false, error: error.message });
+        } else {
+          patchState(store, {
+            loading: false,
+            successMessage: 'Inscription réussie ! Vérifiez votre email pour confirmer votre compte.',
+          });
+        }
+      } catch (e: any) {
         patchState(store, {
           loading: false,
-          successMessage: 'Inscription réussie ! Vérifiez votre email pour confirmer votre compte.',
+          error: e?.message ?? 'Erreur d\'inscription inattendue.',
         });
       }
     },
 
     async resetPassword(email: string) {
       patchState(store, { loading: true, error: null, successMessage: null });
-      const { error } = await supabase.resetPassword(email);
-      if (error) {
-        patchState(store, { loading: false, error: error.message });
-      } else {
+      try {
+        const { error } = await supabase.resetPassword(email);
+        if (error) {
+          patchState(store, { loading: false, error: error.message });
+        } else {
+          patchState(store, {
+            loading: false,
+            successMessage: 'Un email de réinitialisation a été envoyé. Vérifiez votre boîte de réception.',
+          });
+        }
+      } catch (e: any) {
         patchState(store, {
           loading: false,
-          successMessage: 'Un email de réinitialisation a été envoyé. Vérifiez votre boîte de réception.',
+          error: e?.message ?? 'Erreur inattendue.',
         });
       }
     },
 
     async logout() {
-      await supabase.signOut();
+      try {
+        await supabase.signOut();
+      } catch {
+        // Ignore signOut errors — clear local state regardless
+      }
       patchState(store, { user: null, profile: null });
       router.navigate(['/login']);
     },

@@ -6,30 +6,60 @@ import { environment } from '../../../environments/environment';
 export class SupabaseService {
   private readonly appRef = inject(ApplicationRef);
   private readonly supabase: SupabaseClient;
+  private _scheduleTick!: () => void;
+  private _authLockPromise: Promise<void> = Promise.resolve();
 
   constructor() {
     // ─────────────────────────────────────────────────────────
     // Zoneless Angular fix: Supabase uses native fetch() which
     // resolves outside Angular's change detection awareness.
-    // We wrap fetch so that every Supabase response (auth,
-    // reads, writes, storage, functions) triggers a CD cycle.
+    // We coalesce CD triggers so that parallel fetches (e.g.
+    // dashboard loading 6+ queries at once) produce a SINGLE
+    // change detection cycle instead of one per fetch.
     // ─────────────────────────────────────────────────────────
     const appRef = this.appRef;
     const nativeFetch = globalThis.fetch.bind(globalThis);
 
+    // Coalesced CD scheduler — batches all tick requests into
+    // one microtask, so N parallel fetches → 1 CD cycle.
+    let tickScheduled = false;
+    const scheduleTick = () => {
+      if (!tickScheduled) {
+        tickScheduled = true;
+        queueMicrotask(() => {
+          tickScheduled = false;
+          appRef.tick();
+        });
+      }
+    };
+    this._scheduleTick = scheduleTick;
+
     this.supabase = createClient(environment.supabaseUrl, environment.supabaseAnonKey, {
       auth: {
-        // Bypass the Web Locks API to prevent deadlocks in Supabase JS v2.
+        // Simple mutex lock to prevent concurrent token refreshes.
+        // The default Web Locks API can deadlock in some browsers;
+        // this serialises auth operations without blocking the UI.
         lock: async <R>(
           _name: string,
           _acquireTimeout: number,
           fn: () => Promise<R>,
-        ): Promise<R> => await fn(),
+        ): Promise<R> => {
+          // Wait for any in-flight auth operation to finish
+          const prior = this._authLockPromise;
+          let release: () => void;
+          this._authLockPromise = new Promise<void>(r => (release = r));
+          try {
+            await prior;
+            return await fn();
+          } finally {
+            release!();
+          }
+        },
       },
       global: {
         fetch: async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
           const res = await nativeFetch(input, init);
-          appRef.tick();
+          scheduleTick();
           return res;
         },
       },
@@ -70,7 +100,7 @@ export class SupabaseService {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    this.appRef.tick(); // trigger CD after direct fetch
+    this._scheduleTick(); // trigger coalesced CD after direct fetch
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: res.statusText }));
@@ -349,7 +379,7 @@ export class SupabaseService {
       body: file,
     });
 
-    this.appRef.tick(); // trigger CD after direct fetch
+    this._scheduleTick(); // trigger coalesced CD after direct fetch
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: res.statusText }));
@@ -376,7 +406,7 @@ export class SupabaseService {
       body: JSON.stringify({ prefixes: paths }),
     });
 
-    this.appRef.tick(); // trigger CD after direct fetch
+    this._scheduleTick(); // trigger coalesced CD after direct fetch
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: res.statusText }));
@@ -553,7 +583,7 @@ export class SupabaseService {
   async extractOgImage(ticketUrl: string): Promise<string | null> {
     try {
       const res = await fetch(`/api/og-image?url=${encodeURIComponent(ticketUrl)}`);
-      this.appRef.tick(); // trigger CD after direct fetch
+      this._scheduleTick(); // trigger coalesced CD after direct fetch
       if (!res.ok) return null;
       const data = await res.json();
       return data.image_url ?? null;
