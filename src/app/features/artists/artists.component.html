@@ -4,10 +4,22 @@
       <h2>CRM Artistes</h2>
       <p class="subtitle">{{ store.artistCount() }} artistes enregistrés</p>
     </div>
-    <button mat-flat-button color="primary" (click)="onAddArtist()" class="add-btn">
-      <mat-icon>person_add</mat-icon>
-      Ajouter
-    </button>
+    <div class="header-actions">
+      <!-- View toggle -->
+      <div class="view-toggle">
+        <button class="toggle-btn" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')" matTooltip="Vue liste">
+          <mat-icon>view_list</mat-icon>
+        </button>
+        <button class="toggle-btn" [class.active]="viewMode() === 'cards'" (click)="viewMode.set('cards')" matTooltip="Vue cards">
+          <mat-icon>grid_view</mat-icon>
+        </button>
+      </div>
+
+      <button mat-flat-button color="primary" (click)="onAddArtist()" class="add-btn">
+        <mat-icon>person_add</mat-icon>
+        Ajouter
+      </button>
+    </div>
   </div>
 
   <!-- Filters -->
@@ -59,7 +71,20 @@
       <mat-icon>error_outline</mat-icon>
       <p>{{ store.error() }}</p>
     </div>
-  } @else {
+  } @else if (store.filteredArtists().length === 0) {
+    <div class="empty-state">
+      <mat-icon>person_search</mat-icon>
+      @if (store.searchTerm() || store.filterGenre() || store.filterRole()) {
+        <p>Aucun artiste ne correspond aux filtres.</p>
+      } @else {
+        <p>Aucun artiste enregistré.</p>
+        <button mat-flat-button color="primary" (click)="onAddArtist()">
+          <mat-icon>person_add</mat-icon>
+          Ajouter un artiste
+        </button>
+      }
+    </div>
+  } @else if (viewMode() === 'cards') {
     <!-- Artists Grid -->
     <div class="artists-grid">
       @for (artist of store.filteredArtists(); track artist.id) {
@@ -101,19 +126,48 @@
             }
           </div>
         </a>
-      } @empty {
-        <div class="empty-state">
-          <mat-icon>person_search</mat-icon>
-          @if (store.searchTerm() || store.filterGenre() || store.filterRole()) {
-            <p>Aucun artiste ne correspond aux filtres.</p>
-          } @else {
-            <p>Aucun artiste enregistré.</p>
-            <button mat-flat-button color="primary" (click)="onAddArtist()">
-              <mat-icon>person_add</mat-icon>
-              Ajouter un artiste
-            </button>
+      }
+    </div>
+  } @else {
+    <!-- Artists List -->
+    <div class="artists-list">
+      @for (artist of store.filteredArtists(); track artist.id) {
+        <a class="artist-row" [routerLink]="['/admin/artists', artist.id]">
+          <div class="row-avatar" [style.background-image]="artist.photo_url ? 'url(' + artist.photo_url + ')' : ''">
+            @if (!artist.photo_url) {
+              <span class="row-initials">{{ getInitials(artist.name) }}</span>
+            }
+          </div>
+          <div class="row-info">
+            <span class="row-name">{{ artist.name }}</span>
+            <div class="row-meta">
+              @for (g of artist.genres; track g) {
+                <span class="card-genre">{{ g }}</span>
+              }
+              <span class="card-role">{{ getRoleLabel(artist.role) }}</span>
+              @if (artist.city) {
+                <span class="row-city">
+                  <mat-icon>location_on</mat-icon>
+                  {{ artist.city }}
+                </span>
+              }
+            </div>
+          </div>
+          @if (artist.rating > 0) {
+            <span class="row-rating">{{ getRatingStars(artist.rating) }}</span>
           }
-        </div>
+          <div class="row-socials">
+            @if (artist.instagram) {
+              <mat-icon class="social-icon" matTooltip="Instagram">photo_camera</mat-icon>
+            }
+            @if (artist.email) {
+              <mat-icon class="social-icon" matTooltip="Email">email</mat-icon>
+            }
+            @if (artist.phone) {
+              <mat-icon class="social-icon" matTooltip="Téléphone">phone</mat-icon>
+            }
+          </div>
+        </a>
       }
     </div>
   }

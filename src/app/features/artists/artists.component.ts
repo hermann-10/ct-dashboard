@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, effect, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -39,6 +39,15 @@ export class ArtistsComponent implements OnInit {
   readonly store = inject(ArtistsStore);
   private readonly dialog = inject(MatDialog);
   readonly roles = ARTIST_ROLES;
+
+  viewMode = signal<'list' | 'cards'>(
+    localStorage.getItem('artists.viewMode') === 'list' ? 'list' : 'cards'
+  );
+
+  constructor() {
+    // Mémoriser la vue choisie (liste / cards)
+    effect(() => localStorage.setItem('artists.viewMode', this.viewMode()));
+  }
 
   ngOnInit(): void {
     this.store.loadArtists();

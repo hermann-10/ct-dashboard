@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy, signal, computed, effect } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -38,7 +38,9 @@ export class EventsAdminComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
 
-  viewMode = signal<'list' | 'cards'>('cards');
+  viewMode = signal<'list' | 'cards'>(
+    localStorage.getItem('events-admin.viewMode') === 'list' ? 'list' : 'cards'
+  );
   searchTerm = signal('');
   timeFilter = signal<'upcoming' | 'past'>('upcoming');
 
@@ -65,6 +67,11 @@ export class EventsAdminComponent implements OnInit {
       )
       .sort((a, b) => (past ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date)));
   });
+
+  constructor() {
+    // Mémoriser la vue choisie (liste / cards)
+    effect(() => localStorage.setItem('events-admin.viewMode', this.viewMode()));
+  }
 
   ngOnInit(): void {
     this.store.loadAll();
