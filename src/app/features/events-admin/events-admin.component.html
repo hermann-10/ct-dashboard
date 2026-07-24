@@ -34,6 +34,26 @@
     </div>
   </div>
 
+  <!-- Time filter tabs -->
+  <div class="filter-tabs">
+    <button
+      class="filter-tab"
+      [class.active]="timeFilter() === 'upcoming'"
+      (click)="timeFilter.set('upcoming')">
+      <mat-icon class="tab-icon">event</mat-icon>
+      À venir
+      <span class="tab-count">{{ upcomingCount() }}</span>
+    </button>
+    <button
+      class="filter-tab"
+      [class.active]="timeFilter() === 'past'"
+      (click)="timeFilter.set('past')">
+      <mat-icon class="tab-icon">history</mat-icon>
+      Passés
+      <span class="tab-count">{{ pastCount() }}</span>
+    </button>
+  </div>
+
   <!-- Loading (only blocks when no events loaded yet) -->
   @if (store.loading() && store.events().length === 0) {
     <div class="loading-state">
@@ -51,8 +71,10 @@
       <mat-icon>event_busy</mat-icon>
       @if (searchTerm()) {
         <p>Aucun événement ne correspond à « {{ searchTerm() }} »</p>
+      } @else if (timeFilter() === 'past') {
+        <p>Aucun événement passé</p>
       } @else {
-        <p>Aucun événement configuré</p>
+        <p>Aucun événement à venir</p>
       }
     </div>
   } @else {

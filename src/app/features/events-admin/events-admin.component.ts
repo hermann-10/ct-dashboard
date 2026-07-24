@@ -40,17 +40,30 @@ export class EventsAdminComponent implements OnInit {
 
   viewMode = signal<'list' | 'cards'>('cards');
   searchTerm = signal('');
+  timeFilter = signal<'upcoming' | 'past'>('upcoming');
+
+  upcomingCount = computed(() =>
+    this.store.events().filter(e => !this.isPast(e.date)).length
+  );
+
+  pastCount = computed(() =>
+    this.store.events().filter(e => this.isPast(e.date)).length
+  );
 
   filteredEvents = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
-    const events = this.store.events();
-    if (!term) return events;
-    return events.filter(e =>
-      e.name.toLowerCase().includes(term) ||
-      e.slug.toLowerCase().includes(term) ||
-      e.venue.toLowerCase().includes(term) ||
-      e.city.toLowerCase().includes(term)
-    );
+    const past = this.timeFilter() === 'past';
+
+    return this.store.events()
+      .filter(e => this.isPast(e.date) === past)
+      .filter(e =>
+        !term ||
+        e.name.toLowerCase().includes(term) ||
+        e.slug.toLowerCase().includes(term) ||
+        e.venue.toLowerCase().includes(term) ||
+        e.city.toLowerCase().includes(term)
+      )
+      .sort((a, b) => (past ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date)));
   });
 
   ngOnInit(): void {

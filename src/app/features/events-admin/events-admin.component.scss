@@ -138,6 +138,65 @@
   }
 }
 
+// ── Time filter tabs ──
+
+.filter-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+  padding: 0.25rem;
+  background: var(--hm-border-light);
+  border-radius: var(--hm-radius-sm);
+}
+
+.filter-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.875rem;
+  border: none;
+  border-radius: calc(var(--hm-radius-sm) - 2px);
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--hm-text-sm);
+  font-weight: 500;
+  color: var(--hm-text-secondary);
+  transition: all var(--hm-transition-fast);
+
+  .tab-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    color: var(--hm-text-primary);
+  }
+
+  &.active {
+    background: var(--hm-surface);
+    color: var(--hm-brand-primary);
+    box-shadow: var(--hm-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
+  }
+}
+
+.tab-count {
+  font-size: var(--hm-text-xs);
+  font-weight: 600;
+  padding: 0.05rem 0.45rem;
+  border-radius: var(--hm-radius-full);
+  background: var(--hm-surface);
+  color: var(--hm-text-tertiary);
+  border: 1px solid var(--hm-border);
+
+  .filter-tab.active & {
+    background: rgba(108, 92, 231, 0.08);
+    color: var(--hm-brand-primary);
+    border-color: transparent;
+  }
+}
+
 // ── States ──
 
 .loading-state {

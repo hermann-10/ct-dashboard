@@ -29,6 +29,11 @@ import { EventGuestlist, GuestlistEntry } from '../../event-management.model';
           }
         </mat-card-subtitle>
         <div class="card-actions">
+          @if (guestlist().share_token) {
+            <button mat-icon-button matTooltip="Ouvrir la guestlist" (click)="onOpenGuestlist()">
+              <mat-icon>open_in_new</mat-icon>
+            </button>
+          }
           <button mat-icon-button matTooltip="Copier le lien de partage" (click)="onCopyShareLink()">
             <mat-icon>share</mat-icon>
           </button>
@@ -260,10 +265,19 @@ export class GuestlistCardComponent {
   });
   isFull = computed(() => this.entryCount() >= this.guestlist().quota);
 
-  onCopyShareLink(): void {
+  private shareUrl(): string | null {
     const token = this.guestlist().share_token;
-    if (!token) return;
-    const url = `${window.location.origin}/guestlist/${token}`;
+    return token ? `${window.location.origin}/guestlist/${token}` : null;
+  }
+
+  onOpenGuestlist(): void {
+    const url = this.shareUrl();
+    if (url) window.open(url, '_blank');
+  }
+
+  onCopyShareLink(): void {
+    const url = this.shareUrl();
+    if (!url) return;
     navigator.clipboard.writeText(url);
     this.linkCopied.set(true);
     setTimeout(() => this.linkCopied.set(false), 2500);
