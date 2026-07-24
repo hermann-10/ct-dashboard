@@ -220,6 +220,21 @@
   }
 }
 
+.gl-batch-row.checked-in {
+  opacity: 0.55;
+}
+
+.gl-row-checked {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+
+  mat-icon {
+    color: var(--hm-success, #22c55e);
+  }
+}
+
 .gl-row-delete {
   margin-top: 6px;
   opacity: 0.35;
@@ -465,26 +480,23 @@
   .gl-body { padding: 0 1rem 2rem; margin-top: -1rem; }
   .gl-header-overlay { padding: 2rem 1.25rem 1.25rem; }
   .gl-event-name { font-size: var(--hm-text-xl); }
+  // Keep name / acc. / remarks / delete on a single line, compact
   .gl-batch-row {
-    grid-template-columns: 1fr 44px;
-    padding-bottom: 0.25rem;
-    margin-bottom: 0.5rem;
-    border-bottom: 1px dashed var(--hm-border-light);
+    grid-template-columns: 1.4fr 58px 1fr 32px;
+    gap: 0.4rem;
 
-    &:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-    }
+    .gl-row-delete,
+    .gl-row-checked {
+      width: 32px !important;
+      height: 32px !important;
+      line-height: 32px;
+      padding: 0;
 
-    .gl-field-name,
-    .gl-field-acc,
-    .gl-field-remarks {
-      grid-column: 1;
-    }
-
-    .gl-row-delete {
-      grid-column: 2;
-      grid-row: 1;
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
     }
   }
 
