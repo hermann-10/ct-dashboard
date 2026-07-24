@@ -220,21 +220,6 @@
   }
 }
 
-.gl-batch-row.checked-in {
-  opacity: 0.55;
-}
-
-.gl-row-checked {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 10px;
-
-  mat-icon {
-    color: var(--hm-success, #22c55e);
-  }
-}
-
 .gl-row-delete {
   margin-top: 6px;
   opacity: 0.35;

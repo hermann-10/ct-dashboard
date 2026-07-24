@@ -22,8 +22,6 @@ interface GuestEntry {
 }
 
 interface DraftGuestRow {
-  entryId?: string;
-  checkedIn?: boolean;
   name: string;
   accompagnants: number;
   remarks: string;
@@ -86,25 +84,11 @@ export class PublicGuestlistComponent implements OnInit {
   });
   isFull = computed(() => this.entryCount() >= this.quota());
   remainingPlaces = computed(() => Math.max(0, this.quota() - this.entryCount()));
-  newRows = computed(() => this.rows().filter(r => !r.entryId && r.name.trim().length > 0));
-  newCount = computed(() => this.newRows().length);
-  draftRowCount = computed(() => this.rows().filter(r => !r.entryId).length);
-  hasChanges = computed(() => {
-    const gl = this.guestlist();
-    if (!gl) return false;
-    const byId = new Map(gl.entries.map(e => [e.id, e]));
-    return this.rows().some(r => {
-      if (!r.entryId) return r.name.trim().length > 0;
-      if (r.checkedIn) return false;
-      const orig = byId.get(r.entryId);
-      if (!orig || !r.name.trim()) return false;
-      return (
-        r.name.trim() !== orig.guest_name ||
-        (Number(r.accompagnants) || 0) !== (orig.accompagnants ?? 0) ||
-        (r.remarks.trim() || null) !== (orig.remarks ?? null)
-      );
-    });
-  });
+  filledRows = computed(() => this.rows().filter(r => r.name.trim().length > 0));
+  filledCount = computed(() => this.filledRows().length);
+  newPersonsCount = computed(() =>
+    this.filledRows().reduce((s, r) => s + 1 + (Number(r.accompagnants) || 0), 0)
+  );
   eventDate = computed(() => {
     const d = this.guestlist()?.event?.date;
     if (!d) return '';
@@ -130,7 +114,7 @@ export class PublicGuestlistComponent implements OnInit {
         a.guest_name.localeCompare(b.guest_name, 'fr')
       );
       this.guestlist.set(data);
-      this.rebuildRows();
+      this.resetRows();
       await this.generateQrCodes(data.entries);
     } catch {
       this.error.set('Guestlist introuvable. Vérifiez le lien.');
@@ -139,22 +123,10 @@ export class PublicGuestlistComponent implements OnInit {
     }
   }
 
-  // ── Rows management (existing entries pre-filled + empty rows for new guests) ──
-  private rebuildRows(): void {
-    const gl = this.guestlist();
-    const entries = gl?.entries ?? [];
-    const existing: DraftGuestRow[] = entries.map(e => ({
-      entryId: e.id,
-      checkedIn: e.is_checked_in,
-      name: e.guest_name,
-      accompagnants: e.accompagnants ?? 0,
-      remarks: e.remarks ?? '',
-    }));
-    const emptyCount = Math.min(3, this.remainingPlaces());
-    this.rows.set([
-      ...existing,
-      ...Array.from({ length: emptyCount }, () => this.emptyRow()),
-    ]);
+  // ── Batch rows management ──
+  private resetRows(): void {
+    const count = Math.max(1, Math.min(5, this.remainingPlaces()));
+    this.rows.set(Array.from({ length: count }, () => this.emptyRow()));
   }
 
   private emptyRow(): DraftGuestRow {
@@ -162,37 +134,14 @@ export class PublicGuestlistComponent implements OnInit {
   }
 
   addRow(): void {
-    if (this.draftRowCount() >= this.remainingPlaces()) return;
+    if (this.rows().length >= this.remainingPlaces()) return;
     this.rows.update(rows => [...rows, this.emptyRow()]);
   }
 
-  async removeRow(index: number): Promise<void> {
-    const row = this.rows()[index];
-    if (!row) return;
-
-    // Draft row: just remove it locally
-    if (!row.entryId) {
-      this.rows.update(rows => rows.filter((_, i) => i !== index));
-      return;
-    }
-
-    // Existing entry: delete on the server
-    const gl = this.guestlist();
-    if (!gl) return;
-    this.saving.set(true);
-    try {
-      await this.supabase.deleteGuestlistEntry(row.entryId);
-      this.guestlist.set({
-        ...gl,
-        entries: gl.entries.filter(e => e.id !== row.entryId),
-      });
-      this.rows.update(rows => rows.filter((_, i) => i !== index));
-      this.showNotification('success', `${row.name} retiré(e).`);
-    } catch {
-      this.showNotification('error', 'Erreur lors de la suppression.');
-    } finally {
-      this.saving.set(false);
-    }
+  removeRow(index: number): void {
+    this.rows.update(rows =>
+      rows.length > 1 ? rows.filter((_, i) => i !== index) : [this.emptyRow()]
+    );
   }
 
   updateRow(index: number, patch: Partial<DraftGuestRow>): void {
@@ -201,97 +150,83 @@ export class PublicGuestlistComponent implements OnInit {
     );
   }
 
-  async onSaveGuests(): Promise<void> {
+  async onAddGuests(): Promise<void> {
     const gl = this.guestlist();
-    if (!gl || !this.hasChanges()) return;
+    if (!gl || this.isFull()) return;
 
-    // Check that the total after save (existing + new, incl. accompagnants) fits the quota
-    const totalAfter = this.rows()
-      .filter(r => r.entryId || r.name.trim())
-      .reduce((s, r) => s + 1 + (Number(r.accompagnants) || 0), 0);
-    if (totalAfter > this.quota()) {
-      const remaining = this.remainingPlaces();
+    const toAdd = this.filledRows();
+    if (toAdd.length === 0) return;
+
+    // Check that all new persons (1 + accompagnants per row) fit within the remaining quota
+    const remaining = this.remainingPlaces();
+    if (this.newPersonsCount() > remaining) {
       this.showNotification('error', `Plus assez de places (${remaining} restante${remaining > 1 ? 's' : ''}).`);
       return;
     }
 
     this.saving.set(true);
-    const byId = new Map(gl.entries.map(e => [e.id, e]));
-    let entries = [...gl.entries];
-    const createdEntries: GuestEntry[] = [];
+    const added: GuestEntry[] = [];
     const succeeded = new Set<DraftGuestRow>();
-    let created = 0;
-    let updated = 0;
     let failures = 0;
-
     try {
-      for (const row of this.rows()) {
-        const name = row.name.trim();
-
-        if (row.entryId) {
-          // Existing entry: update if modified (checked-in entries stay untouched)
-          const orig = byId.get(row.entryId);
-          if (!orig || row.checkedIn || !name) continue;
-          const changes: Partial<{ guest_name: string; accompagnants: number; remarks: string | null }> = {};
-          if (name !== orig.guest_name) changes.guest_name = name;
-          const acc = Number(row.accompagnants) || 0;
-          if (acc !== (orig.accompagnants ?? 0)) changes.accompagnants = acc;
-          const rem = row.remarks.trim() || null;
-          if (rem !== (orig.remarks ?? null)) changes.remarks = rem;
-          if (Object.keys(changes).length === 0) continue;
-          try {
-            const entry = await this.supabase.updateGuestlistEntry(row.entryId, changes);
-            entries = entries.map(e => (e.id === entry.id ? entry : e));
-            updated++;
-          } catch {
-            failures++;
-          }
-        } else if (name) {
-          // New guest
-          try {
-            const entry = await this.supabase.createGuestlistEntry({
-              guestlist_id: gl.id,
-              guest_name: name,
-              accompagnants: Number(row.accompagnants) || 0,
-              remarks: row.remarks.trim() || undefined,
-            });
-            entries = [...entries, entry];
-            createdEntries.push(entry);
-            succeeded.add(row);
-            created++;
-          } catch {
-            failures++;
-          }
+      for (const row of toAdd) {
+        try {
+          const entry = await this.supabase.createGuestlistEntry({
+            guestlist_id: gl.id,
+            guest_name: row.name.trim(),
+            accompagnants: Number(row.accompagnants) || 0,
+            remarks: row.remarks.trim() || undefined,
+          });
+          added.push(entry);
+          succeeded.add(row);
+        } catch {
+          failures++;
         }
       }
 
-      if (created > 0 || updated > 0) {
+      if (added.length > 0) {
         this.guestlist.set({
           ...gl,
-          entries: entries.sort((a: GuestEntry, b: GuestEntry) =>
+          entries: [...gl.entries, ...added].sort((a: GuestEntry, b: GuestEntry) =>
             a.guest_name.localeCompare(b.guest_name, 'fr')
           ),
         });
-        if (createdEntries.length > 0) {
-          await this.generateQrCodes(createdEntries);
-        }
+        await this.generateQrCodes(added);
       }
 
       if (failures === 0) {
-        const parts: string[] = [];
-        if (created > 0) parts.push(`${created} invité${created > 1 ? 's' : ''} ajouté${created > 1 ? 's' : ''}`);
-        if (updated > 0) parts.push(`${updated} modifié${updated > 1 ? 's' : ''}`);
-        this.showNotification('success', `${parts.join(' · ')} !`);
-        this.rebuildRows();
+        this.showNotification(
+          'success',
+          added.length > 1 ? `${added.length} invités ajoutés !` : `${added[0].guest_name} ajouté(e) !`
+        );
+        this.resetRows();
       } else {
-        // Rebuild from server state, then re-append the new rows that failed so nothing typed is lost
-        const failedDrafts = this.rows().filter(r => !r.entryId && r.name.trim() && !succeeded.has(r));
-        this.rebuildRows();
-        if (failedDrafts.length > 0) {
-          this.rows.update(rows => [...rows.filter(r => r.entryId), ...failedDrafts]);
-        }
-        this.showNotification('error', `${created + updated} enregistré(s), ${failures} en erreur. Réessayez.`);
+        // Keep the rows that failed (and the untouched ones) so nothing typed is lost
+        this.rows.update(rows => {
+          const kept = rows.filter(r => !succeeded.has(r));
+          return kept.length > 0 ? kept : [this.emptyRow()];
+        });
+        this.showNotification('error', `${added.length} ajouté(s), ${failures} en erreur. Réessayez.`);
       }
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async onRemoveGuest(entry: GuestEntry): Promise<void> {
+    const gl = this.guestlist();
+    if (!gl) return;
+
+    this.saving.set(true);
+    try {
+      await this.supabase.deleteGuestlistEntry(entry.id);
+      this.guestlist.set({
+        ...gl,
+        entries: gl.entries.filter(e => e.id !== entry.id),
+      });
+      this.showNotification('success', `${entry.guest_name} retiré(e).`);
+    } catch {
+      this.showNotification('error', 'Erreur lors de la suppression.');
     } finally {
       this.saving.set(false);
     }
