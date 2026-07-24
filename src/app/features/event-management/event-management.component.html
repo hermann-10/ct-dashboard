@@ -46,7 +46,12 @@
       </div>
     </div>
 
-    <mat-tab-group animationDuration="200ms" dynamicHeight>
+    <mat-tab-group
+      animationDuration="200ms"
+      dynamicHeight
+      [selectedIndex]="selectedTab()"
+      (selectedIndexChange)="onTabChange($event)"
+    >
       <!-- Tab 1: Vue d'ensemble -->
       <mat-tab>
         <ng-template mat-tab-label>

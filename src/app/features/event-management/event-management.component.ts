@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -42,16 +42,37 @@ import { EventSalesPanelComponent } from '../bar/components/event-sales-panel/ev
 export class EventManagementComponent implements OnInit {
   readonly store = inject(EventManagementStore);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly pdfExport = inject(PdfExportService);
 
   exporting = signal(false);
+
+  private readonly tabSlugs = ['overview', 'budget', 'lineup', 'guestlists', 'bar', 'notes'];
+  selectedTab = signal(0);
 
   ngOnInit(): void {
     const slug = this.route.snapshot.paramMap.get('slug');
     if (slug) {
       this.store.loadEvent(slug);
     }
+
+    // Restore active tab from the URL (?tab=...)
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    const index = tab ? this.tabSlugs.indexOf(tab) : -1;
+    if (index >= 0) {
+      this.selectedTab.set(index);
+    }
+  }
+
+  onTabChange(index: number): void {
+    this.selectedTab.set(index);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: index > 0 ? this.tabSlugs[index] : null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   // ── Charges ──
