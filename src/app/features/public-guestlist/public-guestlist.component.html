@@ -55,77 +55,94 @@
           </div>
         }
 
-        <!-- Add guest form -->
+        <!-- Add guests form (batch rows) -->
         @if (!isFull()) {
           <div class="gl-add-form">
             <h3>
-              <mat-icon>person_add</mat-icon>
-              Ajouter un invité
+              <mat-icon>group_add</mat-icon>
+              Ajouter des invités
+              <span class="gl-places-left">
+                {{ remainingPlaces() }} place{{ remainingPlaces() > 1 ? 's' : '' }} restante{{ remainingPlaces() > 1 ? 's' : '' }}
+              </span>
             </h3>
-            <div class="gl-form-fields">
-              <mat-form-field appearance="outline">
-                <mat-label>Nom de l'invité</mat-label>
-                <input
-                  matInput
-                  [ngModel]="newGuestName()"
-                  (ngModelChange)="newGuestName.set($event)"
-                  (keydown.enter)="onAddGuest()"
-                  placeholder="Prénom Nom"
-                />
-              </mat-form-field>
 
-              <!-- Email field temporarily disabled
-              <mat-form-field appearance="outline">
-                <mat-label>Email</mat-label>
-                <mat-icon matPrefix>mail_outline</mat-icon>
-                <input
-                  matInput
-                  type="email"
-                  [ngModel]="newGuestEmail()"
-                  (ngModelChange)="newGuestEmail.set($event)"
-                  placeholder="Pour recevoir le QR code"
-                />
-              </mat-form-field>
-              -->
-            </div>
+            <div class="gl-batch-rows">
+              @for (row of rows(); track $index; let i = $index) {
+                <div class="gl-batch-row">
+                  <mat-form-field appearance="outline" class="gl-field-name">
+                    <mat-label>Nom de l'invité</mat-label>
+                    <input
+                      matInput
+                      [ngModel]="row.name"
+                      (ngModelChange)="updateRow(i, { name: $event })"
+                      placeholder="Prénom Nom"
+                    />
+                  </mat-form-field>
 
-            <div class="gl-form-fields-row2">
-              <mat-form-field appearance="outline">
-                <mat-label>+ accompagnant(s)</mat-label>
-                <input
-                  matInput
-                  type="number"
-                  [ngModel]="newAccompagnants()"
-                  (ngModelChange)="newAccompagnants.set($event)"
-                  min="0"
-                  max="5"
-                />
-              </mat-form-field>
+                  <mat-form-field appearance="outline" class="gl-field-acc">
+                    <mat-label>+ acc.</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      [ngModel]="row.accompagnants"
+                      (ngModelChange)="updateRow(i, { accompagnants: $event })"
+                      min="0"
+                      max="5"
+                    />
+                  </mat-form-field>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Remarques</mat-label>
-                <input
-                  matInput
-                  [ngModel]="newRemarks()"
-                  (ngModelChange)="newRemarks.set($event)"
-                  placeholder="Optionnel"
-                />
-              </mat-form-field>
-            </div>
-            <button
-              mat-flat-button
-              color="primary"
-              [disabled]="!newGuestName().trim() || saving()"
-              (click)="onAddGuest()"
-              class="gl-add-btn"
-            >
-              @if (saving()) {
-                <mat-spinner diameter="18" />
-              } @else {
-                <mat-icon>person_add</mat-icon>
+                  <mat-form-field appearance="outline" class="gl-field-remarks">
+                    <mat-label>Remarques</mat-label>
+                    <input
+                      matInput
+                      [ngModel]="row.remarks"
+                      (ngModelChange)="updateRow(i, { remarks: $event })"
+                      placeholder="Optionnel"
+                    />
+                  </mat-form-field>
+
+                  <button
+                    mat-icon-button
+                    class="gl-row-delete"
+                    matTooltip="Supprimer la ligne"
+                    [disabled]="saving()"
+                    (click)="removeRow(i)"
+                  >
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
               }
-              Ajouter à la liste
-            </button>
+            </div>
+
+            <div class="gl-batch-actions">
+              <button
+                mat-stroked-button
+                class="gl-add-row-btn"
+                [disabled]="rows().length >= remainingPlaces() || saving()"
+                (click)="addRow()"
+              >
+                <mat-icon>add</mat-icon>
+                Ajouter une ligne
+              </button>
+              <button
+                mat-flat-button
+                color="primary"
+                [disabled]="filledCount() === 0 || saving()"
+                (click)="onAddGuests()"
+                class="gl-add-btn"
+              >
+                @if (saving()) {
+                  <mat-spinner diameter="18" />
+                } @else {
+                  <mat-icon>person_add</mat-icon>
+                }
+                @if (filledCount() > 1) {
+                  Ajouter {{ filledCount() }} invités
+                } @else {
+                  Ajouter à la liste
+                }
+              </button>
+            </div>
           </div>
         } @else {
           <div class="gl-full-banner">

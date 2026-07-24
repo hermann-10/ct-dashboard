@@ -192,24 +192,61 @@
   }
 }
 
-.gl-form-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  align-items: start;
+.gl-places-left {
+  margin-left: auto;
+  font-size: var(--hm-text-xs);
+  font-weight: 500;
+  color: var(--hm-text-tertiary);
+  background: var(--hm-border-light);
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--hm-radius-full);
 }
 
-.gl-form-fields-row2 {
+// ── Batch rows ──
+.gl-batch-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.gl-batch-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  grid-template-columns: 1.6fr 110px 1.2fr 40px;
+  gap: 0.75rem;
   align-items: start;
-  margin-top: -0.25rem;
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+.gl-row-delete {
+  margin-top: 6px;
+  opacity: 0.35;
+  transition: opacity var(--hm-transition-fast);
+
+  &:hover {
+    opacity: 1;
+    color: var(--hm-error);
+  }
+}
+
+.gl-batch-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.gl-add-row-btn {
+  height: 44px;
+  border-radius: var(--hm-radius-sm) !important;
+  font-weight: 600 !important;
+  font-size: var(--hm-text-sm) !important;
+  flex-shrink: 0;
 }
 
 .gl-add-btn {
-  width: 100%;
-  margin-top: 0.5rem;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -428,9 +465,31 @@
   .gl-body { padding: 0 1rem 2rem; margin-top: -1rem; }
   .gl-header-overlay { padding: 2rem 1.25rem 1.25rem; }
   .gl-event-name { font-size: var(--hm-text-xl); }
-  .gl-form-fields,
-  .gl-form-fields-row2 {
-    grid-template-columns: 1fr;
+  .gl-batch-row {
+    grid-template-columns: 1fr 44px;
+    padding-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px dashed var(--hm-border-light);
+
+    &:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .gl-field-name,
+    .gl-field-acc,
+    .gl-field-remarks {
+      grid-column: 1;
+    }
+
+    .gl-row-delete {
+      grid-column: 2;
+      grid-row: 1;
+    }
+  }
+
+  .gl-batch-actions {
+    flex-direction: column;
   }
   .gl-artist-header {
     flex-direction: column;

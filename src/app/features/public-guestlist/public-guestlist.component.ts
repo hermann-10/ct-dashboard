@@ -21,6 +21,12 @@ interface GuestEntry {
   checkin_token: string;
 }
 
+interface DraftGuestRow {
+  name: string;
+  accompagnants: number;
+  remarks: string;
+}
+
 interface GuestlistData {
   id: string;
   artist_name: string;
@@ -64,11 +70,8 @@ export class PublicGuestlistComponent implements OnInit {
   notification = signal<{ type: 'success' | 'error'; message: string } | null>(null);
   qrCodes = signal<Map<string, string>>(new Map());
 
-  // Form fields
-  newGuestName = signal('');
-  newGuestEmail = signal('');
-  newAccompagnants = signal(0);
-  newRemarks = signal('');
+  // Batch entry rows (empty fields ready to fill)
+  rows = signal<DraftGuestRow[]>([]);
 
   entryCount = computed(() => {
     const entries = this.guestlist()?.entries ?? [];
@@ -80,6 +83,12 @@ export class PublicGuestlistComponent implements OnInit {
     return q > 0 ? Math.min(100, Math.round((this.entryCount() / q) * 100)) : 0;
   });
   isFull = computed(() => this.entryCount() >= this.quota());
+  remainingPlaces = computed(() => Math.max(0, this.quota() - this.entryCount()));
+  filledRows = computed(() => this.rows().filter(r => r.name.trim().length > 0));
+  filledCount = computed(() => this.filledRows().length);
+  newPersonsCount = computed(() =>
+    this.filledRows().reduce((s, r) => s + 1 + (Number(r.accompagnants) || 0), 0)
+  );
   eventDate = computed(() => {
     const d = this.guestlist()?.event?.date;
     if (!d) return '';
@@ -105,6 +114,7 @@ export class PublicGuestlistComponent implements OnInit {
         a.guest_name.localeCompare(b.guest_name, 'fr')
       );
       this.guestlist.set(data);
+      this.resetRows();
       await this.generateQrCodes(data.entries);
     } catch {
       this.error.set('Guestlist introuvable. Vérifiez le lien.');
@@ -113,58 +123,91 @@ export class PublicGuestlistComponent implements OnInit {
     }
   }
 
-  async onAddGuest(): Promise<void> {
-    const name = this.newGuestName().trim();
-    if (!name || this.isFull()) return;
+  // ── Batch rows management ──
+  private resetRows(): void {
+    const count = Math.max(1, Math.min(5, this.remainingPlaces()));
+    this.rows.set(Array.from({ length: count }, () => this.emptyRow()));
+  }
 
+  private emptyRow(): DraftGuestRow {
+    return { name: '', accompagnants: 0, remarks: '' };
+  }
+
+  addRow(): void {
+    if (this.rows().length >= this.remainingPlaces()) return;
+    this.rows.update(rows => [...rows, this.emptyRow()]);
+  }
+
+  removeRow(index: number): void {
+    this.rows.update(rows =>
+      rows.length > 1 ? rows.filter((_, i) => i !== index) : [this.emptyRow()]
+    );
+  }
+
+  updateRow(index: number, patch: Partial<DraftGuestRow>): void {
+    this.rows.update(rows =>
+      rows.map((r, i) => (i === index ? { ...r, ...patch } : r))
+    );
+  }
+
+  async onAddGuests(): Promise<void> {
     const gl = this.guestlist();
-    if (!gl) return;
+    if (!gl || this.isFull()) return;
 
-    // Check that the new entry (1 + accompagnants) fits within the remaining quota
-    const newPersons = 1 + this.newAccompagnants();
-    const remaining = this.quota() - this.entryCount();
-    if (newPersons > remaining) {
+    const toAdd = this.filledRows();
+    if (toAdd.length === 0) return;
+
+    // Check that all new persons (1 + accompagnants per row) fit within the remaining quota
+    const remaining = this.remainingPlaces();
+    if (this.newPersonsCount() > remaining) {
       this.showNotification('error', `Plus assez de places (${remaining} restante${remaining > 1 ? 's' : ''}).`);
       return;
     }
 
     this.saving.set(true);
+    const added: GuestEntry[] = [];
+    const succeeded = new Set<DraftGuestRow>();
+    let failures = 0;
     try {
-      const email = this.newGuestEmail().trim() || undefined;
-      const entry = await this.supabase.createGuestlistEntry({
-        guestlist_id: gl.id,
-        guest_name: name,
-        email,
-        accompagnants: this.newAccompagnants(),
-        remarks: this.newRemarks().trim() || undefined,
-      });
-
-      const updated = {
-        ...gl,
-        entries: [...gl.entries, entry].sort((a: GuestEntry, b: GuestEntry) =>
-          a.guest_name.localeCompare(b.guest_name, 'fr')
-        ),
-      };
-      this.guestlist.set(updated);
-
-      // Reset form
-      this.newGuestName.set('');
-      this.newGuestEmail.set('');
-      this.newAccompagnants.set(0);
-      this.newRemarks.set('');
-
-      this.showNotification('success', `${entry.guest_name} ajouté(e) !`);
-      // Generate QR for new entry
-      if (entry.checkin_token) {
-        await this.generateQrCodes([entry]);
+      for (const row of toAdd) {
+        try {
+          const entry = await this.supabase.createGuestlistEntry({
+            guestlist_id: gl.id,
+            guest_name: row.name.trim(),
+            accompagnants: Number(row.accompagnants) || 0,
+            remarks: row.remarks.trim() || undefined,
+          });
+          added.push(entry);
+          succeeded.add(row);
+        } catch {
+          failures++;
+        }
       }
 
-      // Send QR code email (fire-and-forget, don't block the UI)
-      if (email && entry.checkin_token) {
-        this.sendQrEmail(entry, gl, email);
+      if (added.length > 0) {
+        this.guestlist.set({
+          ...gl,
+          entries: [...gl.entries, ...added].sort((a: GuestEntry, b: GuestEntry) =>
+            a.guest_name.localeCompare(b.guest_name, 'fr')
+          ),
+        });
+        await this.generateQrCodes(added);
       }
-    } catch {
-      this.showNotification('error', 'Erreur lors de l\'ajout. Réessayez.');
+
+      if (failures === 0) {
+        this.showNotification(
+          'success',
+          added.length > 1 ? `${added.length} invités ajoutés !` : `${added[0].guest_name} ajouté(e) !`
+        );
+        this.resetRows();
+      } else {
+        // Keep the rows that failed (and the untouched ones) so nothing typed is lost
+        this.rows.update(rows => {
+          const kept = rows.filter(r => !succeeded.has(r));
+          return kept.length > 0 ? kept : [this.emptyRow()];
+        });
+        this.showNotification('error', `${added.length} ajouté(s), ${failures} en erreur. Réessayez.`);
+      }
     } finally {
       this.saving.set(false);
     }
@@ -208,29 +251,6 @@ export class PublicGuestlistComponent implements OnInit {
       }
     }
     this.qrCodes.set(currentMap);
-  }
-
-  /** Send QR code via email (fire-and-forget) */
-  private async sendQrEmail(entry: GuestEntry, gl: GuestlistData, email: string): Promise<void> {
-    try {
-      const result = await this.supabase.sendGuestQrEmail({
-        guest_name: entry.guest_name,
-        guest_email: email,
-        checkin_token: entry.checkin_token!,
-        event_name: gl.event.name,
-        event_date: gl.event.date,
-        event_venue: gl.event.venue,
-        event_city: gl.event.city,
-        artist_name: gl.artist_name,
-        event_image_url: gl.event.image_url ?? undefined,
-      });
-      if (result.success) {
-        this.showNotification('success', `QR code envoyé à ${email}`);
-      }
-      // Silently ignore email errors — guest is already added
-    } catch {
-      // Don't show error — the guest was added successfully
-    }
   }
 
   private showNotification(type: 'success' | 'error', message: string): void {
