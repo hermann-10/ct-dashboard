@@ -45,12 +45,13 @@ export class SupabaseService {
           _acquireTimeout: number,
           fn: () => Promise<R>,
         ): Promise<R> => {
-          // Wait for any in-flight auth operation to finish
+          // Wait for any in-flight auth operation to finish — but never
+          // more than 5s: a wedged operation must not freeze the queue.
           const prior = this._authLockPromise;
           let release: () => void;
           this._authLockPromise = new Promise<void>(r => (release = r));
           try {
-            await prior;
+            await Promise.race([prior, new Promise(r => setTimeout(r, 5000))]);
             return await fn();
           } finally {
             release!();
@@ -59,7 +60,12 @@ export class SupabaseService {
       },
       global: {
         fetch: async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-          const res = await nativeFetch(input, init);
+          // Add a 20s timeout when the caller has no abort signal, so a
+          // hung request (auth refresh, read) fails instead of freezing.
+          const patchedInit = init?.signal
+            ? init
+            : { ...init, signal: AbortSignal.timeout(20000) };
+          const res = await nativeFetch(input, patchedInit);
           scheduleTick();
           return res;
         },

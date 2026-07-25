@@ -7,6 +7,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { SupabaseService } from '../../../../core/services/supabase.service';
 import { EventRecord } from '../../events-admin.model';
 
@@ -27,7 +29,9 @@ export interface EventDialogData {
     MatSlideToggleModule,
     MatIconModule,
     MatProgressBarModule,
+    MatDatepickerModule,
   ],
+  providers: [provideNativeDateAdapter()],
   template: `
     <h2 mat-dialog-title>{{ data.mode === 'create' ? 'Nouvel événement' : 'Modifier l\\'événement' }}</h2>
     <mat-dialog-content class="dialog-content">
@@ -41,17 +45,20 @@ export interface EventDialogData {
         <input matInput [(ngModel)]="form.slug" required [disabled]="data.mode === 'edit'" />
       </mat-form-field>
 
-      <div class="row">
-        <mat-form-field appearance="outline">
-          <mat-label>Date</mat-label>
-          <input matInput [(ngModel)]="form.date" type="date" required />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Emoji (fallback)</mat-label>
-          <input matInput [(ngModel)]="form.image_emoji" />
-        </mat-form-field>
-      </div>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Date</mat-label>
+        <input
+          matInput
+          [matDatepicker]="picker"
+          [ngModel]="dateValue"
+          (ngModelChange)="onDateChange($event)"
+          (click)="picker.open()"
+          readonly
+          required
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-datepicker #picker />
+      </mat-form-field>
 
       <div class="row">
         <mat-form-field appearance="outline">
@@ -170,6 +177,18 @@ export class EventDialogComponent {
   fetchingOg = signal(false);
   private pendingFile: File | null = null;
 
+  // Datepicker model (the form keeps the YYYY-MM-DD string)
+  dateValue: Date | null = this.data.event?.date
+    ? new Date(this.data.event.date + 'T00:00:00')
+    : null;
+
+  onDateChange(d: Date | null): void {
+    this.dateValue = d;
+    this.form.date = d
+      ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      : '';
+  }
+
   form = {
     slug: this.data.event?.slug ?? '',
     name: this.data.event?.name ?? '',
@@ -201,10 +220,14 @@ export class EventDialogComponent {
     event.preventDefault();
     event.stopPropagation();
     const file = event.dataTransfer?.files?.[0];
-    if (file?.type.startsWith('image/')) this.handleFile(file);
+    if (file) this.handleFile(file);
   }
 
   private handleFile(file: File): void {
+    if (!file.type.startsWith('image/')) {
+      this.uploadError.set('Seules les images sont acceptées (JPG, PNG, WebP).');
+      return;
+    }
     if (file.size > 5 * 1024 * 1024) {
       this.uploadError.set('Le fichier est trop lourd (max 5 MB)');
       return;
