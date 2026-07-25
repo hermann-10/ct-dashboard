@@ -8,6 +8,7 @@ export class SupabaseService {
   private readonly supabase: SupabaseClient;
   private _scheduleTick!: () => void;
   private _authLockPromise: Promise<void> = Promise.resolve();
+  private _cachedAccessToken = '';
 
   constructor() {
     // ─────────────────────────────────────────────────────────
@@ -64,6 +65,12 @@ export class SupabaseService {
         },
       },
     });
+
+    // Cache the access token so REST helpers never depend on a
+    // potentially-hanging getSession() call.
+    this.supabase.auth.onAuthStateChange((_event, session) => {
+      this._cachedAccessToken = session?.access_token ?? '';
+    });
   }
 
   // ─────────────────────────────────────────────────────────
@@ -71,14 +78,30 @@ export class SupabaseService {
   // client which can hang on mutations in zoneless Angular.
   // Reads still go through the Supabase client (they work).
   // ─────────────────────────────────────────────────────────
+  // getSession() can deadlock (supabase-js auth lock). Race it against a
+  // short timeout and fall back to the cached token so requests never hang.
+  private async _getAccessToken(): Promise<string> {
+    try {
+      const result = await Promise.race([
+        this.supabase.auth.getSession(),
+        new Promise<null>(resolve => setTimeout(resolve, 2500, null)),
+      ]);
+      const token = result?.data?.session?.access_token;
+      if (token) {
+        this._cachedAccessToken = token;
+        return token;
+      }
+    } catch { /* fall back to cached token */ }
+    return this._cachedAccessToken;
+  }
+
   private async _rest<T = any>(
     method: 'POST' | 'PATCH' | 'DELETE',
     table: string,
     body?: Record<string, any>,
     queryParams?: string,
   ): Promise<T> {
-    const { data: sessionData } = await this.supabase.auth.getSession();
-    const accessToken = sessionData.session?.access_token ?? '';
+    const accessToken = await this._getAccessToken();
 
     const url = `${environment.supabaseUrl}/rest/v1/${table}${queryParams ? `?${queryParams}` : ''}`;
 
@@ -98,6 +121,7 @@ export class SupabaseService {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(15000),
     });
 
     this._scheduleTick(); // trigger coalesced CD after direct fetch
@@ -363,8 +387,7 @@ export class SupabaseService {
   // client which can hang on uploads in zoneless Angular.
   // ─────────────────────────────────────────────────────────
   private async _storageUpload(bucket: string, path: string, file: File): Promise<string> {
-    const { data: sessionData } = await this.supabase.auth.getSession();
-    const accessToken = sessionData.session?.access_token ?? '';
+    const accessToken = await this._getAccessToken();
 
     const url = `${environment.supabaseUrl}/storage/v1/object/${bucket}/${path}`;
 
@@ -391,8 +414,7 @@ export class SupabaseService {
   }
 
   private async _storageDelete(bucket: string, paths: string[]): Promise<void> {
-    const { data: sessionData } = await this.supabase.auth.getSession();
-    const accessToken = sessionData.session?.access_token ?? '';
+    const accessToken = await this._getAccessToken();
 
     const url = `${environment.supabaseUrl}/storage/v1/object/${bucket}`;
 
