@@ -110,3 +110,110 @@
     .event-info h2 { font-size: var(--hm-text-xl); }
   }
 }
+
+// ── Hub de cartes (remplace les onglets) ──
+.hub-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.hub-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-left: 4px solid var(--hm-brand-primary);
+  border-radius: var(--hm-radius-md);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: box-shadow var(--hm-transition-base), transform var(--hm-transition-base);
+
+  &:hover {
+    box-shadow: var(--hm-shadow-md);
+    transform: translateY(-2px);
+
+    .hub-arrow { transform: translateX(3px); color: var(--hm-brand-primary); }
+  }
+
+  &.budget { border-left-color: var(--hm-error); .hub-icon { background: rgba(239, 68, 68, 0.08); color: var(--hm-error); } }
+  &.lineup { border-left-color: var(--hm-brand-primary); }
+  &.guestlists { border-left-color: var(--hm-warning, #f59e0b); .hub-icon { background: rgba(245, 158, 11, 0.08); color: var(--hm-warning, #f59e0b); } }
+  &.bar { border-left-color: var(--hm-success, #10b981); .hub-icon { background: rgba(16, 185, 129, 0.08); color: var(--hm-success, #10b981); } }
+}
+
+.hub-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--hm-radius-sm);
+  background: rgba(108, 92, 231, 0.08);
+  color: var(--hm-brand-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon { font-size: 22px; width: 22px; height: 22px; }
+}
+
+.hub-info {
+  flex: 1;
+  min-width: 0;
+
+  h3 {
+    margin: 0 0 0.2rem;
+    font-size: var(--hm-text-base);
+    font-weight: 600;
+    color: var(--hm-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: var(--hm-text-xs);
+    color: var(--hm-text-secondary);
+    line-height: 1.5;
+  }
+
+  .hub-detail {
+    color: var(--hm-text-tertiary);
+  }
+}
+
+.hub-badge {
+  background: var(--hm-brand-primary);
+  color: #fff;
+  font-size: var(--hm-text-xs);
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: var(--hm-radius-full);
+  line-height: 1.4;
+}
+
+.hub-arrow {
+  color: var(--hm-text-tertiary);
+  flex-shrink: 0;
+  transition: transform var(--hm-transition-fast), color var(--hm-transition-fast);
+}
+
+.back-to-hub {
+  margin-top: 0.5rem;
+  color: var(--hm-text-secondary) !important;
+  font-weight: 600 !important;
+
+  mat-icon { margin-right: 4px; }
+
+  &:hover { color: var(--hm-brand-primary) !important; }
+}
+
+@media (max-width: 600px) {
+  .hub-cards {
+    grid-template-columns: 1fr;
+  }
+}

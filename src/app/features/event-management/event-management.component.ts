@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MatTabsModule } from '@angular/material/tabs';
+import { CurrencyPipe } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -24,12 +25,15 @@ import {
 } from './components';
 import { EventSalesPanelComponent } from '../bar/components/event-sales-panel/event-sales-panel.component';
 
+export type EventSection = 'budget' | 'lineup' | 'guestlists' | 'bar' | 'notes';
+
 @Component({
   selector: 'app-event-management',
   standalone: true,
   imports: [
     RouterLink,
-    MatTabsModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
+    CurrencyPipe,
+    MatButtonModule, MatIconModule, MatProgressSpinnerModule,
     MatDialogModule, MatTooltipModule,
     BudgetOverviewComponent, ChargesTableComponent, RevenuesTableComponent,
     LineupTableComponent, EventNotesComponent, GuestlistPanelComponent,
@@ -48,30 +52,39 @@ export class EventManagementComponent implements OnInit {
 
   exporting = signal(false);
 
-  private readonly tabSlugs = ['overview', 'budget', 'lineup', 'guestlists', 'bar', 'notes'];
-  selectedTab = signal(0);
+  private readonly sections: EventSection[] = ['budget', 'lineup', 'guestlists', 'bar', 'notes'];
+  section = signal<EventSection | null>(null);
+
+  constructor() {
+    // Sync the active section with the URL (?tab=...) — browser back works
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed())
+      .subscribe(pm => {
+        const t = pm.get('tab') as EventSection | null;
+        this.section.set(t && this.sections.includes(t) ? t : null);
+      });
+  }
 
   ngOnInit(): void {
     const slug = this.route.snapshot.paramMap.get('slug');
     if (slug) {
       this.store.loadEvent(slug);
     }
-
-    // Restore active tab from the URL (?tab=...)
-    const tab = this.route.snapshot.queryParamMap.get('tab');
-    const index = tab ? this.tabSlugs.indexOf(tab) : -1;
-    if (index >= 0) {
-      this.selectedTab.set(index);
-    }
   }
 
-  onTabChange(index: number): void {
-    this.selectedTab.set(index);
+  openSection(section: EventSection): void {
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { tab: index > 0 ? this.tabSlugs[index] : null },
+      queryParams: { tab: section },
       queryParamsHandling: 'merge',
-      replaceUrl: true,
+    });
+  }
+
+  closeSection(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: null },
+      queryParamsHandling: 'merge',
     });
   }
 

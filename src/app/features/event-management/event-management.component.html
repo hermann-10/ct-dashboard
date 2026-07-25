@@ -46,118 +46,147 @@
       </div>
     </div>
 
-    <mat-tab-group
-      animationDuration="200ms"
-      dynamicHeight
-      [selectedIndex]="selectedTab()"
-      (selectedIndexChange)="onTabChange($event)"
-    >
-      <!-- Tab 1: Vue d'ensemble -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <mat-icon class="tab-icon">dashboard</mat-icon>
-          Vue d'ensemble
-        </ng-template>
-        <div class="tab-content">
-          <app-budget-overview [budget]="store.budget()" [lineupFees]="store.totalLineupFees()" />
-        </div>
-      </mat-tab>
+    @if (section() === null) {
+      <!-- ═══ HUB : vue d'ensemble + cartes de navigation ═══ -->
+      <div class="tab-content">
+        <app-budget-overview [budget]="store.budget()" [lineupFees]="store.totalLineupFees()" />
 
-      <!-- Tab 2: Budget (Charges + Recettes) -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <mat-icon class="tab-icon">account_balance_wallet</mat-icon>
-          Budget
-        </ng-template>
-        <div class="tab-content">
-          <h3 class="section-title">Charges / Dépenses</h3>
-          <app-charges-table
-            [charges]="store.charges()"
-            (add)="onAddCharge()"
-            (edit)="onEditCharge($event)"
-            (remove)="onRemoveCharge($event)"
-            (togglePaid)="onToggleChargePaid($event)"
-          />
+        <div class="hub-cards">
+          <button class="hub-card budget" (click)="openSection('budget')">
+            <div class="hub-icon"><mat-icon>account_balance_wallet</mat-icon></div>
+            <div class="hub-info">
+              <h3>Budget</h3>
+              <p>{{ store.charges().length }} charge(s) · {{ store.revenues().length }} recette(s)</p>
+              <p class="hub-detail">Résultat : {{ store.budget().profit | currency:'CHF':'symbol':'1.2-2' }}</p>
+            </div>
+            <mat-icon class="hub-arrow">chevron_right</mat-icon>
+          </button>
 
-          <h3 class="section-title" style="margin-top: 2rem;">Recettes</h3>
-          <app-revenues-table
-            [revenues]="store.revenues()"
-            (add)="onAddRevenue()"
-            (edit)="onEditRevenue($event)"
-            (remove)="onRemoveRevenue($event)"
-            (toggleReceived)="onToggleRevenueReceived($event)"
-          />
-        </div>
-      </mat-tab>
+          <button class="hub-card lineup" (click)="openSection('lineup')">
+            <div class="hub-icon"><mat-icon>groups</mat-icon></div>
+            <div class="hub-info">
+              <h3>
+                Lineup
+                @if (store.totalArtists() > 0) {
+                  <span class="hub-badge">{{ store.totalArtists() }}</span>
+                }
+              </h3>
+              <p>{{ store.confirmedArtists() }}/{{ store.totalArtists() }} artiste(s) confirmé(s)</p>
+              <p class="hub-detail">Cachets : {{ store.totalLineupFees() | currency:'CHF':'symbol':'1.2-2' }}</p>
+            </div>
+            <mat-icon class="hub-arrow">chevron_right</mat-icon>
+          </button>
 
-      <!-- Tab 3: Lineup -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <mat-icon class="tab-icon">groups</mat-icon>
-          Lineup
-        </ng-template>
-        <div class="tab-content">
-          <app-lineup-table
-            [lineup]="store.lineup()"
-            (add)="onAddLineup()"
-            (edit)="onEditLineup($event)"
-            (remove)="onRemoveLineup($event)"
-            (toggleConfirmed)="onToggleLineupConfirmed($event)"
-          />
-        </div>
-      </mat-tab>
+          <button class="hub-card guestlists" (click)="openSection('guestlists')">
+            <div class="hub-icon"><mat-icon>list_alt</mat-icon></div>
+            <div class="hub-info">
+              <h3>
+                Guestlists
+                @if (store.guestlistSummary().totalGuests > 0) {
+                  <span class="hub-badge">{{ store.guestlistSummary().totalGuests }}</span>
+                }
+              </h3>
+              <p>{{ store.guestlistSummary().totalGuestlists }} liste(s) · {{ store.guestlistSummary().totalGuests }}/{{ store.guestlistSummary().totalCapacity }} personnes</p>
+              <p class="hub-detail">{{ store.guestlistSummary().totalCheckedIn }} check-in</p>
+            </div>
+            <mat-icon class="hub-arrow">chevron_right</mat-icon>
+          </button>
 
-      <!-- Tab 4: Guestlists -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <mat-icon class="tab-icon">list_alt</mat-icon>
-          Guestlists
-          @if (store.guestlistSummary().totalGuests > 0) {
-            <span class="tab-badge">{{ store.guestlistSummary().totalGuests }}</span>
-          }
-        </ng-template>
-        <div class="tab-content">
-          <app-guestlist-panel
-            [guestlists]="store.guestlists()"
-            [lineup]="store.lineup()"
-            [summary]="store.guestlistSummary()"
-            [event]="store.event()"
-            (createGuestlist)="onCreateGuestlist()"
-            (addEntry)="onAddGuestEntry($event)"
-            (removeEntry)="onRemoveGuestEntry($event)"
-            (toggleCheckedIn)="onToggleGuestCheckedIn($event)"
-            (editGuestlist)="onEditGuestlist($event)"
-            (removeGuestlist)="onRemoveGuestlist($event)"
-          />
-        </div>
-      </mat-tab>
+          <button class="hub-card bar" (click)="openSection('bar')">
+            <div class="hub-icon"><mat-icon>local_bar</mat-icon></div>
+            <div class="hub-info">
+              <h3>Bar</h3>
+              <p>Ventes &amp; produits de la soirée</p>
+            </div>
+            <mat-icon class="hub-arrow">chevron_right</mat-icon>
+          </button>
 
-      <!-- Tab 5: Bar / Ventes -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <mat-icon class="tab-icon">local_bar</mat-icon>
-          Bar
-        </ng-template>
-        <div class="tab-content">
-          <app-event-sales-panel [eventId]="event.id" />
+          <button class="hub-card notes" (click)="openSection('notes')">
+            <div class="hub-icon"><mat-icon>notes</mat-icon></div>
+            <div class="hub-info">
+              <h3>Notes</h3>
+              @if (event.notes || event.strategy) {
+                <p>Notes &amp; stratégie renseignées</p>
+              } @else {
+                <p>Aucune note pour le moment</p>
+              }
+            </div>
+            <mat-icon class="hub-arrow">chevron_right</mat-icon>
+          </button>
         </div>
-      </mat-tab>
+      </div>
+    } @else {
+      <!-- ═══ SECTION EN PLEINE PAGE ═══ -->
+      <button mat-button class="back-to-hub" (click)="closeSection()">
+        <mat-icon>arrow_back</mat-icon>
+        Vue d'ensemble
+      </button>
 
-      <!-- Tab 6: Notes & Stratégie -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <mat-icon class="tab-icon">notes</mat-icon>
-          Notes
-        </ng-template>
-        <div class="tab-content">
-          <app-event-notes
-            [notes]="store.event()?.notes ?? null"
-            [strategy]="store.event()?.strategy ?? null"
-            [saving]="store.saving()"
-            (save)="onSaveNotes($event)"
-          />
-        </div>
-      </mat-tab>
-    </mat-tab-group>
+      @switch (section()) {
+        @case ('budget') {
+          <div class="tab-content">
+            <h3 class="section-title">Charges / Dépenses</h3>
+            <app-charges-table
+              [charges]="store.charges()"
+              (add)="onAddCharge()"
+              (edit)="onEditCharge($event)"
+              (remove)="onRemoveCharge($event)"
+              (togglePaid)="onToggleChargePaid($event)"
+            />
+
+            <h3 class="section-title" style="margin-top: 2rem;">Recettes</h3>
+            <app-revenues-table
+              [revenues]="store.revenues()"
+              (add)="onAddRevenue()"
+              (edit)="onEditRevenue($event)"
+              (remove)="onRemoveRevenue($event)"
+              (toggleReceived)="onToggleRevenueReceived($event)"
+            />
+          </div>
+        }
+        @case ('lineup') {
+          <div class="tab-content">
+            <app-lineup-table
+              [lineup]="store.lineup()"
+              (add)="onAddLineup()"
+              (edit)="onEditLineup($event)"
+              (remove)="onRemoveLineup($event)"
+              (toggleConfirmed)="onToggleLineupConfirmed($event)"
+            />
+          </div>
+        }
+        @case ('guestlists') {
+          <div class="tab-content">
+            <app-guestlist-panel
+              [guestlists]="store.guestlists()"
+              [lineup]="store.lineup()"
+              [summary]="store.guestlistSummary()"
+              [event]="store.event()"
+              (createGuestlist)="onCreateGuestlist()"
+              (addEntry)="onAddGuestEntry($event)"
+              (removeEntry)="onRemoveGuestEntry($event)"
+              (toggleCheckedIn)="onToggleGuestCheckedIn($event)"
+              (editGuestlist)="onEditGuestlist($event)"
+              (removeGuestlist)="onRemoveGuestlist($event)"
+            />
+          </div>
+        }
+        @case ('bar') {
+          <div class="tab-content">
+            <app-event-sales-panel [eventId]="event.id" />
+          </div>
+        }
+        @case ('notes') {
+          <div class="tab-content">
+            <app-event-notes
+              [notes]="store.event()?.notes ?? null"
+              [strategy]="store.event()?.strategy ?? null"
+              [saving]="store.saving()"
+              (save)="onSaveNotes($event)"
+            />
+          </div>
+        }
+      }
+    }
   }
 </div>
