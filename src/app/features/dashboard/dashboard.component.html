@@ -23,36 +23,61 @@
       </div>
     </div>
 
+    <!-- ═══ Navigation de période ═══ -->
+    <div class="period-nav">
+      <div class="period-mode">
+        <button class="pmode-btn" [class.active]="periodMode() === 'month'" (click)="periodMode.set('month')">Mois</button>
+        <button class="pmode-btn" [class.active]="periodMode() === 'year'" (click)="periodMode.set('year')">Année</button>
+        <button class="pmode-btn" [class.active]="periodMode() === 'total'" (click)="periodMode.set('total')">Total</button>
+      </div>
+      <div class="period-stepper">
+        @if (periodMode() !== 'total') {
+          <button mat-icon-button (click)="shiftPeriod(-1)" matTooltip="Période précédente">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+        }
+        <span class="period-label">{{ periodLabel() }}</span>
+        @if (periodMode() !== 'total') {
+          <button mat-icon-button (click)="shiftPeriod(1)" matTooltip="Période suivante">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+          @if (!isCurrentPeriod()) {
+            <button mat-stroked-button class="period-today" (click)="resetPeriod()">Aujourd'hui</button>
+          }
+        }
+      </div>
+    </div>
+
     <!-- ═══ CA & prochains événements ═══ -->
     <div class="business-row">
       <div class="biz-cards">
         <div class="biz-card">
           <div class="biz-head">
-            <span class="biz-label">CA du mois</span>
-            <div class="biz-icon purple"><mat-icon>payments</mat-icon></div>
+            <span class="biz-label">Recettes — {{ periodLabel() }}</span>
+            <div class="biz-icon green"><mat-icon>trending_up</mat-icon></div>
           </div>
-          <div class="biz-value">{{ store.businessStats().caMonth | currency:'CHF':'symbol':'1.0-0' }}</div>
-          <div class="biz-sub">Recettes des événements du mois</div>
+          <div class="biz-value">{{ periodStats().recettes | currency:'CHF':'symbol':'1.0-0' }}</div>
+          <div class="biz-sub">{{ periodEvents().length }} soirée(s) sur la période</div>
         </div>
 
         <div class="biz-card">
           <div class="biz-head">
-            <span class="biz-label">CA {{ currentYear }}</span>
-            <div class="biz-icon green"><mat-icon>trending_up</mat-icon></div>
+            <span class="biz-label">Charges — {{ periodLabel() }}</span>
+            <div class="biz-icon red"><mat-icon>payments</mat-icon></div>
           </div>
-          <div class="biz-value">{{ store.businessStats().caYear | currency:'CHF':'symbol':'1.0-0' }}</div>
-          <div class="biz-sub">Recettes cumulées sur l'année</div>
+          <div class="biz-value">{{ periodStats().charges | currency:'CHF':'symbol':'1.0-0' }}</div>
+          <div class="biz-sub">Dépenses des événements de la période</div>
         </div>
 
-        <div class="biz-card" [class.negative]="store.businessStats().resultYear < 0">
+        <div class="biz-card" [class.negative]="periodStats().result < 0">
           <div class="biz-head">
-            <span class="biz-label">Résultat {{ currentYear }}</span>
-            <div class="biz-icon" [class.green]="store.businessStats().resultYear >= 0" [class.red]="store.businessStats().resultYear < 0">
-              <mat-icon>{{ store.businessStats().resultYear >= 0 ? 'check_circle' : 'warning' }}</mat-icon>
+            <span class="biz-label">Résultat — {{ periodLabel() }}</span>
+            <div class="biz-icon" [class.green]="periodStats().result >= 0" [class.red]="periodStats().result < 0">
+              <mat-icon>{{ periodStats().result >= 0 ? 'check_circle' : 'warning' }}</mat-icon>
             </div>
           </div>
-          <div class="biz-value">{{ store.businessStats().resultYear | currency:'CHF':'symbol':'1.0-0' }}</div>
-          <div class="biz-sub">Recettes − charges de l'année</div>
+          <div class="biz-value">{{ periodStats().result | currency:'CHF':'symbol':'1.0-0' }}</div>
+          <div class="biz-sub">Recettes − charges</div>
         </div>
       </div>
 
@@ -83,9 +108,9 @@
 
     <!-- ═══ Chiffres par soirée ═══ -->
     <div class="events-financials">
-      <h3 class="section-heading">Chiffres par soirée</h3>
-      @if (store.perEventFinancials().length === 0) {
-        <p class="fin-empty">Saisis des recettes et charges dans le Budget de tes événements pour voir les chiffres ici.</p>
+      <h3 class="section-heading">Chiffres par soirée — {{ periodLabel() }}</h3>
+      @if (periodEvents().length === 0) {
+        <p class="fin-empty">Aucune soirée avec des chiffres sur cette période. Navigue avec les flèches ci-dessus ou saisis des recettes/charges dans le Budget des événements.</p>
       } @else {
         <div class="fin-table">
           <div class="fin-row fin-head">
@@ -95,7 +120,7 @@
             <span class="num fin-charges">Charges</span>
             <span class="num">Résultat</span>
           </div>
-          @for (row of store.perEventFinancials(); track row.name) {
+          @for (row of periodEvents(); track row.id) {
             <div class="fin-row" [class.upcoming]="isUpcoming(row.date)">
               <span class="fin-name">
                 {{ row.name }}

@@ -130,8 +130,11 @@ export class EventManagementComponent implements OnInit {
 
   // ── Revenues ──
   onAddRevenue(): void {
+    const hasFloatLine = this.store.revenues().some(r =>
+      r.label.toLowerCase().includes('fonds de caisse')
+    );
     const dialogRef = this.dialog.open(RevenueDialogComponent, {
-      data: { mode: 'create' } as RevenueDialogData,
+      data: { mode: 'create', suggestFloat: !hasFloatLine } as RevenueDialogData,
       width: '500px',
     });
     dialogRef.afterClosed().subscribe(result => {

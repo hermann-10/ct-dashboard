@@ -12,6 +12,8 @@ import { RevenueSource, REVENUE_SOURCES, EventRevenue } from '../../event-manage
 export interface RevenueDialogData {
   mode: 'create' | 'edit';
   revenue?: EventRevenue;
+  /** Pré-remplir une ligne « Fonds de caisse : −150 » (aucune ligne existante) */
+  suggestFloat?: boolean;
 }
 
 @Component({
@@ -33,6 +35,12 @@ export interface RevenueDialogData {
     </h2>
 
     <mat-dialog-content>
+      @if (floatSuggested) {
+        <p class="float-hint">
+          <mat-icon>info</mat-icon>
+          Ligne pré-remplie : fonds de caisse −150 CHF. Ajuste le montant ou remplace tout pour saisir une autre recette.
+        </p>
+      }
       <form [formGroup]="form" class="dialog-form">
         <mat-form-field appearance="outline">
           <mat-label>Source</mat-label>
@@ -50,7 +58,8 @@ export interface RevenueDialogData {
 
         <mat-form-field appearance="outline">
           <mat-label>Montant (CHF)</mat-label>
-          <input matInput type="number" formControlName="amount" min="0" />
+          <input matInput type="number" formControlName="amount" />
+          <mat-hint>Montant négatif accepté (ex : fonds de caisse −150)</mat-hint>
         </mat-form-field>
 
         <mat-slide-toggle formControlName="is_received">Reçu</mat-slide-toggle>
@@ -80,6 +89,18 @@ export interface RevenueDialogData {
       flex-direction: column;
       gap: 1rem;
     }
+    .float-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 0 1rem;
+      padding: 0.6rem 0.85rem;
+      background: rgba(108, 92, 231, 0.08);
+      color: #5b4bd5;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      mat-icon { font-size: 1.1rem; width: 1.1rem; height: 1.1rem; }
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -90,11 +111,17 @@ export class RevenueDialogComponent {
 
   readonly sources = REVENUE_SOURCES;
 
+  /** Pré-remplissage fonds de caisse (création + aucune ligne existante) */
+  readonly floatSuggested = this.data.mode === 'create' && !!this.data.suggestFloat;
+
   readonly form = this.fb.nonNullable.group({
-    source: [this.data.revenue?.source ?? ('' as RevenueSource), Validators.required],
-    label: [this.data.revenue?.label ?? '', Validators.required],
-    amount: [this.data.revenue?.amount ?? 0, [Validators.required, Validators.min(0)]],
-    is_received: [this.data.revenue?.is_received ?? false],
+    source: [
+      this.data.revenue?.source ?? ((this.floatSuggested ? 'divers' : '') as RevenueSource),
+      Validators.required,
+    ],
+    label: [this.data.revenue?.label ?? (this.floatSuggested ? 'Fonds de caisse' : ''), Validators.required],
+    amount: [this.data.revenue?.amount ?? (this.floatSuggested ? -150 : 0), [Validators.required]],
+    is_received: [this.data.revenue?.is_received ?? this.floatSuggested],
     notes: [this.data.revenue?.notes ?? ''],
   });
 

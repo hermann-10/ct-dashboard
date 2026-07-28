@@ -5,7 +5,7 @@ import { ManagedEvent } from './event-management.model';
 import { EventInvoice, invoiceTotal } from './invoice.model';
 
 // ── Coordonnées de l'émetteur (HM-Events) ──
-const ISSUER = {
+export const ISSUER = {
   brand: 'HM-Events',
   name: 'Hermann Manuel',
   addressLines: ['Chemin du Vieux-Bureau 98', '1217 Meyrin, Suisse'],
@@ -35,7 +35,7 @@ const LIGHT_BG: [number, number, number] = [246, 246, 249];
 
 @Injectable({ providedIn: 'root' })
 export class InvoicePdfService {
-  async exportInvoicePdf(invoice: EventInvoice, event: ManagedEvent | null): Promise<void> {
+  async exportInvoicePdf(invoice: EventInvoice, event: ManagedEvent | null, filenameSuffix?: string): Promise<void> {
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -242,7 +242,7 @@ export class InvoicePdfService {
     doc.text(`${ISSUER.email} – ${ISSUER.website}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
 
     const clientSlug = invoice.client_name.replace(/[^a-z0-9]+/gi, '');
-    const eventSlug = event ? event.name.replace(/[^a-z0-9]+/gi, '') : 'Evenement';
+    const eventSlug = (filenameSuffix ?? (event ? event.name : 'Evenement')).replace(/[^a-z0-9]+/gi, '');
     doc.save(`Facture_${invoice.invoice_number}_${clientSlug}_${eventSlug}.pdf`);
   }
 

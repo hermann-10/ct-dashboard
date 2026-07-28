@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     // Look up event by slug
     const { data: event, error } = await supabase
       .from('events')
-      .select('name, ticket_url, image_url')
+      .select('name, ticket_url, image_url, user_id')
       .eq('slug', slug)
       .single();
 
@@ -71,6 +71,7 @@ export default async function handler(req, res) {
       await supabase.from('clicks').insert({
         event_slug: slug,
         event_name: event.name,
+        user_id: event.user_id || null,
         ip_hash: hashIp(ip),
         user_agent: userAgent,
         device: detectDevice(userAgent),

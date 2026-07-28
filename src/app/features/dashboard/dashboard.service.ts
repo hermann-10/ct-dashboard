@@ -34,6 +34,7 @@ export class DashboardService {
     return events.map((evt: any) => {
       const stats = clicksBySlug.get(evt.slug);
       return {
+        id: evt.id,
         slug: evt.slug,
         name: evt.name,
         destination: evt.ticket_url ?? '',

@@ -1,4 +1,5 @@
 export interface EventConfig {
+  id: string;
   slug: string;
   name: string;
   destination: string;
@@ -57,11 +58,13 @@ export interface DashboardStats {
 
 export interface FinancialRow {
   amount: number;
+  event_id: string;
   event_name: string;
   event_date: string;
 }
 
 export interface EventFinancialRow {
+  id: string;
   name: string;
   date: string;
   ca: number;

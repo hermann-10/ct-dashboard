@@ -37,6 +37,11 @@ export const ADMIN_ROUTES: Routes = [
           import('../artists/artists.routes').then(m => m.ARTISTS_ROUTES),
       },
       {
+        path: 'management',
+        loadChildren: () =>
+          import('../management/management.routes').then(m => m.MANAGEMENT_ROUTES),
+      },
+      {
         path: 'bar',
         loadChildren: () =>
           import('../bar/bar.routes').then(m => m.BAR_ROUTES),

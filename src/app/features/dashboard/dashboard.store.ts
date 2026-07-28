@@ -62,18 +62,18 @@ export const DashboardStore = signalStore(
     }),
     perEventFinancials: computed(() => {
       const fin = financials();
-      const rows = new Map<string, { name: string; date: string; ca: number; charges: number }>();
-      events().forEach(e => rows.set(e.name, { name: e.name, date: e.date, ca: 0, charges: 0 }));
-      const touch = (name: string, date: string) => {
-        let e = rows.get(name);
+      const rows = new Map<string, { id: string; name: string; date: string; ca: number; charges: number }>();
+      events().forEach(e => rows.set(e.id, { id: e.id, name: e.name, date: e.date, ca: 0, charges: 0 }));
+      const touch = (r: { event_id: string; event_name: string; event_date: string }) => {
+        let e = rows.get(r.event_id);
         if (!e) {
-          e = { name, date, ca: 0, charges: 0 };
-          rows.set(name, e);
+          e = { id: r.event_id, name: r.event_name, date: r.event_date, ca: 0, charges: 0 };
+          rows.set(r.event_id, e);
         }
         return e;
       };
-      (fin?.revenues ?? []).forEach(r => { touch(r.event_name, r.event_date).ca += r.amount; });
-      (fin?.charges ?? []).forEach(r => { touch(r.event_name, r.event_date).charges += r.amount; });
+      (fin?.revenues ?? []).forEach(r => { touch(r).ca += r.amount; });
+      (fin?.charges ?? []).forEach(r => { touch(r).charges += r.amount; });
       return Array.from(rows.values())
         .map(e => ({ ...e, result: e.ca - e.charges }))
         .sort((a, b) => b.date.localeCompare(a.date));

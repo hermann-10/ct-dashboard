@@ -35,6 +35,7 @@ export type MusicGenre = typeof MUSIC_GENRES[number];
 export interface Artist {
   id: string;
   name: string;
+  is_managed?: boolean;
   genres: string[];
   role: ArtistRole;
   email: string;
@@ -75,6 +76,7 @@ export interface ArtistStats {
 // ── DTOs ──
 export interface CreateArtistDto {
   name: string;
+  is_managed?: boolean;
   genres?: string[];
   role?: ArtistRole;
   email?: string;

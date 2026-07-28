@@ -2,6 +2,7 @@ import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -23,6 +24,7 @@ interface DialogData {
     FormsModule,
     MatButtonModule,
     MatIconModule,
+    MatSlideToggleModule,
     MatInputModule,
     MatFormFieldModule,
     MatSelectModule,
@@ -80,6 +82,12 @@ interface DialogData {
           <mat-label>Ville</mat-label>
           <input matInput [ngModel]="city()" (ngModelChange)="city.set($event)" />
         </mat-form-field>
+
+        <div class="managed-toggle full-width">
+          <mat-slide-toggle [checked]="isManaged()" (change)="isManaged.set($event.checked)">
+            Artiste managé — visible dans le module Management
+          </mat-slide-toggle>
+        </div>
 
         <!-- Photo upload zone -->
         <div class="photo-section full-width">
@@ -237,6 +245,7 @@ export class ArtistDialogComponent {
   city = signal(this.data.artist?.city ?? '');
   photoUrl = signal(this.data.artist?.photo_url ?? '');
   notes = signal(this.data.artist?.notes ?? '');
+  isManaged = signal(this.data.artist?.is_managed ?? false);
 
   previewUrl = signal('');
   uploading = signal(false);
@@ -313,6 +322,7 @@ export class ArtistDialogComponent {
       city: this.city().trim(),
       photo_url: this.photoUrl().trim() || null,
       notes: this.notes().trim(),
+      is_managed: this.isManaged(),
     };
     this.dialogRef.close(dto);
   }

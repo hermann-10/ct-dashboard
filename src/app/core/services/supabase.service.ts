@@ -484,17 +484,18 @@ export class SupabaseService {
 
   /** Bulk fetch of all revenues + charges with their event date (dashboard CA). */
   async getEventFinancials(): Promise<{
-    revenues: { amount: number; event_name: string; event_date: string }[];
-    charges: { amount: number; event_name: string; event_date: string }[];
+    revenues: { amount: number; event_id: string; event_name: string; event_date: string }[];
+    charges: { amount: number; event_id: string; event_name: string; event_date: string }[];
   }> {
     const [rev, ch] = await Promise.all([
-      this.supabase.from('event_revenues').select('amount, event:events(name, date)'),
-      this.supabase.from('event_charges').select('amount, event:events(name, date)'),
+      this.supabase.from('event_revenues').select('amount, event_id, event:events(name, date)'),
+      this.supabase.from('event_charges').select('amount, event_id, event:events(name, date)'),
     ]);
     if (rev.error) throw rev.error;
     if (ch.error) throw ch.error;
     const mapRow = (r: any) => ({
       amount: Number(r.amount ?? 0),
+      event_id: r.event_id ?? '',
       event_name: r.event?.name ?? '',
       event_date: r.event?.date ?? '',
     });
@@ -515,15 +516,16 @@ export class SupabaseService {
     return data ?? [];
   }
 
-  /** Prochain numéro de facture (continue après le dernier existant). */
+  /** Prochain numéro de facture — séquence unique avec les factures artiste. */
   async getNextInvoiceNumber(): Promise<number> {
-    const { data, error } = await this.supabase
-      .from('event_invoices')
-      .select('invoice_number')
-      .order('invoice_number', { ascending: false })
-      .limit(1);
-    if (error) throw error;
-    return (data?.[0]?.invoice_number ?? 232) + 1;
+    const [a, b] = await Promise.all([
+      this.supabase.from('event_invoices').select('invoice_number').order('invoice_number', { ascending: false }).limit(1),
+      this.supabase.from('artist_invoices').select('invoice_number').order('invoice_number', { ascending: false }).limit(1),
+    ]);
+    if (a.error) throw a.error;
+    const maxEvent = a.data?.[0]?.invoice_number ?? 0;
+    const maxArtist = b.error ? 0 : (b.data?.[0]?.invoice_number ?? 0);
+    return Math.max(maxEvent, maxArtist, 232) + 1;
   }
 
   async createEventInvoice(dto: any): Promise<any> {
@@ -974,6 +976,87 @@ export class SupabaseService {
   }
 
   // ── Artists CRM ──
+  // ── Artist invoices & contracts (module Management) ──
+  async getArtistInvoices(artistId: string): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('artist_invoices')
+      .select('*')
+      .eq('artist_id', artistId)
+      .order('invoice_number', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  /** Prochain n° de facture — séquence UNIQUE entre factures
+      d'événements et factures artiste (pas de doublon). */
+  async getNextArtistInvoiceNumber(): Promise<number> {
+    const [a, b] = await Promise.all([
+      this.supabase.from('artist_invoices').select('invoice_number').order('invoice_number', { ascending: false }).limit(1),
+      this.supabase.from('event_invoices').select('invoice_number').order('invoice_number', { ascending: false }).limit(1),
+    ]);
+    if (a.error) throw a.error;
+    const maxArtist = a.data?.[0]?.invoice_number ?? 0;
+    const maxEvent = b.error ? 0 : (b.data?.[0]?.invoice_number ?? 0);
+    return Math.max(maxArtist, maxEvent, 232) + 1;
+  }
+
+  async createArtistInvoice(dto: any): Promise<any> {
+    return this._rest('POST', 'artist_invoices', dto);
+  }
+
+  async updateArtistInvoice(id: string, changes: any): Promise<any> {
+    return this._rest('PATCH', 'artist_invoices', { ...changes, updated_at: new Date().toISOString() }, `id=eq.${id}`);
+  }
+
+  async deleteArtistInvoice(id: string): Promise<void> {
+    await this._rest('DELETE', 'artist_invoices', undefined, `id=eq.${id}`);
+  }
+
+  async getArtistContracts(artistId: string): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('artist_contracts')
+      .select('*')
+      .eq('artist_id', artistId)
+      .order('event_date', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async createArtistContract(dto: any): Promise<any> {
+    return this._rest('POST', 'artist_contracts', dto);
+  }
+
+  async updateArtistContract(id: string, changes: any): Promise<any> {
+    return this._rest('PATCH', 'artist_contracts', { ...changes, updated_at: new Date().toISOString() }, `id=eq.${id}`);
+  }
+
+  async deleteArtistContract(id: string): Promise<void> {
+    await this._rest('DELETE', 'artist_contracts', undefined, `id=eq.${id}`);
+  }
+
+  // ── Artist revenues (module Management) ──
+  async getArtistRevenues(artistId: string): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('artist_revenues')
+      .select('*')
+      .eq('artist_id', artistId)
+      .order('date', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async createArtistRevenue(dto: any): Promise<any> {
+    return this._rest('POST', 'artist_revenues', dto);
+  }
+
+  async updateArtistRevenue(id: string, changes: any): Promise<any> {
+    return this._rest('PATCH', 'artist_revenues', { ...changes, updated_at: new Date().toISOString() }, `id=eq.${id}`);
+  }
+
+  async deleteArtistRevenue(id: string): Promise<void> {
+    await this._rest('DELETE', 'artist_revenues', undefined, `id=eq.${id}`);
+  }
+
   async getArtists(): Promise<any[]> {
     const { data, error } = await this.supabase
       .from('artists')

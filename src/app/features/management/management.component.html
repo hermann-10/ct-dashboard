@@ -1,0 +1,257 @@
+<div class="management-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-info">
+      <h2>Management</h2>
+      <p class="subtitle">Carrière & revenus des artistes</p>
+    </div>
+    <div class="header-actions">
+      <mat-form-field appearance="outline" class="artist-select">
+        <mat-label>Artiste</mat-label>
+        <mat-select [ngModel]="selectedArtistId()" (ngModelChange)="selectedArtistId.set($event)">
+          @for (artist of artists(); track artist.id) {
+            <mat-option [value]="artist.id">{{ artist.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (mgmtSection() === 'revenus') {
+        <button mat-stroked-button (click)="onExport()" [disabled]="periodRevenues().length === 0" matTooltip="Exporter la période affichée (CSV pour Excel)">
+          <mat-icon>download</mat-icon>
+          Exporter
+        </button>
+        <button mat-flat-button color="primary" (click)="onAdd()" [disabled]="!selectedArtistId()">
+          <mat-icon>add</mat-icon>
+          Prestation
+        </button>
+      } @else if (mgmtSection() === 'factures') {
+        <button mat-flat-button color="primary" (click)="onAddInvoice()" [disabled]="!selectedArtistId()">
+          <mat-icon>add</mat-icon>
+          Nouvelle facture
+        </button>
+      } @else {
+        <button mat-flat-button color="primary" (click)="onAddContract()" [disabled]="!selectedArtistId()">
+          <mat-icon>add</mat-icon>
+          Nouveau contrat
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Sections -->
+  <div class="mgmt-tabs">
+    <button class="mtab" [class.active]="mgmtSection() === 'revenus'" (click)="mgmtSection.set('revenus')">
+      <mat-icon>payments</mat-icon>
+      Revenus
+    </button>
+    <button class="mtab" [class.active]="mgmtSection() === 'factures'" (click)="mgmtSection.set('factures')">
+      <mat-icon>receipt_long</mat-icon>
+      Factures
+      @if (invoices().length > 0) {
+        <span class="mtab-badge">{{ invoices().length }}</span>
+      }
+    </button>
+    <button class="mtab" [class.active]="mgmtSection() === 'contrats'" (click)="mgmtSection.set('contrats')">
+      <mat-icon>history_edu</mat-icon>
+      Contrats
+      @if (contracts().length > 0) {
+        <span class="mtab-badge">{{ contracts().length }}</span>
+      }
+    </button>
+  </div>
+
+  @if (mgmtSection() === 'revenus') {
+    <!-- ═══ REVENUS ═══ -->
+    <div class="period-nav">
+      <div class="period-mode">
+        <button class="pmode-btn" [class.active]="periodMode() === 'month'" (click)="periodMode.set('month')">Mois</button>
+        <button class="pmode-btn" [class.active]="periodMode() === 'year'" (click)="periodMode.set('year')">Année</button>
+        <button class="pmode-btn" [class.active]="periodMode() === 'total'" (click)="periodMode.set('total')">Total</button>
+      </div>
+      <div class="period-stepper">
+        @if (periodMode() !== 'total') {
+          <button mat-icon-button (click)="shiftPeriod(-1)" matTooltip="Période précédente">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+        }
+        <span class="period-label">{{ periodLabel() }}</span>
+        @if (periodMode() !== 'total') {
+          <button mat-icon-button (click)="shiftPeriod(1)" matTooltip="Période suivante">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+          @if (!isCurrentPeriod()) {
+            <button mat-stroked-button class="period-today" (click)="resetPeriod()">Aujourd'hui</button>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <span class="kpi-label">Revenus — {{ periodLabel() }}</span>
+        <span class="kpi-value">{{ periodStats().total | currency:'CHF':'symbol':'1.0-0' }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Prestations</span>
+        <span class="kpi-value">{{ periodStats().count }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Cachet moyen</span>
+        <span class="kpi-value">{{ periodStats().average | currency:'CHF':'symbol':'1.0-0' }}</span>
+      </div>
+    </div>
+
+    <div class="content-row">
+      <div class="revenues-panel">
+        <div class="panel-header">
+          <h3>Prestations — {{ periodLabel() }}</h3>
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput placeholder="Filtrer..." [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" />
+          </mat-form-field>
+        </div>
+
+        @if (loading()) {
+          <div class="loading-state"><mat-spinner diameter="36" /></div>
+        } @else if (periodRevenues().length === 0) {
+          <p class="empty-state">Aucune prestation sur cette période.</p>
+        } @else {
+          <div class="rev-table">
+            @for (rev of periodRevenues(); track rev.id) {
+              <div class="rev-row">
+                <span class="rev-date">{{ rev.date | date:'dd.MM.yyyy' }}</span>
+                <span class="rev-info">
+                  <span class="rev-venue">{{ rev.venue || '—' }}</span>
+                  @if (rev.event_name) {
+                    <span class="rev-event">{{ rev.event_name }}</span>
+                  }
+                </span>
+                <span class="rev-amount">{{ rev.amount | currency:'CHF':'symbol':'1.2-2' }}</span>
+                <span class="rev-actions">
+                  <button mat-icon-button matTooltip="Modifier" (click)="onEdit(rev)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button matTooltip="Supprimer" class="delete-btn" (click)="onDelete(rev)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="years-panel">
+        <h3>Récap par année</h3>
+        @for (y of yearSummaries(); track y.year) {
+          <button class="year-row" (click)="goToYear(y.year)" matTooltip="Voir l'année {{ y.year }}">
+            <span class="year-label">{{ y.year }}</span>
+            <span class="year-bar-wrap">
+              <span class="year-bar" [style.width.%]="(y.total / maxYearTotal()) * 100"></span>
+            </span>
+            <span class="year-total">{{ y.total | currency:'CHF':'symbol':'1.0-0' }}</span>
+            <span class="year-count">{{ y.count }} prest.</span>
+          </button>
+        } @empty {
+          <p class="empty-state">Aucune donnée.</p>
+        }
+      </div>
+    </div>
+  } @else if (mgmtSection() === 'factures') {
+    <!-- ═══ FACTURES ═══ -->
+    <div class="list-panel">
+      @if (invoices().length === 0) {
+        <div class="big-empty">
+          <mat-icon>receipt_long</mat-icon>
+          <p>Aucune facture pour {{ selectedArtist()?.name ?? 'cet artiste' }}.</p>
+          <p class="big-empty-hint">Crée une facture pré-remplie au nom de l'artiste, exporte-la en PDF, et suis son statut (brouillon → envoyée → payée).</p>
+        </div>
+      } @else {
+        @for (invoice of invoices(); track invoice.id) {
+          <div class="doc-row">
+            <div class="doc-num">N° {{ invoice.invoice_number }}</div>
+            <div class="doc-info">
+              <span class="doc-title">{{ invoice.client_name }}</span>
+              <span class="doc-sub">
+                {{ invoice.issue_date | date:'d MMM yyyy' }}
+                @if (invoice.due_date) {
+                  · échéance {{ invoice.due_date | date:'d MMM yyyy' }}
+                }
+              </span>
+            </div>
+            <div class="doc-amount">{{ invoiceTotal(invoice) | currency:'CHF':'symbol':'1.2-2' }}</div>
+            <button class="status-chip" [class.draft]="invoice.status === 'draft'" [class.sent]="invoice.status === 'sent'" [class.paid]="invoice.status === 'paid'"
+                    matTooltip="Cliquer pour changer le statut"
+                    (click)="onInvoiceStatus(invoice)">
+              {{ invoice.status === 'draft' ? 'Brouillon' : invoice.status === 'sent' ? 'Envoyée' : 'Payée' }}
+            </button>
+            <div class="doc-actions">
+              <button mat-icon-button matTooltip="Télécharger le PDF" (click)="onExportInvoice(invoice)">
+                <mat-icon>picture_as_pdf</mat-icon>
+              </button>
+              <button mat-icon-button matTooltip="Modifier" (click)="onEditInvoice(invoice)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button matTooltip="Supprimer" class="delete-btn" (click)="onDeleteInvoice(invoice)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  } @else {
+    <!-- ═══ CONTRATS ═══ -->
+    <div class="list-panel">
+      @if (contracts().length === 0) {
+        <div class="big-empty">
+          <mat-icon>history_edu</mat-icon>
+          <p>Aucun contrat pour {{ selectedArtist()?.name ?? 'cet artiste' }}.</p>
+          <p class="big-empty-hint">Génère un contrat de prestation artistique (date, lieu, cachet, clauses) prêt à signer, exportable en PDF.</p>
+        </div>
+      } @else {
+        @for (contract of contracts(); track contract.id) {
+          <div class="doc-row">
+            <div class="doc-date-box">
+              <span class="doc-day">{{ contract.event_date | date:'d' }}</span>
+              <span class="doc-month">{{ contract.event_date | date:'MMM yy' }}</span>
+            </div>
+            <div class="doc-info">
+              <span class="doc-title">{{ contract.client_name }}</span>
+              <span class="doc-sub">
+                {{ [contract.venue, contract.city].join(', ') }}
+                @if (contract.schedule) {
+                  · {{ contract.schedule }}
+                }
+              </span>
+            </div>
+            <div class="doc-amount">{{ contract.fee | currency:'CHF':'symbol':'1.2-2' }}</div>
+            <button class="status-chip" [class.draft]="contract.status === 'draft'" [class.sent]="contract.status === 'sent'" [class.paid]="contract.status === 'signed'"
+                    matTooltip="Cliquer pour changer le statut"
+                    (click)="onContractStatus(contract)">
+              {{ contract.status === 'draft' ? 'Brouillon' : contract.status === 'sent' ? 'Envoyé' : 'Signé' }}
+            </button>
+            <div class="doc-actions">
+              <button mat-icon-button matTooltip="Télécharger le PDF" (click)="onExportContract(contract)">
+                <mat-icon>picture_as_pdf</mat-icon>
+              </button>
+              <button mat-icon-button matTooltip="Modifier" (click)="onEditContract(contract)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button matTooltip="Supprimer" class="delete-btn" (click)="onDeleteContract(contract)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+</div>

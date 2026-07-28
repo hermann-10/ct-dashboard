@@ -535,3 +535,60 @@
   }
   .fin-head .fin-date, .fin-head .fin-charges { display: none; }
 }
+
+// ═══ Navigation de période ═══
+.period-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.period-mode {
+  display: flex;
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-full);
+  overflow: hidden;
+  background: var(--hm-surface);
+}
+
+.pmode-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--hm-text-sm);
+  font-weight: 600;
+  color: var(--hm-text-secondary);
+  padding: 0.4rem 1.1rem;
+  transition: all var(--hm-transition-fast);
+
+  &.active {
+    background: var(--hm-brand-primary);
+    color: #fff;
+  }
+}
+
+.period-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.period-label {
+  min-width: 130px;
+  text-align: center;
+  font-size: var(--hm-text-base);
+  font-weight: 700;
+  color: var(--hm-text-primary);
+  text-transform: capitalize;
+}
+
+.period-today {
+  margin-left: 0.5rem;
+  height: 32px;
+  font-size: var(--hm-text-xs) !important;
+  border-radius: var(--hm-radius-full) !important;
+}

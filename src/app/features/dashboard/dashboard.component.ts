@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -50,7 +50,66 @@ export class DashboardComponent implements OnInit {
     { label: 'Tout', days: 0 },
   ];
   activePeriod = signal('Tout');
-  readonly currentYear = new Date().getFullYear();
+
+  // ── Navigation de période (cartes CA + chiffres par soirée) ──
+  periodMode = signal<'month' | 'year' | 'total'>('month');
+  periodAnchor = signal(new Date());
+
+  private readonly periodPrefix = computed(() => {
+    if (this.periodMode() === 'total') return '';
+    const d = this.periodAnchor();
+    const y = d.getFullYear();
+    return this.periodMode() === 'month'
+      ? `${y}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      : String(y);
+  });
+
+  periodLabel = computed(() => {
+    if (this.periodMode() === 'total') return 'Depuis le début';
+    const d = this.periodAnchor();
+    return this.periodMode() === 'month'
+      ? d.toLocaleDateString('fr-CH', { month: 'long', year: 'numeric' })
+      : String(d.getFullYear());
+  });
+
+  isCurrentPeriod = computed(() => {
+    if (this.periodMode() === 'total') return true;
+    const now = new Date();
+    const p = this.periodMode() === 'month'
+      ? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      : String(now.getFullYear());
+    return this.periodPrefix() === p;
+  });
+
+  periodStats = computed(() => {
+    const fin = this.store.financials();
+    const p = this.periodPrefix();
+    const sum = (rows: { amount: number; event_date: string }[]) =>
+      rows.filter(r => r.event_date.startsWith(p)).reduce((s, r) => s + r.amount, 0);
+    const recettes = sum(fin?.revenues ?? []);
+    const charges = sum(fin?.charges ?? []);
+    return { recettes, charges, result: recettes - charges };
+  });
+
+  periodEvents = computed(() =>
+    this.store.perEventFinancials().filter(e => e.date.startsWith(this.periodPrefix()))
+  );
+
+  shiftPeriod(delta: number): void {
+    if (this.periodMode() === 'total') return;
+    const d = new Date(this.periodAnchor());
+    if (this.periodMode() === 'month') {
+      d.setDate(1);
+      d.setMonth(d.getMonth() + delta);
+    } else {
+      d.setFullYear(d.getFullYear() + delta);
+    }
+    this.periodAnchor.set(d);
+  }
+
+  resetPeriod(): void {
+    this.periodAnchor.set(new Date());
+  }
 
   daysUntilLabel(date: string): string {
     const today = new Date();
