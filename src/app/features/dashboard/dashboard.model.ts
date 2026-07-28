@@ -41,6 +41,7 @@ export interface UtmBreakdown {
 export interface TimelinePoint {
   date: string;
   count: number;
+  byEvent?: Record<string, number>;
 }
 
 export interface EventTimelineData {

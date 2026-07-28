@@ -15,6 +15,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { provideNativeDateAdapter } from '@angular/material/core';
+import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { Chart, registerables } from 'chart.js';
 import { DashboardStore } from '../dashboard/dashboard.store';
@@ -30,10 +34,14 @@ Chart.register(...registerables);
     MatSelectModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
+    MatFormFieldModule,
+    MatDatepickerModule,
+    FormsModule,
     DatePipe,
     DecimalPipe,
     TitleCasePipe,
   ],
+  providers: [provideNativeDateAdapter()],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (store.loading()) {
@@ -65,6 +73,21 @@ Chart.register(...registerables);
               </button>
             }
           </div>
+
+          <!-- Date range picker (jour précis / plage) -->
+          <mat-form-field appearance="outline" class="range-field" subscriptSizing="dynamic">
+            <mat-date-range-input [rangePicker]="rangePicker">
+              <input matStartDate placeholder="Du" [ngModel]="rangeStart()" (ngModelChange)="onRangeStart($event)" readonly (click)="rangePicker.open()" />
+              <input matEndDate placeholder="Au" [ngModel]="rangeEnd()" (ngModelChange)="onRangeEnd($event)" readonly (click)="rangePicker.open()" />
+            </mat-date-range-input>
+            <mat-datepicker-toggle matIconSuffix [for]="rangePicker" />
+            <mat-date-range-picker #rangePicker />
+          </mat-form-field>
+          @if (activePeriod() === 'custom') {
+            <button mat-icon-button (click)="clearRange()" matTooltip="Effacer la plage de dates" class="refresh-btn">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
 
           <!-- Event filter -->
           <div class="event-filter-wrap">
@@ -137,6 +160,44 @@ Chart.register(...registerables);
         </div>
         @if (store.timeline().length === 0) {
           <p class="no-data">Aucune donnee disponible</p>
+        }
+      </div>
+
+      <!-- Clics par jour / par événement -->
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title">Clics par jour</h3>
+          <span class="section-badge">{{ dailyBreakdown().length }} jours actifs</span>
+        </div>
+        @if (dailyBreakdown().length > 0) {
+          <div class="table-scroll">
+            <table class="hm-table">
+              <thead>
+                <tr>
+                  <th>Jour</th>
+                  <th>Clics</th>
+                  <th>Par événement</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (day of dailyBreakdown(); track day.date) {
+                  <tr class="day-row" (click)="onSelectDay(day.date)" matTooltip="Filtrer sur ce jour">
+                    <td class="cell-date">{{ day.date | date:'EEE dd MMM yyyy' }}</td>
+                    <td class="cell-count">{{ day.count }}</td>
+                    <td>
+                      <div class="cell-events">
+                        @for (ev of day.events; track ev.slug) {
+                          <span class="event-badge">{{ ev.name }} · {{ ev.count }}</span>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="no-data">Aucun clic sur la période</p>
         }
       </div>
 
@@ -878,6 +939,42 @@ Chart.register(...registerables);
       text-align: right;
     }
 
+    /* ── Range picker & clics par jour ── */
+    .range-field {
+      width: 210px;
+
+      ::ng-deep .mat-mdc-text-field-wrapper {
+        height: 40px;
+        background: var(--hm-surface, #fff);
+      }
+
+      ::ng-deep .mat-mdc-form-field-infix {
+        padding-top: 8px;
+        padding-bottom: 8px;
+        min-height: 40px;
+      }
+
+      input { cursor: pointer; }
+    }
+
+    .day-row {
+      cursor: pointer;
+      transition: background 120ms ease;
+
+      &:hover { background: rgba(108, 92, 231, 0.05); }
+    }
+
+    .cell-count {
+      font-weight: 700;
+      color: var(--hm-text-primary);
+    }
+
+    .cell-events {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 768px) {
       :host {
@@ -942,6 +1039,25 @@ export class TrafficComponent implements OnInit, OnDestroy {
   ];
 
   activePeriod = signal('Tout');
+
+  // Plage de dates personnalisée (jour précis)
+  rangeStart = signal<Date | null>(null);
+  rangeEnd = signal<Date | null>(null);
+
+  // Détail par jour + par événement, jours actifs seulement, plus récent en premier
+  dailyBreakdown = computed(() => {
+    const nameBySlug = new Map(this.store.events().map(e => [e.slug, e.name]));
+    return this.store.timeline()
+      .filter(pt => pt.count > 0)
+      .map(pt => ({
+        date: pt.date,
+        count: pt.count,
+        events: Object.entries(pt.byEvent ?? {})
+          .map(([slug, count]) => ({ slug, count, name: nameBySlug.get(slug) ?? slug }))
+          .sort((a, b) => b.count - a.count),
+      }))
+      .reverse();
+  });
 
   // Computed: bounce rate = 100 - conversionRate
   bounceRate = computed(() => {
@@ -1107,8 +1223,46 @@ export class TrafficComponent implements OnInit, OnDestroy {
     }
   }
 
+  onRangeStart(d: Date | null): void {
+    this.rangeStart.set(d);
+  }
+
+  onRangeEnd(d: Date | null): void {
+    this.rangeEnd.set(d);
+    const start = this.rangeStart();
+    if (start && d) this.applyRange(start, d);
+  }
+
+  onSelectDay(iso: string): void {
+    const d = new Date(iso + 'T00:00:00');
+    this.rangeStart.set(d);
+    this.rangeEnd.set(d);
+    this.applyRange(d, d);
+  }
+
+  clearRange(): void {
+    this.rangeStart.set(null);
+    this.rangeEnd.set(null);
+    this.onPeriodChange('Tout', 0);
+  }
+
+  private applyRange(start: Date, end: Date): void {
+    this.activePeriod.set('custom');
+    const s = new Date(start);
+    s.setHours(0, 0, 0, 0);
+    const e = new Date(end);
+    e.setHours(23, 59, 59, 999);
+    this.store.loadAll({
+      eventSlug: this.store.selectedEventSlug() ?? undefined,
+      startDate: s.toISOString(),
+      endDate: e.toISOString(),
+    });
+  }
+
   onPeriodChange(label: string, days: number): void {
     this.activePeriod.set(label);
+    this.rangeStart.set(null);
+    this.rangeEnd.set(null);
     const slug = this.store.selectedEventSlug() ?? undefined;
     if (days === 0) {
       this.store.loadAll({ eventSlug: slug, startDate: undefined, endDate: undefined });
