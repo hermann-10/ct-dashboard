@@ -28,8 +28,8 @@ export interface CreateInvoiceDto {
   event_id: string;
   invoice_number: number;
   client_name: string;
-  client_address?: string;
-  client_phone?: string;
+  client_address?: string | null;
+  client_phone?: string | null;
   issue_date: string;
   due_date?: string;
   conditions?: string;

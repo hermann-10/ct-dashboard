@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -49,18 +49,18 @@ interface DraftItem {
       <h4 class="group-title">Client</h4>
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Nom du client</mat-label>
-        <input matInput [(ngModel)]="form.client_name" required placeholder="Halle W" />
+        <input matInput #nameEl [(ngModel)]="form.client_name" required placeholder="Halle W" />
       </mat-form-field>
 
       <div class="row">
         <mat-form-field appearance="outline">
           <mat-label>Adresse (une ligne par ligne)</mat-label>
-          <textarea matInput rows="2" [(ngModel)]="form.client_address" placeholder="Ch. Jacques-Philibert-de-Sauvage 37&#10;1219 Vernier"></textarea>
+          <textarea matInput #addrEl rows="2" [(ngModel)]="form.client_address" placeholder="Ch. Jacques-Philibert-de-Sauvage 37&#10;1219 Vernier"></textarea>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Téléphone</mat-label>
-          <input matInput [(ngModel)]="form.client_phone" placeholder="+41 79 940 61 25" />
+          <input matInput #phoneEl [(ngModel)]="form.client_phone" placeholder="+41 79 940 61 25" />
         </mat-form-field>
       </div>
 
@@ -148,6 +148,12 @@ export class InvoiceDialogComponent {
   readonly data = inject<InvoiceDialogData>(MAT_DIALOG_DATA);
   private readonly dialogRef = inject(MatDialogRef<InvoiceDialogComponent>);
 
+  // Lecture directe du DOM à la sauvegarde — garantit que ce qui est affiché
+  // est bien ce qui est enregistré (autofill navigateur, frappe rapide, etc.)
+  @ViewChild('nameEl') private nameEl?: ElementRef<HTMLInputElement>;
+  @ViewChild('addrEl') private addrEl?: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('phoneEl') private phoneEl?: ElementRef<HTMLInputElement>;
+
   issueDate: Date | null;
   dueDate: Date | null;
 
@@ -227,10 +233,13 @@ export class InvoiceDialogComponent {
         const n = parseFloat(it.amount);
         return { description: it.description.trim(), amount: isNaN(n) ? null : n };
       });
+    const nameVal = this.nameEl?.nativeElement.value ?? this.form.client_name;
+    const addrVal = this.addrEl?.nativeElement.value ?? this.form.client_address;
+    const phoneVal = this.phoneEl?.nativeElement.value ?? this.form.client_phone;
     this.dialogRef.close({
-      client_name: this.form.client_name.trim(),
-      client_address: this.form.client_address.trim() || undefined,
-      client_phone: this.form.client_phone.trim() || undefined,
+      client_name: nameVal.trim(),
+      client_address: addrVal.trim() || null,
+      client_phone: phoneVal.trim() || null,
       issue_date: this.form.issue_date,
       due_date: this.form.due_date || undefined,
       conditions: this.form.conditions.trim() || 'Règlement par virement bancaire',
