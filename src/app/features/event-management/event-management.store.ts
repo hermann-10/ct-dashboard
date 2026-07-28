@@ -7,6 +7,7 @@ import {
   CreateChargeDto, CreateRevenueDto, CreateLineupDto,
   CreateGuestlistDto, CreateGuestEntryDto,
 } from './event-management.model';
+import { EventInvoice, CreateInvoiceDto, UpdateInvoiceDto, InvoiceStatus } from './invoice.model';
 
 interface EventManagementState {
   event: ManagedEvent | null;
@@ -14,6 +15,7 @@ interface EventManagementState {
   revenues: EventRevenue[];
   lineup: EventLineup[];
   guestlists: EventGuestlist[];
+  invoices: EventInvoice[];
   loading: boolean;
   saving: boolean;
   error: string | null;
@@ -25,6 +27,7 @@ const initialState: EventManagementState = {
   revenues: [],
   lineup: [],
   guestlists: [],
+  invoices: [],
   loading: false,
   saving: false,
   error: null,
@@ -72,15 +75,59 @@ export const EventManagementStore = signalStore(
         const event = isUuid
           ? await service.getEventById(slugOrId)
           : await service.getEventBySlug(slugOrId);
-        const [charges, revenues, lineup, guestlists] = await Promise.all([
+        const [charges, revenues, lineup, guestlists, invoices] = await Promise.all([
           service.getCharges(event.id),
           service.getRevenues(event.id),
           service.getLineup(event.id),
           service.getGuestlists(event.id),
+          service.getInvoices(event.id).catch(() => [] as EventInvoice[]),
         ]);
-        patchState(store, { event, charges, revenues, lineup, guestlists, loading: false });
+        patchState(store, { event, charges, revenues, lineup, guestlists, invoices, loading: false });
       } catch (e: any) {
         patchState(store, { loading: false, error: e.message ?? 'Erreur de chargement' });
+      }
+    },
+
+    // ── Factures ──
+    async getNextInvoiceNumber(): Promise<number> {
+      return service.getNextInvoiceNumber();
+    },
+    async addInvoice(dto: CreateInvoiceDto) {
+      patchState(store, { saving: true });
+      try {
+        const created = await service.createInvoice(dto);
+        patchState(store, { invoices: [created, ...store.invoices()], saving: false });
+      } catch (e: any) {
+        patchState(store, { saving: false, error: e.message });
+      }
+    },
+    async editInvoice(id: string, dto: UpdateInvoiceDto) {
+      patchState(store, { saving: true });
+      try {
+        const updated = await service.updateInvoice(id, dto);
+        patchState(store, {
+          invoices: store.invoices().map(i => i.id === id ? updated : i),
+          saving: false,
+        });
+      } catch (e: any) {
+        patchState(store, { saving: false, error: e.message });
+      }
+    },
+    async setInvoiceStatus(id: string, status: InvoiceStatus) {
+      try {
+        const updated = await service.updateInvoice(id, { status });
+        patchState(store, { invoices: store.invoices().map(i => i.id === id ? updated : i) });
+      } catch (e: any) {
+        patchState(store, { error: e.message });
+      }
+    },
+    async removeInvoice(id: string) {
+      patchState(store, { saving: true });
+      try {
+        await service.deleteInvoice(id);
+        patchState(store, { invoices: store.invoices().filter(i => i.id !== id), saving: false });
+      } catch (e: any) {
+        patchState(store, { saving: false, error: e.message });
       }
     },
 

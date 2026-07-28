@@ -101,6 +101,24 @@
             <mat-icon class="hub-arrow">chevron_right</mat-icon>
           </button>
 
+          <button class="hub-card invoices" (click)="openSection('invoices')">
+            <div class="hub-icon"><mat-icon>receipt_long</mat-icon></div>
+            <div class="hub-info">
+              <h3>
+                Factures
+                @if (store.invoices().length > 0) {
+                  <span class="hub-badge">{{ store.invoices().length }}</span>
+                }
+              </h3>
+              @if (store.invoices().length > 0) {
+                <p>{{ store.invoices().length }} facture(s) émise(s)</p>
+              } @else {
+                <p>Aucune facture pour cet événement</p>
+              }
+            </div>
+            <mat-icon class="hub-arrow">chevron_right</mat-icon>
+          </button>
+
           <button class="hub-card notes" (click)="openSection('notes')">
             <div class="hub-icon"><mat-icon>notes</mat-icon></div>
             <div class="hub-info">
@@ -174,6 +192,61 @@
         @case ('bar') {
           <div class="tab-content">
             <app-event-sales-panel [eventId]="event.id" />
+          </div>
+        }
+        @case ('invoices') {
+          <div class="tab-content">
+            <div class="invoices-header">
+              <h3 class="section-title" style="margin: 0;">Factures</h3>
+              <button mat-flat-button color="primary" (click)="onCreateInvoice()" [disabled]="store.saving()">
+                <mat-icon>add</mat-icon>
+                Nouvelle facture
+              </button>
+            </div>
+
+            @if (store.invoices().length === 0) {
+              <div class="invoices-empty">
+                <mat-icon>receipt_long</mat-icon>
+                <p>Aucune facture pour cet événement.</p>
+                <p class="invoices-empty-hint">Crée une facture pré-remplie avec les infos de la soirée, puis exporte-la en PDF.</p>
+              </div>
+            } @else {
+              <div class="invoices-list">
+                @for (invoice of store.invoices(); track invoice.id) {
+                  <div class="invoice-row">
+                    <div class="invoice-num">N° {{ invoice.invoice_number }}</div>
+                    <div class="invoice-info">
+                      <span class="invoice-client">{{ invoice.client_name }}</span>
+                      <span class="invoice-dates">
+                        {{ invoice.issue_date | date:'d MMM yyyy' }}
+                        @if (invoice.due_date) {
+                          · échéance {{ invoice.due_date | date:'d MMM yyyy' }}
+                        }
+                      </span>
+                    </div>
+                    <div class="invoice-amount">{{ invoiceTotal(invoice) | currency:'CHF':'symbol':'1.2-2' }}</div>
+                    <div class="invoice-status">
+                      <button class="status-chip" [class.draft]="invoice.status === 'draft'" [class.sent]="invoice.status === 'sent'" [class.paid]="invoice.status === 'paid'"
+                              matTooltip="Cliquer pour changer le statut"
+                              (click)="onInvoiceStatus(invoice, invoice.status === 'draft' ? 'sent' : invoice.status === 'sent' ? 'paid' : 'draft')">
+                        {{ invoice.status === 'draft' ? 'Brouillon' : invoice.status === 'sent' ? 'Envoyée' : 'Payée' }}
+                      </button>
+                    </div>
+                    <div class="invoice-actions">
+                      <button mat-icon-button matTooltip="Télécharger le PDF" (click)="onExportInvoice(invoice)">
+                        <mat-icon>picture_as_pdf</mat-icon>
+                      </button>
+                      <button mat-icon-button matTooltip="Modifier" (click)="onEditInvoice(invoice)">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button matTooltip="Supprimer" class="invoice-delete" (click)="onRemoveInvoice(invoice)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
           </div>
         }
         @case ('notes') {

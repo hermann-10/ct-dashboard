@@ -6,6 +6,7 @@ import {
   CreateChargeDto, CreateRevenueDto, CreateLineupDto,
   CreateGuestlistDto, CreateGuestEntryDto,
 } from './event-management.model';
+import { EventInvoice, CreateInvoiceDto, UpdateInvoiceDto } from './invoice.model';
 
 @Injectable({ providedIn: 'root' })
 export class EventManagementService {
@@ -22,6 +23,27 @@ export class EventManagementService {
 
   async updateEventNotes(id: string, notes: string | null, strategy: string | null): Promise<ManagedEvent> {
     return this.supabase.updateEventNotes(id, notes, strategy);
+  }
+
+  // ── Factures ──
+  async getInvoices(eventId: string): Promise<EventInvoice[]> {
+    return this.supabase.getEventInvoices(eventId);
+  }
+
+  async getNextInvoiceNumber(): Promise<number> {
+    return this.supabase.getNextInvoiceNumber();
+  }
+
+  async createInvoice(dto: CreateInvoiceDto): Promise<EventInvoice> {
+    return this.supabase.createEventInvoice(dto);
+  }
+
+  async updateInvoice(id: string, dto: UpdateInvoiceDto): Promise<EventInvoice> {
+    return this.supabase.updateEventInvoice(id, dto);
+  }
+
+  async deleteInvoice(id: string): Promise<void> {
+    return this.supabase.deleteEventInvoice(id);
   }
 
   // ── Charges ──

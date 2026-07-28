@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../core/services/supabase.service';
-import { EventConfig, ClickRecord, DeviceBreakdown, UtmBreakdown, TimelinePoint, DashboardStats, EventTimelineData } from './dashboard.model';
+import { EventConfig, ClickRecord, DeviceBreakdown, UtmBreakdown, TimelinePoint, DashboardStats, EventTimelineData, EventFinancials } from './dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
@@ -60,6 +60,10 @@ export class DashboardService {
     const totalEvents = events.length;
     const conversionRate = totalClicks > 0 ? (uniqueVisitors / totalClicks) * 100 : 0;
     return { totalClicks, uniqueVisitors, totalEvents, conversionRate };
+  }
+
+  async getFinancials(): Promise<EventFinancials> {
+    return this.supabase.getEventFinancials();
   }
 
   async getClicks(eventSlug?: string, startDate?: string, endDate?: string): Promise<ClickRecord[]> {

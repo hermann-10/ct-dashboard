@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -7,7 +8,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
 import { DashboardStore } from './dashboard.store';
 import { AuthStore } from '../auth/auth.store';
-import { KpiCardsComponent } from './components/kpi-cards';
 import { ClicksChartComponent } from './components/clicks-chart';
 import { DeviceBreakdownComponent } from './components/device-breakdown';
 import { UtmTableComponent } from './components/utm-table';
@@ -18,12 +18,14 @@ import { NotificationCenterComponent } from '../notifications';
   selector: 'app-dashboard',
   standalone: true,
   imports: [
+    CurrencyPipe,
+    DatePipe,
+    DecimalPipe,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatSelectModule,
-    KpiCardsComponent,
     ClicksChartComponent,
     DeviceBreakdownComponent,
     UtmTableComponent,
@@ -48,6 +50,25 @@ export class DashboardComponent implements OnInit {
     { label: 'Tout', days: 0 },
   ];
   activePeriod = signal('Tout');
+  readonly currentYear = new Date().getFullYear();
+
+  daysUntilLabel(date: string): string {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(date + 'T00:00:00');
+    const days = Math.round((target.getTime() - today.getTime()) / 86400000);
+    if (days <= 0) return "Aujourd'hui";
+    if (days === 1) return 'Demain';
+    return `Dans ${days} jours`;
+  }
+
+  isUpcoming(date: string): boolean {
+    return date >= new Date().toISOString().split('T')[0];
+  }
+
+  onManageEvent(slug: string): void {
+    this.router.navigate(['/admin/event', slug, 'manage']);
+  }
 
   ngOnInit(): void {
     this.store.loadAll();

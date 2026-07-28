@@ -54,3 +54,22 @@ export interface DashboardStats {
   totalEvents: number;
   conversionRate: number;
 }
+
+export interface FinancialRow {
+  amount: number;
+  event_name: string;
+  event_date: string;
+}
+
+export interface EventFinancialRow {
+  name: string;
+  date: string;
+  ca: number;
+  charges: number;
+  result: number;
+}
+
+export interface EventFinancials {
+  revenues: FinancialRow[];
+  charges: FinancialRow[];
+}

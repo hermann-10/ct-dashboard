@@ -61,6 +61,7 @@
           @if (event.ticket_url) {
             <a [href]="event.ticket_url" class="ticket-btn" target="_blank" rel="noopener" (click)="onTicketClick(event)">
               Acheter des tickets
+              <small class="ticket-btn-sub">{{ event.name }} · {{ event.date | date:'EEE d MMMM' }}</small>
             </a>
           }
         </div>

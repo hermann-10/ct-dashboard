@@ -120,16 +120,21 @@ h1 {
 
 .event-card {
   background: white;
+  border: 1.5px solid #eceaf6;
   border-radius: 16px;
   padding: 1rem 1.25rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1.75rem;
   color: inherit;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 16px rgba(30, 27, 75, 0.07);
   transition: transform 0.15s, box-shadow 0.15s;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 24px rgba(30, 27, 75, 0.12);
   }
 
   &.past {
@@ -321,4 +326,13 @@ h1 {
   display: flex;
   justify-content: center;
   padding: 2rem;
+}
+
+.ticket-btn-sub {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  opacity: 0.9;
+  margin-top: 2px;
+  text-transform: capitalize;
 }

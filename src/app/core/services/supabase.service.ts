@@ -7,7 +7,6 @@ export class SupabaseService {
   private readonly appRef = inject(ApplicationRef);
   private readonly supabase: SupabaseClient;
   private _scheduleTick!: () => void;
-  private _authLockPromise: Promise<void> = Promise.resolve();
   private _cachedAccessToken = '';
 
   constructor() {
@@ -37,26 +36,15 @@ export class SupabaseService {
 
     this.supabase = createClient(environment.supabaseUrl, environment.supabaseAnonKey, {
       auth: {
-        // Simple mutex lock to prevent concurrent token refreshes.
-        // The default Web Locks API can deadlock in some browsers;
-        // this serialises auth operations without blocking the UI.
+        // Pass-through lock (remplace le Web Locks API qui peut deadlocker).
+        // supabase-js déduplique déjà les refreshs de token en interne ;
+        // un mutex sérialisé ici mettait CHAQUE requête (lectures comprises)
+        // en file d'attente derrière l'auth → pages lentes à chaque navigation.
         lock: async <R>(
           _name: string,
           _acquireTimeout: number,
           fn: () => Promise<R>,
-        ): Promise<R> => {
-          // Wait for any in-flight auth operation to finish — but never
-          // more than 5s: a wedged operation must not freeze the queue.
-          const prior = this._authLockPromise;
-          let release: () => void;
-          this._authLockPromise = new Promise<void>(r => (release = r));
-          try {
-            await Promise.race([prior, new Promise(r => setTimeout(r, 5000))]);
-            return await fn();
-          } finally {
-            release!();
-          }
-        },
+        ): Promise<R> => fn(),
       },
       global: {
         fetch: async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
@@ -492,6 +480,62 @@ export class SupabaseService {
   async deleteEventCharge(id: string): Promise<void> {
     const { error } = await this.supabase.from('event_charges').delete().eq('id', id);
     if (error) throw error;
+  }
+
+  /** Bulk fetch of all revenues + charges with their event date (dashboard CA). */
+  async getEventFinancials(): Promise<{
+    revenues: { amount: number; event_name: string; event_date: string }[];
+    charges: { amount: number; event_name: string; event_date: string }[];
+  }> {
+    const [rev, ch] = await Promise.all([
+      this.supabase.from('event_revenues').select('amount, event:events(name, date)'),
+      this.supabase.from('event_charges').select('amount, event:events(name, date)'),
+    ]);
+    if (rev.error) throw rev.error;
+    if (ch.error) throw ch.error;
+    const mapRow = (r: any) => ({
+      amount: Number(r.amount ?? 0),
+      event_name: r.event?.name ?? '',
+      event_date: r.event?.date ?? '',
+    });
+    return {
+      revenues: (rev.data ?? []).map(mapRow),
+      charges: (ch.data ?? []).map(mapRow),
+    };
+  }
+
+  // ── Event Invoices CRUD ──
+  async getEventInvoices(eventId: string): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('event_invoices')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('invoice_number', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  /** Prochain numéro de facture (continue après le dernier existant). */
+  async getNextInvoiceNumber(): Promise<number> {
+    const { data, error } = await this.supabase
+      .from('event_invoices')
+      .select('invoice_number')
+      .order('invoice_number', { ascending: false })
+      .limit(1);
+    if (error) throw error;
+    return (data?.[0]?.invoice_number ?? 232) + 1;
+  }
+
+  async createEventInvoice(dto: any): Promise<any> {
+    return this._rest('POST', 'event_invoices', dto);
+  }
+
+  async updateEventInvoice(id: string, changes: any): Promise<any> {
+    return this._rest('PATCH', 'event_invoices', { ...changes, updated_at: new Date().toISOString() }, `id=eq.${id}`);
+  }
+
+  async deleteEventInvoice(id: string): Promise<void> {
+    await this._rest('DELETE', 'event_invoices', undefined, `id=eq.${id}`);
   }
 
   // ── Event Revenues CRUD ──

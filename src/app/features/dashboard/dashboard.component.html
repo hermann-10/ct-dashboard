@@ -16,28 +16,6 @@
         <h2>Vue d'ensemble</h2>
       </div>
       <div class="header-actions">
-        <!-- Period pills -->
-        <div class="period-pills">
-          @for (period of periods; track period.label) {
-            <button class="pill"
-                    [class.active]="activePeriod() === period.label"
-                    (click)="onPeriodChange(period.label, period.days)">
-              {{ period.label }}
-            </button>
-          }
-        </div>
-
-        <!-- Event filter -->
-        <div class="event-filter-wrap">
-          <mat-icon class="filter-icon">filter_list</mat-icon>
-          <mat-select [value]="store.selectedEventSlug()" panelWidth="auto" (selectionChange)="onEventFilter($event.value)" class="event-select" placeholder="Tous les événements">
-            <mat-option [value]="null">Tous les événements</mat-option>
-            @for (event of store.events(); track event.slug) {
-              <mat-option [value]="event.slug">{{ event.name }}</mat-option>
-            }
-          </mat-select>
-        </div>
-
         <button mat-icon-button (click)="onRefresh()" matTooltip="Actualiser" class="refresh-btn">
           <mat-icon>refresh</mat-icon>
         </button>
@@ -45,23 +23,148 @@
       </div>
     </div>
 
-    <app-kpi-cards [stats]="store.stats()" />
+    <!-- ═══ CA & prochains événements ═══ -->
+    <div class="business-row">
+      <div class="biz-cards">
+        <div class="biz-card">
+          <div class="biz-head">
+            <span class="biz-label">CA du mois</span>
+            <div class="biz-icon purple"><mat-icon>payments</mat-icon></div>
+          </div>
+          <div class="biz-value">{{ store.businessStats().caMonth | currency:'CHF':'symbol':'1.0-0' }}</div>
+          <div class="biz-sub">Recettes des événements du mois</div>
+        </div>
 
-    <div class="charts-row">
-      <div class="chart-main">
-        <app-clicks-chart [timeline]="store.timeline()" [eventTimeline]="store.eventTimeline()" />
+        <div class="biz-card">
+          <div class="biz-head">
+            <span class="biz-label">CA {{ currentYear }}</span>
+            <div class="biz-icon green"><mat-icon>trending_up</mat-icon></div>
+          </div>
+          <div class="biz-value">{{ store.businessStats().caYear | currency:'CHF':'symbol':'1.0-0' }}</div>
+          <div class="biz-sub">Recettes cumulées sur l'année</div>
+        </div>
+
+        <div class="biz-card" [class.negative]="store.businessStats().resultYear < 0">
+          <div class="biz-head">
+            <span class="biz-label">Résultat {{ currentYear }}</span>
+            <div class="biz-icon" [class.green]="store.businessStats().resultYear >= 0" [class.red]="store.businessStats().resultYear < 0">
+              <mat-icon>{{ store.businessStats().resultYear >= 0 ? 'check_circle' : 'warning' }}</mat-icon>
+            </div>
+          </div>
+          <div class="biz-value">{{ store.businessStats().resultYear | currency:'CHF':'symbol':'1.0-0' }}</div>
+          <div class="biz-sub">Recettes − charges de l'année</div>
+        </div>
       </div>
-      <div class="chart-side">
-        <app-device-breakdown [devices]="store.deviceBreakdown()" />
+
+      <div class="upcoming-panel">
+        <h3 class="up-title">
+          Prochains événements
+          @if (store.upcomingCount() > 0) {
+            <span class="up-count">{{ store.upcomingCount() }}</span>
+          }
+        </h3>
+        @for (evt of store.upcomingEvents(); track evt.slug) {
+          <button class="up-row" (click)="onManageEvent(evt.slug)">
+            <div class="up-date">
+              <span class="up-day">{{ evt.date | date:'d' }}</span>
+              <span class="up-month">{{ evt.date | date:'MMM' }}</span>
+            </div>
+            <div class="up-info">
+              <span class="up-name">{{ evt.name }}</span>
+              <span class="up-when">{{ daysUntilLabel(evt.date) }}</span>
+            </div>
+            <mat-icon class="up-arrow">chevron_right</mat-icon>
+          </button>
+        } @empty {
+          <p class="up-empty">Aucun événement à venir</p>
+        }
       </div>
     </div>
 
-    <div class="tables-row">
-      <div class="table-main">
-        <app-events-list [events]="store.events()" (viewDetail)="onViewEvent($event)" />
+    <!-- ═══ Chiffres par soirée ═══ -->
+    <div class="events-financials">
+      <h3 class="section-heading">Chiffres par soirée</h3>
+      @if (store.perEventFinancials().length === 0) {
+        <p class="fin-empty">Saisis des recettes et charges dans le Budget de tes événements pour voir les chiffres ici.</p>
+      } @else {
+        <div class="fin-table">
+          <div class="fin-row fin-head">
+            <span>Soirée</span>
+            <span class="fin-date">Date</span>
+            <span class="num">Recettes</span>
+            <span class="num fin-charges">Charges</span>
+            <span class="num">Résultat</span>
+          </div>
+          @for (row of store.perEventFinancials(); track row.name) {
+            <div class="fin-row" [class.upcoming]="isUpcoming(row.date)">
+              <span class="fin-name">
+                {{ row.name }}
+                @if (isUpcoming(row.date)) {
+                  <span class="fin-badge">À venir</span>
+                }
+              </span>
+              <span class="fin-date">{{ row.date | date:'d MMM yyyy' }}</span>
+              <span class="num">{{ row.ca | currency:'CHF':'symbol':'1.0-0' }}</span>
+              <span class="num fin-charges">{{ row.charges | currency:'CHF':'symbol':'1.0-0' }}</span>
+              <span class="num fin-result" [class.pos]="row.result > 0" [class.neg]="row.result < 0">
+                {{ row.result | currency:'CHF':'symbol':'1.0-0' }}
+              </span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- ═══ Trafic & clics (compact, en bas) ═══ -->
+    <div class="clicks-zone">
+      <div class="clicks-header">
+        <h3 class="section-heading muted">Trafic & clics</h3>
+        <div class="clicks-filters">
+          <div class="period-pills">
+            @for (period of periods; track period.label) {
+              <button class="pill"
+                      [class.active]="activePeriod() === period.label"
+                      (click)="onPeriodChange(period.label, period.days)">
+                {{ period.label }}
+              </button>
+            }
+          </div>
+          <div class="event-filter-wrap">
+            <mat-icon class="filter-icon">filter_list</mat-icon>
+            <mat-select [value]="store.selectedEventSlug()" panelWidth="auto" (selectionChange)="onEventFilter($event.value)" class="event-select" placeholder="Tous les événements">
+              <mat-option [value]="null">Tous les événements</mat-option>
+              @for (event of store.events(); track event.slug) {
+                <mat-option [value]="event.slug">{{ event.name }}</mat-option>
+              }
+            </mat-select>
+          </div>
+        </div>
       </div>
-      <div class="table-side">
-        <app-utm-table [sources]="store.utmBreakdown()" />
+
+      @if (store.stats(); as stats) {
+        <div class="mini-stats">
+          <span class="mini-chip"><b>{{ stats.totalClicks }}</b> clics</span>
+          <span class="mini-chip"><b>{{ stats.uniqueVisitors }}</b> visiteurs uniques</span>
+          <span class="mini-chip"><b>{{ stats.conversionRate | number:'1.1-1' }}%</b> taux unique</span>
+        </div>
+      }
+
+      <div class="charts-row">
+        <div class="chart-main">
+          <app-clicks-chart [timeline]="store.timeline()" [eventTimeline]="store.eventTimeline()" />
+        </div>
+        <div class="chart-side">
+          <app-device-breakdown [devices]="store.deviceBreakdown()" />
+        </div>
+      </div>
+
+      <div class="tables-row">
+        <div class="table-main">
+          <app-events-list [events]="store.events()" (viewDetail)="onViewEvent($event)" />
+        </div>
+        <div class="table-side">
+          <app-utm-table [sources]="store.utmBreakdown()" />
+        </div>
       </div>
     </div>
   }

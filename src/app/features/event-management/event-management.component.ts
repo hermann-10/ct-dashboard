@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,6 +9,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { EventManagementStore } from './event-management.store';
 import { PdfExportService } from './pdf-export.service';
+import { InvoicePdfService } from './invoice-pdf.service';
+import { EventInvoice, InvoiceStatus, invoiceTotal } from './invoice.model';
 import { EventCharge, EventRevenue, EventLineup, EventGuestlist } from './event-management.model';
 import {
   BudgetOverviewComponent,
@@ -22,10 +24,11 @@ import {
   LineupDialogComponent, LineupDialogData,
   GuestDialogComponent, GuestDialogData,
   GuestlistDialogComponent, GuestlistDialogData,
+  InvoiceDialogComponent, InvoiceDialogData,
 } from './components';
 import { EventSalesPanelComponent } from '../bar/components/event-sales-panel/event-sales-panel.component';
 
-export type EventSection = 'budget' | 'lineup' | 'guestlists' | 'bar' | 'notes';
+export type EventSection = 'budget' | 'lineup' | 'guestlists' | 'bar' | 'notes' | 'invoices';
 
 @Component({
   selector: 'app-event-management',
@@ -33,6 +36,7 @@ export type EventSection = 'budget' | 'lineup' | 'guestlists' | 'bar' | 'notes';
   imports: [
     RouterLink,
     CurrencyPipe,
+    DatePipe,
     MatButtonModule, MatIconModule, MatProgressSpinnerModule,
     MatDialogModule, MatTooltipModule,
     BudgetOverviewComponent, ChargesTableComponent, RevenuesTableComponent,
@@ -49,10 +53,11 @@ export class EventManagementComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly pdfExport = inject(PdfExportService);
+  private readonly invoicePdf = inject(InvoicePdfService);
 
   exporting = signal(false);
 
-  private readonly sections: EventSection[] = ['budget', 'lineup', 'guestlists', 'bar', 'notes'];
+  private readonly sections: EventSection[] = ['budget', 'lineup', 'guestlists', 'bar', 'notes', 'invoices'];
   section = signal<EventSection | null>(null);
 
   constructor() {
@@ -261,6 +266,62 @@ export class EventManagementComponent implements OnInit {
 
   onToggleGuestCheckedIn(event: { guestlistId: string; entryId: string }): void {
     this.store.toggleGuestCheckedIn(event.guestlistId, event.entryId);
+  }
+
+  // ── Factures ──
+  readonly invoiceTotal = invoiceTotal;
+
+  async onCreateInvoice(): Promise<void> {
+    const event = this.store.event();
+    if (!event) return;
+    let invoiceNumber: number;
+    try {
+      invoiceNumber = await this.store.getNextInvoiceNumber();
+    } catch {
+      alert(
+        "La table des factures n'existe pas encore dans Supabase.\n\n" +
+        "Exécute le fichier supabase-invoices-migration.sql (à la racine du projet) " +
+        "dans le SQL Editor de Supabase, puis réessaie."
+      );
+      return;
+    }
+    const dialogRef = this.dialog.open(InvoiceDialogComponent, {
+      data: { mode: 'create', event, invoiceNumber } as InvoiceDialogData,
+      width: '640px',
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.store.addInvoice({ ...result, event_id: event.id, invoice_number: invoiceNumber });
+      }
+    });
+  }
+
+  onEditInvoice(invoice: EventInvoice): void {
+    const event = this.store.event();
+    if (!event) return;
+    const dialogRef = this.dialog.open(InvoiceDialogComponent, {
+      data: { mode: 'edit', event, invoiceNumber: invoice.invoice_number, invoice } as InvoiceDialogData,
+      width: '640px',
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.store.editInvoice(invoice.id, result);
+      }
+    });
+  }
+
+  onInvoiceStatus(invoice: EventInvoice, status: InvoiceStatus): void {
+    this.store.setInvoiceStatus(invoice.id, status);
+  }
+
+  onRemoveInvoice(invoice: EventInvoice): void {
+    if (confirm(`Supprimer la facture n° ${invoice.invoice_number} ?`)) {
+      this.store.removeInvoice(invoice.id);
+    }
+  }
+
+  async onExportInvoice(invoice: EventInvoice): Promise<void> {
+    await this.invoicePdf.exportInvoicePdf(invoice, this.store.event());
   }
 
   // ── PDF Export ──

@@ -19,3 +19,5 @@ export { RevenueDialogComponent, type RevenueDialogData } from './revenue-dialog
 export { LineupDialogComponent, type LineupDialogData } from './lineup-dialog/lineup-dialog.component';
 export { GuestDialogComponent, type GuestDialogData } from './guest-dialog/guest-dialog.component';
 export { GuestlistDialogComponent, type GuestlistDialogData } from './guestlist-dialog/guestlist-dialog.component';
+export { InvoiceDialogComponent } from './invoice-dialog/invoice-dialog.component';
+export type { InvoiceDialogData } from './invoice-dialog/invoice-dialog.component';
