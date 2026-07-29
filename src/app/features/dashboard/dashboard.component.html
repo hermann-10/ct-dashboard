@@ -41,9 +41,7 @@
           <button mat-icon-button (click)="shiftPeriod(1)" matTooltip="Période suivante">
             <mat-icon>chevron_right</mat-icon>
           </button>
-          @if (!isCurrentPeriod()) {
-            <button mat-stroked-button class="period-today" (click)="resetPeriod()">Aujourd'hui</button>
-          }
+          <button mat-stroked-button class="period-today" [class.ghost]="isCurrentPeriod()" [disabled]="isCurrentPeriod()" (click)="resetPeriod()">Aujourd'hui</button>
         }
       </div>
     </div>

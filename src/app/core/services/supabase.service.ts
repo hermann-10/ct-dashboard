@@ -90,7 +90,7 @@ export class SupabaseService {
   }
 
   private async _rest<T = any>(
-    method: 'POST' | 'PATCH' | 'DELETE',
+    method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
     table: string,
     body?: Record<string, any>,
     queryParams?: string,
@@ -107,14 +107,14 @@ export class SupabaseService {
     };
 
     // For POST/PATCH we want a single object back (equivalent to .single())
-    if (method !== 'DELETE') {
+    if (method === 'POST' || method === 'PATCH') {
       headers['Accept'] = 'application/vnd.pgrst.object+json';
     }
 
     const res = await fetch(url, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      body: body && method !== 'GET' ? JSON.stringify(body) : undefined,
       signal: AbortSignal.timeout(15000),
     });
 
@@ -334,11 +334,9 @@ export class SupabaseService {
 
   // Events CRUD
   async getEvents(publishedOnly = false): Promise<any[]> {
-    let query = this.supabase.from('events').select('*').order('date', { ascending: true });
-    if (publishedOnly) query = query.eq('is_published', true);
-    const { data, error } = await query;
-    if (error) throw error;
-    return data ?? [];
+    const params = ['select=*', 'order=date.asc'];
+    if (publishedOnly) params.push('is_published=eq.true');
+    return this._rest<any[]>('GET', 'events', undefined, params.join('&'));
   }
 
   async getUpcomingEvents(): Promise<any[]> {

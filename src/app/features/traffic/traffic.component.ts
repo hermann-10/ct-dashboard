@@ -12,7 +12,8 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -22,6 +23,7 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { Chart, registerables } from 'chart.js';
 import { DashboardStore } from '../dashboard/dashboard.store';
+import { EventConfig } from '../dashboard/dashboard.model';
 
 Chart.register(...registerables);
 
@@ -31,7 +33,8 @@ Chart.register(...registerables);
   imports: [
     MatButtonModule,
     MatIconModule,
-    MatSelectModule,
+    MatAutocompleteModule,
+    MatInputModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatFormFieldModule,
@@ -89,16 +92,52 @@ Chart.register(...registerables);
             </button>
           }
 
-          <!-- Event filter -->
-          <div class="event-filter-wrap">
-            <mat-icon class="filter-icon">filter_list</mat-icon>
-            <mat-select [value]="store.selectedEventSlug()" panelWidth="auto" (selectionChange)="onEventFilter($event.value)" class="event-select" placeholder="Tous les événements">
-              <mat-option [value]="null">Tous les événements</mat-option>
-              @for (event of store.events(); track event.slug) {
-                <mat-option [value]="event.slug">{{ event.name }}</mat-option>
+          <!-- Event filter : recherche + groupes À venir / Passés -->
+          <mat-form-field appearance="outline" class="event-filter-field" subscriptSizing="dynamic">
+            <mat-icon matPrefix class="filter-icon">search</mat-icon>
+            <input matInput
+                   placeholder="Tous les événements"
+                   [ngModel]="eventInputValue()"
+                   (ngModelChange)="onEventSearch($event)"
+                   [matAutocomplete]="eventAuto" />
+            @if (store.selectedEventSlug()) {
+              <button mat-icon-button matSuffix (click)="clearEventFilter($event)" matTooltip="Tous les événements">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+            <mat-autocomplete #eventAuto="matAutocomplete"
+                              [displayWith]="displayEvent"
+                              (optionSelected)="onEventPicked($event.option.value)"
+                              panelWidth="360px">
+              @if (upcomingOptions().length > 0) {
+                <mat-optgroup label="À venir">
+                  @for (ev of upcomingOptions(); track ev.slug) {
+                    <mat-option [value]="ev">
+                      <div class="ev-opt">
+                        <span class="ev-opt-name">{{ ev.name }}</span>
+                        <span class="ev-opt-meta">{{ ev.date | date:'EEE dd.MM.yy' }} · {{ ev.totalClicks }} clics</span>
+                      </div>
+                    </mat-option>
+                  }
+                </mat-optgroup>
               }
-            </mat-select>
-          </div>
+              @if (pastOptions().length > 0) {
+                <mat-optgroup label="Passés">
+                  @for (ev of pastOptions(); track ev.slug) {
+                    <mat-option [value]="ev">
+                      <div class="ev-opt">
+                        <span class="ev-opt-name">{{ ev.name }}</span>
+                        <span class="ev-opt-meta">{{ ev.date | date:'EEE dd.MM.yy' }} · {{ ev.totalClicks }} clics</span>
+                      </div>
+                    </mat-option>
+                  }
+                </mat-optgroup>
+              }
+              @if (upcomingOptions().length === 0 && pastOptions().length === 0) {
+                <mat-option disabled>Aucun événement trouvé</mat-option>
+              }
+            </mat-autocomplete>
+          </mat-form-field>
 
           <button mat-icon-button (click)="onRefresh()" matTooltip="Actualiser" class="refresh-btn">
             <mat-icon>refresh</mat-icon>
@@ -939,6 +978,48 @@ Chart.register(...registerables);
       text-align: right;
     }
 
+    /* ── Event filter (autocomplete) ── */
+    .event-filter-field {
+      width: 240px;
+
+      ::ng-deep .mat-mdc-text-field-wrapper {
+        height: 40px;
+        background: var(--hm-surface, #fff);
+      }
+
+      ::ng-deep .mat-mdc-form-field-infix {
+        padding-top: 8px;
+        padding-bottom: 8px;
+        min-height: 40px;
+      }
+
+      .filter-icon {
+        color: var(--hm-text-secondary);
+        margin-right: 4px;
+      }
+    }
+
+    /* Options du panneau autocomplete (overlay hors composant) */
+    ::ng-deep .ev-opt {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      padding: 2px 0;
+      line-height: 1.3;
+
+      .ev-opt-name {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #1e1e3c;
+      }
+
+      .ev-opt-meta {
+        font-size: 0.74rem;
+        color: #8a8aa3;
+        text-transform: capitalize;
+      }
+    }
+
     /* ── Range picker & clics par jour ── */
     .range-field {
       width: 210px;
@@ -1039,6 +1120,42 @@ export class TrafficComponent implements OnInit, OnDestroy {
   ];
 
   activePeriod = signal('Tout');
+
+  // Filtre événement — autocomplete
+  eventInputValue = signal<string | EventConfig | null>(null);
+  private eventSearch = signal('');
+
+  private filteredEvents = computed(() => {
+    const term = this.eventSearch().toLowerCase().trim();
+    return this.store.events().filter(e =>
+      !term ||
+      e.name.toLowerCase().includes(term) ||
+      e.date.includes(term)
+    );
+  });
+
+  upcomingOptions = computed(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return this.filteredEvents()
+      .filter(e => e.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date));
+  });
+
+  pastOptions = computed(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return this.filteredEvents()
+      .filter(e => e.date < today)
+      .sort((a, b) => b.date.localeCompare(a.date));
+  });
+
+  displayEvent = (ev: EventConfig | string | null): string => {
+    if (ev && typeof ev === 'object') {
+      const d = new Date(ev.date + 'T00:00:00')
+        .toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: '2-digit' });
+      return ev.name + ' · ' + d;
+    }
+    return typeof ev === 'string' ? ev : '';
+  };
 
   // Plage de dates personnalisée (jour précis)
   rangeStart = signal<Date | null>(null);
@@ -1278,6 +1395,28 @@ export class TrafficComponent implements OnInit, OnDestroy {
     }
   }
 
+  onEventSearch(value: string | EventConfig | null): void {
+    this.eventInputValue.set(value);
+    if (typeof value === 'string') {
+      this.eventSearch.set(value);
+    } else if (value === null) {
+      this.eventSearch.set('');
+    }
+  }
+
+  onEventPicked(ev: EventConfig): void {
+    this.eventInputValue.set(ev);
+    this.eventSearch.set('');
+    this.onEventFilter(ev.slug);
+  }
+
+  clearEventFilter(e?: Event): void {
+    e?.stopPropagation();
+    this.eventInputValue.set(null);
+    this.eventSearch.set('');
+    this.onEventFilter(null);
+  }
+
   onEventFilter(slug: string | null): void {
     const startDate = this.store.startDate() ?? undefined;
     const endDate = this.store.endDate() ?? undefined;
@@ -1296,7 +1435,12 @@ export class TrafficComponent implements OnInit, OnDestroy {
     const map: Record<string, string> = {
       meta: 'campaign',
       facebook: 'campaign',
+      fb: 'campaign',
+      msg: 'chat',
+      an: 'campaign',
       instagram: 'photo_camera',
+      ig: 'photo_camera',
+      snapchat: 'bolt',
       google: 'search',
       direct: 'link',
       email: 'email',
@@ -1312,7 +1456,12 @@ export class TrafficComponent implements OnInit, OnDestroy {
     const map: Record<string, string> = {
       meta: '#6C5CE7',
       facebook: '#1877F2',
+      fb: '#1877F2',
+      msg: '#0084FF',
+      an: '#6C5CE7',
       instagram: '#E4405F',
+      ig: '#E4405F',
+      snapchat: '#FFC300',
       google: '#4285F4',
       direct: '#10B981',
       email: '#F59E0B',

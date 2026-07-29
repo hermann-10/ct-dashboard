@@ -591,4 +591,11 @@
   height: 32px;
   font-size: var(--hm-text-xs) !important;
   border-radius: var(--hm-radius-full) !important;
+
+  // Sur la période courante : invisible mais l'espace reste réservé
+  // pour éviter tout décalage du stepper quand on navigue.
+  &.ghost {
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
