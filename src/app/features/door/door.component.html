@@ -113,7 +113,9 @@
                   <span class="row-accomp">+{{ g.entry.accompagnants }}</span>
                 }
                
-                  <span class="row-accomp">- {{ g.entry.remarks }}</span>
+                @if (g.entry.remarks) {
+                  <span class="row-accomp"> {{ g.entry.remarks }}</span>
+                }
                 
                 
               </div>
