@@ -11,6 +11,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { SupabaseService } from '../../core/services/supabase.service';
 
 interface GuestEntry {
+//remarks: any;
   id: string;
   guest_name: string;
   email: string | null;
@@ -130,6 +131,7 @@ export class DoorComponent implements OnInit {
   });
 
   filteredCount = computed(() => this.filteredGuests().length);
+entry: any;
 
   async ngOnInit(): Promise<void> {
     const slug = this.route.snapshot.paramMap.get('slug');
