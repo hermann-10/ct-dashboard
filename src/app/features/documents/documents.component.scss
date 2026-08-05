@@ -322,3 +322,10 @@
   align-items: center;
   gap: 4px;
 }
+
+/* ── Mode discret : montants masqués ── */
+.amounts-hidden .cell-fee {
+  filter: blur(9px);
+  user-select: none;
+  pointer-events: none;
+}

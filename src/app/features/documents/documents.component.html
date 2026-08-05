@@ -1,4 +1,4 @@
-<div class="documents-page">
+<div class="documents-page" [class.amounts-hidden]="hideAmounts()">
   <div class="page-header">
     <div class="header-info">
       <h2>Documents</h2>
@@ -83,6 +83,10 @@
 
       <span class="tb-spacer"></span>
 
+      <button mat-icon-button (click)="onToggleAmounts()"
+              [matTooltip]="hideAmounts() ? 'Afficher les montants' : 'Masquer les montants'">
+        <mat-icon>{{ hideAmounts() ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
       <button mat-icon-button (click)="load()" matTooltip="Actualiser">
         <mat-icon>refresh</mat-icon>
       </button>

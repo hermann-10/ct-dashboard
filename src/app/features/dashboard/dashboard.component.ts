@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { PrivacyService } from '../../core/services/privacy.service';
 import { Router } from '@angular/router';
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -37,6 +38,13 @@ import { NotificationCenterComponent } from '../notifications';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent implements OnInit {
+  private readonly privacy = inject(PrivacyService);
+  readonly hideAmounts = this.privacy.hideAmounts;
+
+  onToggleAmounts(): void {
+    this.privacy.toggle();
+  }
+
   readonly store = inject(DashboardStore);
   private readonly auth = inject(AuthStore);
   private readonly router = inject(Router);

@@ -519,3 +519,20 @@
   .doc-row { flex-wrap: wrap; gap: 0.5rem; }
   .doc-actions { width: 100%; justify-content: flex-end; }
 }
+
+/* ── Mode discret : montants masqués (flou, mise en page intacte) ── */
+.hide-amounts-btn {
+  color: var(--hm-text-secondary);
+}
+
+.amounts-hidden {
+  .kpi-value,
+  .rev-amount,
+  .year-total,
+  .doc-amount {
+    filter: blur(9px);
+    user-select: none;
+    pointer-events: none;
+    transition: filter 150ms ease;
+  }
+}

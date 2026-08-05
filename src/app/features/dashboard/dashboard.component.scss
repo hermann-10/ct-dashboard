@@ -599,3 +599,14 @@
     pointer-events: none;
   }
 }
+
+/* ── Mode discret : montants masqués ── */
+.amounts-hidden {
+  .biz-value,
+  .fin-table .num,
+  .fin-result {
+    filter: blur(9px);
+    user-select: none;
+    pointer-events: none;
+  }
+}

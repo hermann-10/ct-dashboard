@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { SupabaseService } from '../../core/services/supabase.service';
+import { PrivacyService } from '../../core/services/privacy.service';
 import { Artist } from '../artists/artists.model';
 import { InvoicePdfService } from '../event-management/invoice-pdf.service';
 import { EventInvoice, InvoiceStatus, invoiceTotal } from '../event-management/invoice.model';
@@ -40,6 +41,15 @@ import { ArtistContractDialogComponent, ArtistContractDialogData } from './compo
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ManagementComponent implements OnInit {
+  private readonly privacy = inject(PrivacyService);
+
+  /** Mode discret partagé : masque tous les montants (persisté). */
+  readonly hideAmounts = this.privacy.hideAmounts;
+
+  onToggleAmounts(): void {
+    this.privacy.toggle();
+  }
+
   private readonly supabase = inject(SupabaseService);
   private readonly dialog = inject(MatDialog);
   private readonly invoicePdf = inject(InvoicePdfService);

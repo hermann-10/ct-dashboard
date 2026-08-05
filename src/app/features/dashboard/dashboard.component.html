@@ -1,4 +1,4 @@
-<div class="dashboard-content">
+<div class="dashboard-content" [class.amounts-hidden]="hideAmounts()">
   @if (store.loading()) {
     <div class="loading-overlay">
       <mat-spinner diameter="48" />
@@ -16,6 +16,10 @@
         <h2>Vue d'ensemble</h2>
       </div>
       <div class="header-actions">
+        <button mat-icon-button (click)="onToggleAmounts()"
+                [matTooltip]="hideAmounts() ? 'Afficher les montants' : 'Masquer les montants'" class="refresh-btn">
+          <mat-icon>{{ hideAmounts() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
         <button mat-icon-button (click)="onRefresh()" matTooltip="Actualiser" class="refresh-btn">
           <mat-icon>refresh</mat-icon>
         </button>

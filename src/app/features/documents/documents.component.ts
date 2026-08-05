@@ -11,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { SupabaseService } from '../../core/services/supabase.service';
+import { PrivacyService } from '../../core/services/privacy.service';
 import { ContractPdfService } from '../management/contract-pdf.service';
 import { InvoicePdfService } from '../event-management/invoice-pdf.service';
 import { EventInvoice, InvoiceStatus, invoiceTotal } from '../event-management/invoice.model';
@@ -85,11 +86,17 @@ interface DocumentFile {
 })
 export class DocumentsComponent implements OnInit {
   private readonly supabase = inject(SupabaseService);
+  private readonly privacy = inject(PrivacyService);
   private readonly contractPdf = inject(ContractPdfService);
   private readonly invoicePdf = inject(InvoicePdfService);
   private readonly dialog = inject(MatDialog);
 
   readonly section = signal<DocSection>('contrats');
+  readonly hideAmounts = this.privacy.hideAmounts;
+
+  onToggleAmounts(): void {
+    this.privacy.toggle();
+  }
 
   readonly contracts = signal<ContractRow[]>([]);
   readonly invoices = signal<CombinedInvoice[]>([]);

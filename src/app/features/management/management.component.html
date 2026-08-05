@@ -1,4 +1,4 @@
-<div class="management-page">
+<div class="management-page" [class.amounts-hidden]="hideAmounts()">
   <!-- Header -->
   <div class="page-header">
     <div class="header-info">
@@ -6,6 +6,12 @@
       <p class="subtitle">Carrière & revenus des artistes</p>
     </div>
     <div class="header-actions">
+      <button mat-icon-button class="hide-amounts-btn"
+              (click)="onToggleAmounts()"
+              [matTooltip]="hideAmounts() ? 'Afficher les montants' : 'Masquer les montants'">
+        <mat-icon>{{ hideAmounts() ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+
       <mat-form-field appearance="outline" class="artist-select">
         <mat-label>Artiste</mat-label>
         <mat-select [ngModel]="selectedArtistId()" (ngModelChange)="selectedArtistId.set($event)">
