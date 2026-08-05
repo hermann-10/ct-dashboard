@@ -1,51 +1,65 @@
-<div class="login-wrapper">
-  <mat-card class="login-card">
-    <mat-card-header>
-      <mat-card-title>
-        <img src="/hm_dev_logo.png" alt="HM-Events" class="login-logo" />
-        HM Events
-      </mat-card-title>
-      <mat-card-subtitle>Connectez-vous pour accéder au dashboard</mat-card-subtitle>
-    </mat-card-header>
+<div class="auth-container">
+  <mat-card class="auth-card">
+    <div class="card-content">
+      <!-- ═══ Formulaire ═══ -->
+      <div class="form-section">
+        <div class="form-content">
+          <div class="brand-row">
+            <img src="/hm_dev_logo.png" alt="HM-Events" class="brand-row-logo" />
+            <span class="brand-row-name">HM Events</span>
+          </div>
+          <h2 class="title">Connexion</h2>
+          <p class="subtitle">Connectez-vous pour accéder au dashboard</p>
 
-    <mat-card-content>
-      @if (store.error()) {
-        <div class="error-banner">
-          <mat-icon>error_outline</mat-icon>
-          {{ store.error() }}
+          <form class="auth-form" (ngSubmit)="onSubmit()">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" [ngModel]="email()" (ngModelChange)="email.set($event)" name="email" required />
+              <mat-icon matPrefix>email</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Mot de passe</mat-label>
+              <input matInput [type]="hidePassword() ? 'password' : 'text'" [ngModel]="password()" (ngModelChange)="password.set($event)" name="password" required />
+              <mat-icon matPrefix>lock</mat-icon>
+              <button mat-icon-button matSuffix type="button" (click)="hidePassword.set(!hidePassword())"
+                      [attr.aria-label]="'Afficher le mot de passe'">
+                <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </mat-form-field>
+
+            <button mat-raised-button type="submit" class="create-btn" [disabled]="store.loading() || !email() || !password()">
+              @if (store.loading()) {
+                <mat-spinner diameter="20" class="btn-spinner" />
+              } @else {
+                <span>Se connecter</span>
+              }
+            </button>
+
+            @if (store.error()) {
+              <div class="error-message">{{ store.error() }}</div>
+            }
+          </form>
+
+          <div class="remember-forgot">
+            <a routerLink="/forgot-password" class="forgot-password-link">Mot de passe oublié ?</a>
+          </div>
+
+          <div class="login-link">
+            <span>Pas encore de compte ? </span>
+            <a routerLink="/register" class="login-text">Créer un compte</a>
+          </div>
         </div>
-      }
-
-      <form (ngSubmit)="onSubmit()">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Email</mat-label>
-          <input matInput type="email" [ngModel]="email()" (ngModelChange)="email.set($event)" name="email" required />
-          <mat-icon matPrefix>email</mat-icon>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Mot de passe</mat-label>
-          <input matInput [type]="hidePassword() ? 'password' : 'text'" [ngModel]="password()" (ngModelChange)="password.set($event)" name="password" required />
-          <mat-icon matPrefix>lock</mat-icon>
-          <button mat-icon-button matSuffix type="button" (click)="hidePassword.set(!hidePassword())">
-            <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
-          </button>
-        </mat-form-field>
-
-        <button mat-flat-button color="primary" type="submit" class="full-width login-btn" [disabled]="store.loading() || !email() || !password()">
-          @if (store.loading()) {
-            <mat-spinner diameter="20" />
-          } @else {
-            Se connecter
-          }
-        </button>
-      </form>
-
-      <div class="auth-links">
-        <a routerLink="/forgot-password" class="auth-link">Mot de passe oublié ?</a>
-        <span class="auth-separator">|</span>
-        <a routerLink="/register" class="auth-link">Créer un compte</a>
       </div>
-    </mat-card-content>
+
+      <!-- ═══ Panneau visuel ═══ -->
+      <div class="right-side-section brand-panel">
+        <div class="brand-panel-inner">
+          <img src="/hm_dev_logo.png" alt="HM-Events" class="brand-panel-logo" />
+          <h3>HM Events App</h3>
+          <p>Événements · Billetterie · Management</p>
+        </div>
+      </div>
+    </div>
   </mat-card>
 </div>

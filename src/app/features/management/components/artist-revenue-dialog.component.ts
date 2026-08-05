@@ -5,6 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { ArtistRevenue } from '../management.model';
@@ -26,6 +27,7 @@ export interface ArtistRevenueDialogData {
     MatInputModule,
     MatButtonModule,
     MatDatepickerModule,
+    MatSlideToggleModule,
     MatAutocompleteModule,
   ],
   providers: [provideNativeDateAdapter()],
@@ -72,6 +74,15 @@ export interface ArtistRevenueDialogData {
         <mat-label>Notes</mat-label>
         <textarea matInput rows="2" [(ngModel)]="form.notes"></textarea>
       </mat-form-field>
+
+      @if (data.mode === 'create') {
+        <mat-slide-toggle class="invoice-toggle" [checked]="createInvoice()" (change)="createInvoice.set($event.checked)">
+          Créer aussi une facture (brouillon) pour cette prestation
+        </mat-slide-toggle>
+        <mat-slide-toggle class="invoice-toggle" [checked]="createContract()" (change)="createContract.set($event.checked)">
+          Créer aussi un contrat (brouillon) pour cette prestation
+        </mat-slide-toggle>
+      }
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
@@ -86,6 +97,7 @@ export interface ArtistRevenueDialogData {
     .full-width { width: 100%; }
     .row { display: flex; gap: 1rem; }
     .row mat-form-field { flex: 1; }
+    .invoice-toggle { margin: 0.25rem 0 0.5rem; font-size: 0.85rem; }
     @media (max-width: 560px) {
       .dialog-content { min-width: unset; }
       .row { flex-direction: column; gap: 0.25rem; }
@@ -98,6 +110,12 @@ export class ArtistRevenueDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<ArtistRevenueDialogComponent>);
 
   venueTerm = signal(this.data.revenue?.venue ?? '');
+
+  /** Création automatique d'une facture brouillon liée (mode création). */
+  createInvoice = signal(true);
+
+  /** Création automatique d'un contrat brouillon lié (mode création). */
+  createContract = signal(true);
 
   filteredVenues = computed(() => {
     const known = this.data.venues ?? [];
@@ -134,6 +152,8 @@ export class ArtistRevenueDialogComponent {
       event_name: this.form.event_name.trim() || undefined,
       amount: Number(this.form.amount),
       notes: this.form.notes.trim() || undefined,
+      createInvoice: this.data.mode === 'create' && this.createInvoice(),
+      createContract: this.data.mode === 'create' && this.createContract(),
     });
   }
 

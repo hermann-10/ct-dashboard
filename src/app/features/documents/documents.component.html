@@ -1,0 +1,331 @@
+<div class="documents-page">
+  <div class="page-header">
+    <div class="header-info">
+      <h2>Documents</h2>
+      <p class="subtitle">Contrats, factures & fichiers des artistes</p>
+    </div>
+  </div>
+
+  <!-- ═══ Onglets ═══ -->
+  <div class="doc-tabs">
+    <button class="dtab" [class.active]="section() === 'contrats'" (click)="section.set('contrats')">
+      <mat-icon>history_edu</mat-icon>
+      Contrats
+      @if (contracts().length > 0) {
+        <span class="dtab-badge">{{ contracts().length }}</span>
+      }
+    </button>
+    <button class="dtab" [class.active]="section() === 'factures'" (click)="section.set('factures')">
+      <mat-icon>receipt_long</mat-icon>
+      Factures
+      @if (invoices().length > 0) {
+        <span class="dtab-badge">{{ invoices().length }}</span>
+      }
+    </button>
+    <button class="dtab" [class.active]="section() === 'fichiers'" (click)="section.set('fichiers')">
+      <mat-icon>attach_file</mat-icon>
+      Fichiers
+      @if (files().length > 0) {
+        <span class="dtab-badge">{{ files().length }}</span>
+      }
+    </button>
+  </div>
+
+  <div class="doc-card">
+    <!-- ═══ Barre d'outils façon Kuber ═══ -->
+    <div class="doc-toolbar">
+      <span class="doc-toolbar-title">
+        {{ section() === 'contrats' ? 'Liste des contrats' : section() === 'factures' ? 'Toutes les factures' : 'Fichiers (riders, fiches techniques…)' }}
+      </span>
+
+      <mat-form-field appearance="outline" class="tb-field tb-search" subscriptSizing="dynamic">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput placeholder="Rechercher..." [ngModel]="search()" (ngModelChange)="search.set($event)" />
+      </mat-form-field>
+
+      @if (section() !== 'factures') {
+        <mat-form-field appearance="outline" class="tb-field" subscriptSizing="dynamic">
+          <mat-select [ngModel]="artistFilter()" (ngModelChange)="artistFilter.set($event)" placeholder="Tous les artistes" panelWidth="auto">
+            <mat-option [value]="null">Tous les artistes</mat-option>
+            @for (artist of artists(); track artist.id) {
+              <mat-option [value]="artist.id">{{ artist.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+
+      @if (section() === 'contrats') {
+        <mat-form-field appearance="outline" class="tb-field" subscriptSizing="dynamic">
+          <mat-select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" panelWidth="auto">
+            <mat-option value="all">Tous les statuts</mat-option>
+            <mat-option value="draft">Brouillon</mat-option>
+            <mat-option value="sent">Envoyé</mat-option>
+            <mat-option value="signed">Signé</mat-option>
+          </mat-select>
+        </mat-form-field>
+      } @else if (section() === 'factures') {
+        <mat-form-field appearance="outline" class="tb-field" subscriptSizing="dynamic">
+          <mat-select [ngModel]="invoiceKindFilter()" (ngModelChange)="invoiceKindFilter.set($event)" panelWidth="auto">
+            <mat-option value="all">Tous les types</mat-option>
+            <mat-option value="event">Événements</mat-option>
+            <mat-option value="artist">Artistes</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="tb-field" subscriptSizing="dynamic">
+          <mat-select [ngModel]="invoiceStatusFilter()" (ngModelChange)="invoiceStatusFilter.set($event)" panelWidth="auto">
+            <mat-option value="all">Tous les statuts</mat-option>
+            <mat-option value="draft">Brouillon</mat-option>
+            <mat-option value="sent">Envoyée</mat-option>
+            <mat-option value="paid">Payée</mat-option>
+          </mat-select>
+        </mat-form-field>
+      }
+
+      <span class="tb-spacer"></span>
+
+      <button mat-icon-button (click)="load()" matTooltip="Actualiser">
+        <mat-icon>refresh</mat-icon>
+      </button>
+
+      @if (section() === 'contrats') {
+        <button mat-flat-button color="primary" (click)="onCreate()" [disabled]="!selectedArtist()"
+                [matTooltip]="selectedArtist() ? 'Nouveau contrat pour ' + selectedArtist()!.name : 'Sélectionne d\'abord un artiste dans le filtre'">
+          <mat-icon>add</mat-icon>
+          Nouveau contrat
+        </button>
+      } @else if (section() === 'fichiers') {
+        <input type="file" #fileInput hidden (change)="onFileSelected(fileInput)" />
+        <button mat-flat-button color="primary" (click)="fileInput.click()" [disabled]="uploading()">
+          @if (uploading()) {
+            <mat-spinner diameter="18" />
+          } @else {
+            <span class="upload-inner"><mat-icon>upload_file</mat-icon>&nbsp;Ajouter un fichier</span>
+          }
+        </button>
+      }
+    </div>
+
+    <!-- ═══ Contenu ═══ -->
+    @if (loading()) {
+      <div class="doc-loading"><mat-spinner diameter="36" /></div>
+    } @else if (error()) {
+      <div class="doc-error">
+        <mat-icon>error_outline</mat-icon>
+        {{ error() }}
+        <button mat-stroked-button (click)="load()">Réessayer</button>
+      </div>
+    } @else {
+      @switch (section()) {
+
+        <!-- ─── CONTRATS ─── -->
+        @case ('contrats') {
+          @if (filtered().length === 0) {
+            <div class="doc-empty">
+              <mat-icon>history_edu</mat-icon>
+              <p>Aucun contrat trouvé.</p>
+              <p class="doc-empty-hint">Sélectionne un artiste dans le filtre puis clique sur « Nouveau contrat ».</p>
+            </div>
+          } @else {
+            <div class="table-scroll">
+              <table class="hm-table doc-table">
+                <thead>
+                  <tr>
+                    <th>N°</th>
+                    <th>Artiste</th>
+                    <th>Client</th>
+                    <th>Date</th>
+                    <th>Lieu</th>
+                    <th class="cell-right">Cachet</th>
+                    <th>Statut</th>
+                    <th>PDF</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (contract of filtered(); track contract.id) {
+                    <tr>
+                      <td class="cell-num">{{ contractNumber(contract) }}</td>
+                      <td class="cell-artist">{{ contract.artist?.name ?? '—' }}</td>
+                      <td class="cell-client">{{ contract.client_name }}</td>
+                      <td>
+                        <span class="cell-date">
+                          <mat-icon class="cell-icon">calendar_today</mat-icon>
+                          {{ contract.event_date | date:'dd/MM/yyyy' }}
+                        </span>
+                      </td>
+                      <td class="cell-venue">{{ [contract.venue, contract.city].join(', ') || '—' }}</td>
+                      <td class="cell-right cell-fee">{{ contract.fee | currency:'CHF':'symbol':'1.2-2' }}</td>
+                      <td>
+                        <button class="status-chip"
+                                [class.draft]="contract.status === 'draft'"
+                                [class.sent]="contract.status === 'sent'"
+                                [class.signed]="contract.status === 'signed'"
+                                matTooltip="Cliquer pour changer le statut"
+                                (click)="onStatus(contract)">
+                          {{ contract.status === 'draft' ? 'Brouillon' : contract.status === 'sent' ? 'Envoyé' : 'Signé' }}
+                        </button>
+                      </td>
+                      <td>
+                        <button mat-icon-button matTooltip="Télécharger le PDF" (click)="onPdf(contract)">
+                          <mat-icon>download</mat-icon>
+                        </button>
+                      </td>
+                      <td>
+                        <span class="row-actions">
+                          <button mat-icon-button matTooltip="Modifier" class="action-edit" (click)="onEdit(contract)">
+                            <mat-icon>edit_square</mat-icon>
+                          </button>
+                          <button mat-icon-button matTooltip="Supprimer" class="action-delete" (click)="onDelete(contract)">
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <div class="doc-footer">{{ filtered().length }} contrat(s)</div>
+          }
+        }
+
+        <!-- ─── FACTURES ─── -->
+        @case ('factures') {
+          @if (filteredInvoices().length === 0) {
+            <div class="doc-empty">
+              <mat-icon>receipt_long</mat-icon>
+              <p>Aucune facture trouvée.</p>
+              <p class="doc-empty-hint">Les factures se créent depuis la page d'un événement ou le module Management.</p>
+            </div>
+          } @else {
+            <div class="table-scroll">
+              <table class="hm-table doc-table">
+                <thead>
+                  <tr>
+                    <th>N°</th>
+                    <th>Type</th>
+                    <th>Client</th>
+                    <th>Origine</th>
+                    <th>Date</th>
+                    <th>Échéance</th>
+                    <th class="cell-right">Montant</th>
+                    <th>Statut</th>
+                    <th>PDF</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (inv of filteredInvoices(); track inv.kind + inv.id) {
+                    <tr>
+                      <td class="cell-num">N° {{ inv.invoice_number }}</td>
+                      <td>
+                        <span class="kind-chip" [class.kind-event]="inv.kind === 'event'" [class.kind-artist]="inv.kind === 'artist'">
+                          {{ inv.kind === 'event' ? 'Événement' : 'Artiste' }}
+                        </span>
+                      </td>
+                      <td class="cell-client">{{ inv.client_name }}</td>
+                      <td class="cell-venue">{{ inv.origin }}</td>
+                      <td>{{ inv.issue_date | date:'dd/MM/yyyy' }}</td>
+                      <td>{{ inv.due_date ? (inv.due_date | date:'dd/MM/yyyy') : '—' }}</td>
+                      <td class="cell-right cell-fee">{{ inv.total | currency:'CHF':'symbol':'1.2-2' }}</td>
+                      <td>
+                        <button class="status-chip"
+                                [class.draft]="inv.status === 'draft'"
+                                [class.sent]="inv.status === 'sent'"
+                                [class.signed]="inv.status === 'paid'"
+                                matTooltip="Cliquer pour changer le statut"
+                                (click)="onInvoiceStatus(inv)">
+                          {{ inv.status === 'draft' ? 'Brouillon' : inv.status === 'sent' ? 'Envoyée' : 'Payée' }}
+                        </button>
+                      </td>
+                      <td>
+                        <button mat-icon-button matTooltip="Télécharger le PDF" (click)="onInvoicePdf(inv)">
+                          <mat-icon>download</mat-icon>
+                        </button>
+                      </td>
+                      <td>
+                        <span class="row-actions">
+                          @if (inv.kind === 'artist') {
+                            <button mat-icon-button matTooltip="Modifier" class="action-edit" (click)="onInvoiceEdit(inv)">
+                              <mat-icon>edit_square</mat-icon>
+                            </button>
+                          } @else {
+                            <a mat-icon-button matTooltip="Ouvrir dans l'événement" class="action-edit"
+                               [routerLink]="['/admin/event', inv.eventSlug, 'manage']" [queryParams]="{ section: 'invoices' }">
+                              <mat-icon>open_in_new</mat-icon>
+                            </a>
+                          }
+                          <button mat-icon-button matTooltip="Supprimer" class="action-delete" (click)="onInvoiceDelete(inv)">
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <div class="doc-footer">{{ filteredInvoices().length }} facture(s)</div>
+          }
+        }
+
+        <!-- ─── FICHIERS ─── -->
+        @case ('fichiers') {
+          @if (!filesAvailable()) {
+            <div class="doc-empty">
+              <mat-icon>cloud_off</mat-icon>
+              <p>Le stockage de fichiers n'est pas encore configuré.</p>
+              <p class="doc-empty-hint">Exécute <b>documents-fichiers-migration.sql</b> dans Supabase → SQL Editor, puis actualise.</p>
+            </div>
+          } @else if (filteredFiles().length === 0) {
+            <div class="doc-empty">
+              <mat-icon>attach_file</mat-icon>
+              <p>Aucun fichier.</p>
+              <p class="doc-empty-hint">Ajoute riders, fiches techniques, visuels… Associe-les à un artiste via le filtre avant l'upload.</p>
+            </div>
+          } @else {
+            <div class="table-scroll">
+              <table class="hm-table doc-table">
+                <thead>
+                  <tr>
+                    <th>Document</th>
+                    <th>Artiste</th>
+                    <th>Taille</th>
+                    <th>Ajouté le</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (f of filteredFiles(); track f.id) {
+                    <tr>
+                      <td>
+                        <span class="file-label">
+                          <mat-icon class="file-icon">{{ fileIcon(f) }}</mat-icon>
+                          {{ f.label }}
+                        </span>
+                      </td>
+                      <td class="cell-artist">{{ f.artist?.name ?? '—' }}</td>
+                      <td class="cell-venue">{{ fileSize(f) }}</td>
+                      <td>{{ f.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                      <td>
+                        <span class="row-actions">
+                          <button mat-icon-button matTooltip="Télécharger" (click)="onFileDownload(f)">
+                            <mat-icon>download</mat-icon>
+                          </button>
+                          <button mat-icon-button matTooltip="Supprimer" class="action-delete" (click)="onFileDelete(f)">
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <div class="doc-footer">{{ filteredFiles().length }} fichier(s)</div>
+          }
+        }
+      }
+    }
+  </div>
+</div>

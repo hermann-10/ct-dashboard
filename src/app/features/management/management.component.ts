@@ -223,13 +223,63 @@ export class ManagementComponent implements OnInit {
     });
     ref.afterClosed().subscribe(async result => {
       if (!result) return;
+      const { createInvoice, createContract, ...revenueDto } = result;
       try {
-        const created = await this.supabase.createArtistRevenue({ ...result, artist_id: artistId });
+        const created = await this.supabase.createArtistRevenue({ ...revenueDto, artist_id: artistId });
         this.revenues.update(rows =>
           [created as ArtistRevenue, ...rows].sort((a, b) => b.date.localeCompare(a.date))
         );
       } catch (e: any) {
         this.error.set(e.message);
+        return;
+      }
+      // Facture brouillon liée, créée automatiquement si demandé
+      if (createInvoice) {
+        try {
+          const invoiceNumber = await this.supabase.getNextArtistInvoiceNumber();
+          const artistName = this.selectedArtist()?.name ?? 'Artiste';
+          const dateFr = new Date(revenueDto.date + 'T00:00:00').toLocaleDateString('fr-CH');
+          const description = [
+            `Prestation DJ — ${artistName}`,
+            revenueDto.event_name,
+            revenueDto.venue,
+          ].filter(Boolean).join(' — ') + ` (${dateFr})`;
+          const invoice = await this.supabase.createArtistInvoice({
+            artist_id: artistId,
+            invoice_number: invoiceNumber,
+            client_name: revenueDto.venue || 'À compléter',
+            issue_date: revenueDto.date,
+            conditions: 'Règlement par virement bancaire',
+            items: [{ description, amount: revenueDto.amount }],
+            status: 'draft',
+          });
+          this.invoices.update(list => [invoice as ArtistInvoice, ...list]);
+        } catch {
+          alert(
+            'La prestation a été ajoutée, mais la facture automatique n\'a pas pu être créée.\n' +
+            'Vérifie que la table artist_invoices existe (management-invoices-contracts.sql).'
+          );
+        }
+      }
+      // Contrat brouillon lié, créé automatiquement si demandé
+      if (createContract) {
+        try {
+          const contract = await this.supabase.createArtistContract({
+            artist_id: artistId,
+            client_name: revenueDto.venue || 'À compléter',
+            event_date: revenueDto.date,
+            venue: revenueDto.venue || undefined,
+            fee: revenueDto.amount,
+            payment_terms: 'Paiement intégral le soir de la prestation',
+            status: 'draft',
+          });
+          this.contracts.update(list => [contract as ArtistContract, ...list]);
+        } catch {
+          alert(
+            'La prestation a été ajoutée, mais le contrat automatique n\'a pas pu être créé.\n' +
+            'Vérifie que la table artist_contracts existe (management-invoices-contracts.sql).'
+          );
+        }
       }
     });
   }

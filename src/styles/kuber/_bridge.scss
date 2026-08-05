@@ -1,0 +1,115 @@
+/* ═══════════════════════════════════════════════════════════════
+   PONT HM-Events ⇄ Kuber
+   Toutes les pages admin consomment les tokens --hm-* :
+   on les redéfinit ici, sous .admin-shell uniquement, avec le
+   langage visuel Kuber (fond #ecf0f4, cartes blanches radius 10,
+   ombre douce bleutée, violet dégradé #4a00e0 → #8e2de2).
+   Le site public garde les tokens d'origine définis dans :root.
+   ═══════════════════════════════════════════════════════════════ */
+
+.admin-shell {
+  /* ── Palette Kuber ── */
+  --hm-brand-primary: #6f2ce2;
+  --hm-brand-primary-light: #a56ef0;
+  --hm-brand-primary-dark: #4a00e0;
+
+  /* ── Fonds & surfaces ── */
+  --hm-bg: #ecf0f4;
+  --hm-bg-secondary: #f4f6f9;
+  --hm-surface: #ffffff;
+  --hm-surface-hover: #f8f9fc;
+
+  /* ── Bordures ── */
+  --hm-border: #e8ecf4;
+  --hm-border-light: #f2f4f9;
+  --hm-border-focus: #6f2ce2;
+
+  /* ── Ombres façon carte Kuber ── */
+  --hm-shadow-xs: 0 0 6px 0 rgba(183, 192, 206, 0.16);
+  --hm-shadow-sm: 0 0 10px 0 rgba(183, 192, 206, 0.2);
+  --hm-shadow-md: 0 0 10px 0 rgba(183, 192, 206, 0.2);
+  --hm-shadow-lg: 0 4px 18px 0 rgba(183, 192, 206, 0.35);
+  --hm-shadow-xl: 0 8px 24px 0 rgba(183, 192, 206, 0.45);
+  --hm-shadow-glow: 0 0 0 3px rgba(111, 44, 226, 0.15);
+
+  /* ── Rayons Kuber (cartes à 10px) ── */
+  --hm-radius-sm: 6px;
+  --hm-radius-md: 10px;
+  --hm-radius-lg: 12px;
+  --hm-radius-xl: 16px;
+
+  /* ═══ Boutons Material → gradient Kuber ═══ */
+  .mat-mdc-unelevated-button.mat-primary,
+  .mat-mdc-raised-button.mat-primary {
+    background: linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%);
+    color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(110, 34, 220, 0.3);
+  }
+
+  .mat-mdc-unelevated-button.mat-primary:hover,
+  .mat-mdc-raised-button.mat-primary:hover {
+    box-shadow: 0 6px 16px rgba(110, 34, 220, 0.42);
+  }
+
+  .mat-mdc-outlined-button {
+    border-radius: 8px;
+  }
+
+  /* ═══ Champs de formulaire : coins arrondis Kuber ═══ */
+  .mat-mdc-form-field .mat-mdc-text-field-wrapper {
+    border-radius: 8px;
+  }
+
+  /* ═══ Titres de page : typographie Kuber ═══ */
+  .page-header h2,
+  .header-left h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1e1b4b;
+    letter-spacing: -0.015em;
+  }
+
+  /* ═══ Tableaux (.hm-table) : en-têtes façon Kuber ═══ */
+  .hm-table thead th {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #9aa4b8;
+    background: transparent;
+    border-bottom: 2px solid #f2f4f9;
+  }
+
+  .hm-table tbody tr:hover {
+    background: #f6f8fc;
+  }
+
+  /* ═══ Chips / badges de statut : arrondis pleins Kuber ═══ */
+  .status-chip,
+  .event-badge {
+    border-radius: 999px;
+  }
+
+}
+
+/* ═══ Overlays Material (dialogues, menus, datepickers) ═══
+   Rendus dans .cdk-overlay-container au niveau body, donc hors
+   .admin-shell. Seules les pages admin ouvrent des overlays de
+   ce type — le site public n'en utilise pas. */
+.cdk-overlay-container {
+  .mat-mdc-dialog-surface {
+    border-radius: 12px !important;
+  }
+
+  .mat-mdc-unelevated-button.mat-primary,
+  .mat-mdc-raised-button.mat-primary {
+    background: linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%);
+    color: #fff;
+    border-radius: 8px;
+  }
+
+  .mat-mdc-menu-panel {
+    border-radius: 10px;
+  }
+}

@@ -1,127 +1,94 @@
-.admin-layout {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  max-width: 1400px;
-  margin: 0 auto;
+/* ═══════════════════════════════════════════════════════════
+   Shell admin — compléments locaux au thème Kuber global
+   (le gros du style vient de src/styles/kuber-admin.scss)
+   ═══════════════════════════════════════════════════════════ */
 
-  @media (min-width: 1401px) {
-    box-shadow: 0 0 24px rgba(0, 0, 0, 0.06);
+:host {
+  display: block;
+}
+
+.admin-shell {
+  min-height: 100vh;
+}
+
+.brand-logo {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+  padding: 2px;
+}
+
+/* Remplace ng-scrollbar du template Kuber */
+.sidebar-scroll {
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
   }
 }
 
-// ── Toolbar ──
-.admin-toolbar {
-  z-index: 2;
+/* Avatar à initiales (le template Kuber utilise des photos) */
+.user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.user-avatar-lg {
+  width: 48px;
+  height: 48px;
+  font-size: 1.05rem;
+  background: linear-gradient(135deg, #4a00e0, #8e2de2);
+}
+
+/* Icônes Material dans la sidebar (Kuber utilise feather) */
+.sidebarIcon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin-right: 12px;
+}
+
+/* Backdrop mobile */
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* Le contenu doit passer sous la navbar fixe (60px) */
+section.content {
+  padding-top: 60px;
+}
+
+/* Chip utilisateur dans la topbar */
+.chip {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  background: var(--hm-surface) !important;
-  color: var(--hm-text-primary) !important;
-  border-bottom: 1px solid var(--hm-border);
-  box-shadow: var(--hm-shadow-xs);
-  padding: 0 1rem;
-  height: 60px;
+  gap: 8px;
+  color: #fff;
 
-  .toolbar-logo {
-    height: 36px;
-    width: auto;
-    object-fit: contain;
-    border-radius: var(--hm-radius-sm);
-  }
-
-  .toolbar-title {
-    font-weight: 700;
-    font-size: 1.1rem;
-    letter-spacing: -0.02em;
-    color: var(--hm-text-primary);
-
-    span {
-      color: var(--hm-brand-primary);
-    }
-  }
-
-  .spacer { flex: 1; }
-
-  .user-email {
-    font-size: var(--hm-text-xs);
-    color: var(--hm-text-secondary);
-    margin-right: 0.25rem;
+  span:first-child {
     font-weight: 500;
-    background: var(--hm-bg);
-    padding: 4px 12px;
-    border-radius: var(--hm-radius-full);
+    text-transform: none;
   }
-
-  button[mat-icon-button] {
-    color: var(--hm-text-secondary);
-    &:hover { color: var(--hm-text-primary); }
-  }
-}
-
-// ── Sidenav container ──
-.sidenav-container {
-  flex: 1;
-}
-
-// ── Sidenav ──
-.sidenav {
-  width: 250px;
-  border-right: 1px solid var(--hm-border);
-  background: var(--hm-surface) !important;
-  display: flex;
-  flex-direction: column;
-
-  mat-nav-list {
-    flex: 1;
-    padding: 0.75rem 0.5rem;
-  }
-
-  a[mat-list-item] {
-    border-radius: var(--hm-radius-sm) !important;
-    margin: 2px 0;
-    height: 44px !important;
-    font-size: var(--hm-text-sm);
-    font-weight: 500;
-    color: var(--hm-text-secondary);
-    transition: all var(--hm-transition-fast);
-
-    mat-icon {
-      color: var(--hm-text-tertiary);
-      font-size: 20px;
-      transition: color var(--hm-transition-fast);
-    }
-
-    &:hover {
-      background: var(--hm-surface-hover) !important;
-      color: var(--hm-text-primary);
-
-      mat-icon { color: var(--hm-brand-primary-light); }
-    }
-  }
-}
-
-.active-link {
-  background: rgba(108, 92, 231, 0.08) !important;
-  color: var(--hm-brand-primary) !important;
-  font-weight: 600 !important;
-
-  mat-icon { color: var(--hm-brand-primary) !important; }
-}
-
-.sidenav-footer {
-  border-top: 1px solid var(--hm-border);
-  padding: 0.5rem;
-}
-
-.home-link {
-  opacity: 0.6;
-  font-size: var(--hm-text-xs) !important;
-  &:hover { opacity: 1; }
-}
-
-// ── Main content ──
-.main-content {
-  background: var(--hm-bg);
-  overflow-y: auto;
 }

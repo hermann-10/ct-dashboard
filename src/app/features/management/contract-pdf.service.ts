@@ -6,6 +6,10 @@ import { ISSUER } from '../event-management/invoice-pdf.service';
 const NAVY: [number, number, number] = [30, 30, 60];
 const GRAY_TEXT: [number, number, number] = [130, 130, 145];
 
+/**
+ * Contrat de prestation — structure calquée sur le modèle
+ * « Contrat Anniversaire » fourni par Hermann (juillet 2024).
+ */
 @Injectable({ providedIn: 'root' })
 export class ContractPdfService {
   async exportContractPdf(contract: ArtistContract, artistName: string): Promise<void> {
@@ -14,130 +18,192 @@ export class ContractPdfService {
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 20;
     const width = pageWidth - margin * 2;
-    let y = 20;
+    let y = 18;
+
+    const ensureSpace = (needed: number): void => {
+      if (y > pageHeight - needed) {
+        doc.addPage();
+        y = 20;
+      }
+    };
+
+    const sectionTitle = (title: string): void => {
+      ensureSpace(60);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...NAVY);
+      doc.text(title, margin, y);
+      y += 6;
+    };
+
+    const body = (text: string, indent = 0): void => {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(40, 40, 55);
+      const lines = doc.splitTextToSize(text, width - indent);
+      ensureSpace(lines.length * 4.6 + 30);
+      doc.text(lines, margin + indent, y);
+      y += lines.length * 4.6 + 2.5;
+    };
+
+    const bullet = (label: string, value: string): void => {
+      doc.setFontSize(10);
+      ensureSpace(35);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(40, 40, 55);
+      doc.text('•  ' + label + ' : ', margin + 3, y);
+      const labelWidth = doc.getTextWidth('•  ' + label + ' :  ');
+      doc.setFont('helvetica', 'normal');
+      const lines = doc.splitTextToSize(value, width - labelWidth - 6);
+      doc.text(lines, margin + 3 + labelWidth, y);
+      y += lines.length * 4.6 + 1.5;
+    };
+
+    // ── En-tête : lieu et date du jour ──
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(...GRAY_TEXT);
+    doc.text(`Genève, le ${this.dateLong(this.today())}`, margin, y);
+    y += 12;
 
     // ── Titre ──
     doc.setTextColor(...NAVY);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(15);
-    doc.text('CONTRAT DE PRESTATION ARTISTIQUE', pageWidth / 2, y, { align: 'center' });
-    y += 6;
+    doc.setFontSize(16);
+    doc.text('Contrat de prestation', pageWidth / 2, y, { align: 'center' });
+    y += 5;
     doc.setDrawColor(...NAVY);
     doc.setLineWidth(0.4);
-    doc.line(margin, y, pageWidth - margin, y);
+    doc.line(margin + width / 4, y, pageWidth - margin - width / 4, y);
     y += 10;
 
     // ── Parties ──
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('ENTRE', margin, y);
+    doc.setTextColor(...NAVY);
+    doc.text('Entre', margin, y);
     y += 5;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9.5);
+    doc.setTextColor(40, 40, 55);
     const clientLines = [
       contract.client_name,
       ...(contract.client_address ?? '').split('\n').filter(Boolean),
-      'ci-après « l\'Organisateur »',
     ];
     for (const line of clientLines) {
       doc.text(line, margin + 4, y);
-      y += 4.5;
+      y += 4.6;
     }
-    y += 3;
+    doc.setTextColor(...GRAY_TEXT);
+    doc.text('ci-après appelé le client, d\'une part', margin + 4, y);
+    y += 7;
+
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text('ET', margin, y);
+    doc.setTextColor(...NAVY);
+    doc.text('Et', margin, y);
     y += 5;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9.5);
+    doc.setTextColor(40, 40, 55);
     const artistLines = [
-      `${ISSUER.name} — artiste « ${artistName} »`,
+      `${ISSUER.name} (${artistName})`,
       ...ISSUER.addressLines,
       `${ISSUER.phone} · ${ISSUER.email}`,
-      `N° IDE ${ISSUER.ide}`,
-      'ci-après « l\'Artiste »',
     ];
     for (const line of artistLines) {
       doc.text(line, margin + 4, y);
-      y += 4.5;
+      y += 4.6;
     }
-    y += 6;
+    doc.setTextColor(...GRAY_TEXT);
+    doc.text('ci-après appelé le prestataire, d\'autre part.', margin + 4, y);
+    y += 8;
 
-    // ── Articles ──
-    const dateLong = this.dateLong(contract.event_date);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(40, 40, 55);
+    doc.text('Il est convenu ce qui suit :', margin, y);
+    y += 8;
+
+    // ── 1. Objet ──
     const lieu = [contract.venue, contract.city].filter(Boolean).join(', ') || 'à définir';
-    const articles: [string, string][] = [
-      [
-        'Article 1 — Objet',
-        `L'Organisateur engage l'Artiste pour une prestation de DJ (« ${artistName} ») dans le cadre de l'événement organisé le ${dateLong}.`,
-      ],
-      [
-        'Article 2 — Date, lieu et horaires',
-        `La prestation aura lieu le ${dateLong} à ${lieu}${contract.schedule ? `, de ${contract.schedule}` : ''}. L'Artiste se présentera sur place au minimum 30 minutes avant le début de sa prestation.`,
-      ],
-      [
-        'Article 3 — Cachet et modalités de paiement',
-        `En contrepartie de la prestation, l'Organisateur versera à l'Artiste un cachet de ${this.fmt(contract.fee)} CHF net. Modalités : ${contract.payment_terms}. TVA non applicable — prestataire non assujetti à la TVA suisse.`,
-      ],
-      [
-        'Article 4 — Obligations des parties',
-        `L'Organisateur met à disposition une installation de sonorisation en état de fonctionnement et adaptée à la prestation (table de mixage, retours, câblage). L'Artiste s'engage à fournir une prestation professionnelle et à respecter les horaires convenus.`,
-      ],
-      [
-        'Article 5 — Annulation',
-        `En cas d'annulation par l'Organisateur moins de 14 jours avant l'événement, 50% du cachet reste dû ; moins de 48 heures avant, la totalité du cachet est due. En cas de force majeure dûment justifiée, les parties sont libérées de leurs obligations sans indemnité.`,
-      ],
-      [
-        'Article 6 — Clauses particulières',
-        contract.clauses?.trim() || 'Néant.',
-      ],
-    ];
+    sectionTitle('1. Objet');
+    body('Le prestataire s\'engage à fournir une prestation d\'animation DJ, soit :');
+    bullet('Lieu de la prestation', lieu);
+    bullet('Date de la prestation', this.dateLong(contract.event_date));
+    bullet('Détail de la prestation', `animation de l’événement en fournissant une prestation en tant que DJ (${artistName})`);
+    bullet('Heures du mandat', contract.schedule || 'à convenir entre les parties');
+    y += 3;
 
-    for (const [title, body] of articles) {
-      if (y > pageHeight - 60) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
-      doc.setTextColor(...NAVY);
-      doc.text(title, margin, y);
-      y += 5;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9.5);
-      const lines = doc.splitTextToSize(body, width);
-      doc.text(lines, margin, y);
-      y += lines.length * 4.4 + 5;
+    // ── 2. Obligations des parties ──
+    sectionTitle('2. Obligations des parties');
+    body('Le prestataire s\'engage à mener à bien la tâche précisée dans l\'objet, conformément aux règles de l\'art et de la meilleure manière. Il organise également le transport jusqu\'au lieu de la manifestation.');
+    body('Le prestataire se présentera 45 minutes avant le début de sa prestation et s\'adressera au responsable pour l\'installation du matériel.');
+    body('Le client s\'engage à mettre à disposition une table.');
+    body('Le prestataire viendra avec le matériel suivant : ordinateur, platines et table de mixage.');
+    body('Le client peut demander des équipements spécifiques, ce qui risque d\'engendrer des frais supplémentaires à la charge de ce dernier.');
+    body('Les frais de logement et de transport sont compris dans l\'offre.');
+    y += 3;
+
+    // ── 3. Aspects financiers ──
+    sectionTitle('3. Aspects financiers');
+    body(`Le client s'engage à verser au prestataire la somme de ${this.fmt(contract.fee)} CHF.`);
+    body(`Modalités de paiement : ${contract.payment_terms}.`);
+    body(`Versement par virement bancaire sur le compte de : ${ISSUER.payment.beneficiary} — IBAN : ${ISSUER.payment.iban} (${ISSUER.payment.bank}) — ou par Twint au ${ISSUER.phone}.`);
+    y += 3;
+
+    // ── 4. Assurances sociales, impôts ──
+    sectionTitle('4. Assurances sociales, impôts');
+    body('AVS/AI/APG : le client n\'est pas tenu de déclarer cette prestation. Il appartient au prestataire d\'annoncer ses gains à titre de revenu d\'une activité indépendante à une caisse de compensation (directives de l\'AVS sur le salaire déterminant).');
+    y += 3;
+
+    // ── 5. Résiliation ──
+    sectionTitle('5. Résiliation');
+    body(`En cas d'annulation par le client dans les 7 jours précédant l'événement, le client s'engage à verser 50 % du montant cité au point 3, soit ${this.fmt(contract.fee / 2)} CHF.`);
+    body('En cas d\'annulation par le prestataire dans les 7 jours, ce dernier s\'engage soit à rembourser la totalité du montant encaissé au moment de l\'annulation, soit à trouver un autre prestataire d\'un niveau équivalent. Le client se réserve le droit de refuser le prestataire proposé.');
+    y += 3;
+
+    // ── 6. Clauses particulières (optionnel) ──
+    if (contract.clauses?.trim()) {
+      sectionTitle('6. Clauses particulières');
+      body(contract.clauses.trim());
+      y += 3;
     }
 
     // ── Signatures ──
-    if (y > pageHeight - 55) {
-      doc.addPage();
-      y = 25;
-    }
-    y += 4;
-    doc.setFontSize(9.5);
-    doc.text(`Fait à ${ISSUER.city.split(',')[0]}, le ${this.dateLong(this.today())}, en deux exemplaires.`, margin, y);
-    y += 14;
-
-    const colW = width / 2 - 8;
+    ensureSpace(70);
+    y += 6;
     doc.setFont('helvetica', 'bold');
-    doc.text("L'Organisateur", margin, y);
-    doc.text("L'Artiste", margin + width / 2 + 8, y);
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(8);
+    doc.setFontSize(10);
+    doc.setTextColor(...NAVY);
+    doc.text('Signatures', margin, y);
+    y += 8;
+
+    const colW = width / 2 - 10;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(40, 40, 55);
+    doc.text('Le client', margin, y);
+    doc.text('Le prestataire', margin + width / 2 + 10, y);
+    doc.setDrawColor(160, 160, 175);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y + 18, margin + colW, y + 18);
+    doc.line(margin + width / 2 + 10, y + 18, margin + width / 2 + 10 + colW, y + 18);
+    y += 24;
+
+    doc.setFontSize(9);
     doc.setTextColor(...GRAY_TEXT);
-    doc.text('« Lu et approuvé », signature :', margin, y + 5);
-    doc.text('« Lu et approuvé », signature :', margin + width / 2 + 8, y + 5);
-    doc.setDrawColor(180, 180, 195);
-    doc.line(margin, y + 28, margin + colW, y + 28);
-    doc.line(margin + width / 2 + 8, y + 28, margin + width / 2 + 8 + colW, y + 28);
+    doc.text('« Lu et approuvé »', margin, y);
+    doc.text(`Genève, le ${this.dateLong(this.today())}`, margin + width / 2 + 10, y);
+    y += 12;
+
+    // ── Attestation OCAS ──
+    ensureSpace(35);
+    doc.setFontSize(8.5);
+    doc.setTextColor(...GRAY_TEXT);
+    const attestation = ISSUER.attestation.join(' ') + ' ' + ISSUER.registration.slice(0, 2).join(' · ');
+    const attLines = doc.splitTextToSize(attestation, width);
+    doc.text(attLines, margin, y);
 
     // ── Pied de page ──
-    doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
-    doc.setTextColor(...GRAY_TEXT);
-    doc.text(`${ISSUER.city}  ·  ${ISSUER.ide}`, pageWidth / 2, pageHeight - 12, { align: 'center' });
+    doc.text(`${ISSUER.city}  ·  ${ISSUER.ide}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
 
     const clientSlug = contract.client_name.replace(/[^a-z0-9]+/gi, '');
     doc.save(`Contrat_${artistName.replace(/[^a-z0-9]+/gi, '')}_${clientSlug}_${contract.event_date}.pdf`);
@@ -154,7 +220,7 @@ export class ContractPdfService {
 
   private dateLong(date: string): string {
     return new Date(date + 'T00:00:00').toLocaleDateString('fr-CH', {
-      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+      day: 'numeric', month: 'long', year: 'numeric',
     });
   }
 }

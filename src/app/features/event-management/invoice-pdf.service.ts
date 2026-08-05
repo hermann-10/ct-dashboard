@@ -16,9 +16,9 @@ export const ISSUER = {
   ide: 'CHE-343.412.973',
   payment: {
     beneficiary: 'Hermann MANUEL',
-    iban: 'CH59 0900 0000 1625 9417 0',
-    bank: 'PostFinance SA, Mingerstrasse 20, 3030 Bern',
-    bic: 'POFICHBEXXX',
+    iban: 'CH75 8080 8008 5337 9297 4',
+    bank: 'Raiffeisen Schweiz Genossenschaft, Raiffeisenplatz 4, 9001 St. Gallen',
+    bic: 'RAIFCH22XXX',
   },
   attestation: [
     "J'atteste être inscrit comme",

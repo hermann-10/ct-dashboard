@@ -1,0 +1,14 @@
+/* ═══════════════════════════════════════════════════════════
+   Thème admin Kuber — porté depuis le template Kuber (starter)
+   Chargé globalement mais sans effet sur le site public :
+   tous les sélecteurs ciblent .admin-shell / .navbar / .sidebar /
+   section.content, absents des pages publiques.
+   ═══════════════════════════════════════════════════════════ */
+@use "kuber/general";
+@use "kuber/media";
+@use "kuber/navbar";
+@use "kuber/leftsidebaroverlay";
+@use "kuber/card";
+@use "kuber/theme-purple";
+@use "kuber/auth";
+@use "kuber/bridge";

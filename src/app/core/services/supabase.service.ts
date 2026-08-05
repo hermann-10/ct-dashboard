@@ -1025,6 +1025,70 @@ export class SupabaseService {
     return data ?? [];
   }
 
+  /** Toutes les factures d'événements avec l'événement joint (page Documents). */
+  async getAllEventInvoices(): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('event_invoices')
+      .select('*, event:events(id, name, date, slug)')
+      .order('invoice_number', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  /** Toutes les factures d'artistes avec l'artiste joint (page Documents). */
+  async getAllArtistInvoices(): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('artist_invoices')
+      .select('*, artist:artists(id, name)')
+      .order('invoice_number', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  // ── Fichiers (riders, fiches techniques…) — bucket Storage « documents » ──
+  async getArtistDocuments(): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('artist_documents')
+      .select('*, artist:artists(id, name)')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async createArtistDocument(dto: any): Promise<any> {
+    return this._rest('POST', 'artist_documents', dto);
+  }
+
+  async deleteArtistDocument(id: string): Promise<void> {
+    await this._rest('DELETE', 'artist_documents', undefined, `id=eq.${id}`);
+  }
+
+  async uploadDocumentFile(path: string, file: File): Promise<void> {
+    const { error } = await this.supabase.storage.from('documents').upload(path, file, { upsert: false });
+    if (error) throw error;
+  }
+
+  async getDocumentSignedUrl(path: string): Promise<string> {
+    const { data, error } = await this.supabase.storage.from('documents').createSignedUrl(path, 3600);
+    if (error) throw error;
+    return data.signedUrl;
+  }
+
+  async removeDocumentFile(path: string): Promise<void> {
+    const { error } = await this.supabase.storage.from('documents').remove([path]);
+    if (error) throw error;
+  }
+
+  /** Tous les contrats, tous artistes confondus (page Documents). */
+  async getAllArtistContracts(): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('artist_contracts')
+      .select('*, artist:artists(id, name)')
+      .order('event_date', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
+
   async createArtistContract(dto: any): Promise<any> {
     return this._rest('POST', 'artist_contracts', dto);
   }

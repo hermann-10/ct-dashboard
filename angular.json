@@ -41,7 +41,8 @@
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "src/styles.scss",
+              "src/styles/kuber-admin.scss"
             ],
             "polyfills": []
           },

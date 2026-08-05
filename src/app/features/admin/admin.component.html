@@ -1,73 +1,101 @@
-<div class="admin-layout">
-  <mat-toolbar color="primary" class="admin-toolbar">
-    <button mat-icon-button (click)="onToggleSidenav()">
-      <mat-icon>menu</mat-icon>
-    </button>
-    <img src="/hm_dev_logo.png" alt="HM-Events" class="toolbar-logo" />
-    <span class="toolbar-title">HM Events App</span>
-    <span class="spacer"></span>
-    <span class="user-email">{{ displayName() || userEmail()?.email }}</span>
-    <button mat-icon-button (click)="onLogout()" matTooltip="Déconnexion">
-      <mat-icon>logout</mat-icon>
-    </button>
-  </mat-toolbar>
+<div class="admin-shell theme-purple"
+     [class.ls-closed]="isMobile()"
+     [class.overlay-open]="isMobile() && sidenavOpened()"
+     [class.side-closed]="!isMobile() && !sidenavOpened()"
+     [class.submenu-closed]="!isMobile() && !sidenavOpened()">
 
-  <mat-sidenav-container class="sidenav-container">
-    <mat-sidenav
-      [opened]="sidenavOpened()"
-      (openedChange)="sidenavOpened.set($event)"
-      [mode]="isMobile() ? 'over' : 'side'"
-      class="sidenav"
-    >
-      <mat-nav-list>
-        <a mat-list-item routerLink="/admin/dashboard" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>dashboard</mat-icon>
-          <span matListItemTitle>Dashboard</span>
-        </a>
-        <a mat-list-item routerLink="/admin/traffic" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>insights</mat-icon>
-          <span matListItemTitle>Traffic</span>
-        </a>
-        <a mat-list-item routerLink="/admin/events" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>event</mat-icon>
-          <span matListItemTitle>Événements</span>
-        </a>
-        <a mat-list-item routerLink="/admin/artists" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>album</mat-icon>
-          <span matListItemTitle>Artistes</span>
-        </a>
-        <a mat-list-item routerLink="/admin/management" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>work</mat-icon>
-          <span matListItemTitle>Management</span>
-        </a>
-        <a mat-list-item routerLink="/admin/bar" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>local_bar</mat-icon>
-          <span matListItemTitle>Bar / Produits</span>
-        </a>
-        <a mat-list-item routerLink="/admin/newsletter" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>mail_outline</mat-icon>
-          <span matListItemTitle>Newsletter</span>
-        </a>
-        <a mat-list-item routerLink="/admin/users" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>people</mat-icon>
-          <span matListItemTitle>Utilisateurs</span>
-        </a>
-        <a mat-list-item routerLink="/admin/settings" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>settings</mat-icon>
-          <span matListItemTitle>Paramètres</span>
-        </a>
-      </mat-nav-list>
-
-      <div class="sidenav-footer">
-        <a mat-list-item routerLink="/" class="home-link">
-          <mat-icon matListItemIcon>home</mat-icon>
-          <span matListItemTitle>Voir le site</span>
+  <!-- ═══ Topbar Kuber ═══ -->
+  <nav class="navbar active">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <a href="#" onclick="return false;" class="bars" (click)="onToggleSidenav()"></a>
+        <a class="navbar-brand" routerLink="/admin/dashboard">
+          <img src="/hm_dev_logo.png" alt="HM-Events" class="brand-logo" />
+          <span class="logo-name">HM Events</span>
         </a>
       </div>
-    </mat-sidenav>
+      <div class="collapse navbar-collapse show">
+        <ul class="float-start collapse-menu-icon">
+          <li class="collapseBtn">
+            <button mat-icon-button (click)="onToggleSidenav()" class="sidemenu-collapse nav-notification-icons">
+              <mat-icon class="icon-color">menu</mat-icon>
+            </button>
+          </li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li class="fullscreen">
+            <a mat-icon-button routerLink="/" class="nav-notification-icons" matTooltip="Voir le site">
+              <mat-icon class="icon-color">home</mat-icon>
+            </a>
+          </li>
+          <li class="nav-item user_profile">
+            <button mat-button [matMenuTriggerFor]="profilemenu">
+              <div class="chip">
+                <span>{{ displayName() || userEmail()?.email }}</span>
+                <span class="user-avatar">{{ initials() }}</span>
+              </div>
+            </button>
+            <mat-menu #profilemenu="matMenu" class="profile-menu">
+              <button mat-menu-item routerLink="/admin/settings">
+                <mat-icon>settings</mat-icon>
+                Paramètres
+              </button>
+              <button mat-menu-item (click)="onLogout()">
+                <mat-icon>logout</mat-icon>
+                Déconnexion
+              </button>
+            </mat-menu>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
-    <mat-sidenav-content class="main-content">
-      <router-outlet />
-    </mat-sidenav-content>
-  </mat-sidenav-container>
+  <!-- ═══ Sidebar Kuber ═══ -->
+  <aside id="leftsidebar" class="sidebar">
+    <div class="menu">
+      <div class="sidebar-scroll">
+        <ul class="list">
+          <li class="sidebar-user-panel">
+            <div class="user-panel">
+              <div class="image">
+                <span class="user-avatar user-avatar-lg">{{ initials() }}</span>
+              </div>
+            </div>
+            <div class="profile-usertitle">
+              <div class="sidebar-userpic-name">{{ displayName() || 'Admin' }}</div>
+              <div class="profile-usertitle-job">HM-Events</div>
+            </div>
+          </li>
+
+          <li class="header">NAVIGATION</li>
+          @for (item of navItems; track item.path) {
+            <li routerLinkActive="active-top">
+              <a [routerLink]="item.path" class="menu-top">
+                <mat-icon class="sidebarIcon">{{ item.icon }}</mat-icon>
+                <span class="hide-menu">{{ item.label }}</span>
+              </a>
+            </li>
+          }
+
+          <li class="header">SITE</li>
+          <li>
+            <a routerLink="/" class="menu-top">
+              <mat-icon class="sidebarIcon">home</mat-icon>
+              <span class="hide-menu">Voir le site</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+  @if (isMobile() && sidenavOpened()) {
+    <div class="mobile-overlay" (click)="sidenavOpened.set(false)"></div>
+  }
+
+  <!-- ═══ Contenu ═══ -->
+  <section class="content">
+    <router-outlet />
+  </section>
 </div>
