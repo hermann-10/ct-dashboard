@@ -139,6 +139,12 @@
                 </span>
                 <span class="rev-amount">{{ rev.amount | currency:'CHF':'symbol':'1.2-2' }}</span>
                 <span class="rev-actions">
+                  <button mat-icon-button matTooltip="Générer une facture" class="invoice-btn" (click)="onInvoiceFromRevenue(rev)">
+                    <mat-icon>receipt_long</mat-icon>
+                  </button>
+                  <button mat-icon-button matTooltip="Générer un contrat" class="contract-btn" (click)="onContractFromRevenue(rev)">
+                    <mat-icon>history_edu</mat-icon>
+                  </button>
                   <button mat-icon-button matTooltip="Modifier" (click)="onEdit(rev)">
                     <mat-icon>edit</mat-icon>
                   </button>

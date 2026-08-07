@@ -1,0 +1,150 @@
+<div class="logistics-page">
+  <div class="page-header">
+    <div class="header-info">
+      <h2>Logistique</h2>
+      <p class="subtitle">Inventaire du matériel HM-Events</p>
+    </div>
+  </div>
+
+  <!-- ═══ KPI façon N'JOY ═══ -->
+  <div class="log-kpis">
+    <div class="log-kpi">
+      <div class="log-kpi-icon total"><mat-icon>inventory_2</mat-icon></div>
+      <div><span class="k">{{ kpis().total }}</span><span class="l">Total items</span></div>
+    </div>
+    <div class="log-kpi">
+      <div class="log-kpi-icon ok"><mat-icon>check_circle</mat-icon></div>
+      <div><span class="k">{{ kpis().available }}</span><span class="l">Disponibles</span></div>
+    </div>
+    <div class="log-kpi">
+      <div class="log-kpi-icon use"><mat-icon>local_shipping</mat-icon></div>
+      <div><span class="k">{{ kpis().inUse }}</span><span class="l">En utilisation</span></div>
+    </div>
+    <div class="log-kpi">
+      <div class="log-kpi-icon warn"><mat-icon>warning</mat-icon></div>
+      <div><span class="k">{{ kpis().missing }}</span><span class="l">Manquants</span></div>
+    </div>
+  </div>
+
+  <div class="doc-card">
+    <div class="doc-toolbar">
+      <span class="doc-toolbar-title">Matériel</span>
+
+      <mat-form-field appearance="outline" class="tb-field tb-search" subscriptSizing="dynamic">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput placeholder="Rechercher un matériel..." [ngModel]="search()" (ngModelChange)="search.set($event)" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="tb-field" subscriptSizing="dynamic">
+        <mat-select [ngModel]="categoryFilter()" (ngModelChange)="categoryFilter.set($event)" placeholder="Toutes catégories" panelWidth="auto">
+          <mat-option [value]="null">Toutes catégories</mat-option>
+          @for (c of categories; track c) {
+            <mat-option [value]="c">{{ c }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="tb-field" subscriptSizing="dynamic">
+        <mat-select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" panelWidth="auto">
+          <mat-option value="all">Tous les statuts</mat-option>
+          <mat-option value="available">Disponible</mat-option>
+          <mat-option value="in_use">En utilisation</mat-option>
+          <mat-option value="ordered">En commande</mat-option>
+          <mat-option value="unavailable">Pas dispo</mat-option>
+          <mat-option value="out_of_stock">En rupture</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <span class="tb-spacer"></span>
+
+      <button mat-icon-button (click)="load()" matTooltip="Actualiser">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <button mat-flat-button color="primary" (click)="onAdd()">
+        <mat-icon>add</mat-icon>
+        Ajouter
+      </button>
+    </div>
+
+    @if (loading()) {
+      <div class="doc-loading"><mat-spinner diameter="36" /></div>
+    } @else if (!available()) {
+      <div class="doc-empty">
+        <mat-icon>cloud_off</mat-icon>
+        <p>L'inventaire n'est pas encore configuré.</p>
+        <p class="doc-empty-hint">Exécute <b>logistics-migration.sql</b> dans Supabase → SQL Editor, puis actualise.</p>
+      </div>
+    } @else if (error()) {
+      <div class="doc-error">
+        <mat-icon>error_outline</mat-icon>
+        {{ error() }}
+        <button mat-stroked-button (click)="load()">Réessayer</button>
+      </div>
+    } @else if (filtered().length === 0) {
+      <div class="doc-empty">
+        <mat-icon>inventory_2</mat-icon>
+        <p>Aucun matériel trouvé.</p>
+        <p class="doc-empty-hint">Ajoute badges, câbles, déco, nappes… puis sors-les sur un événement le jour J.</p>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table class="hm-table log-table">
+          <thead>
+            <tr>
+              <th>Matériel</th>
+              <th>Catégorie</th>
+              <th class="cell-right">Qté</th>
+              <th>Statut</th>
+              <th>État</th>
+              <th>Emplacement</th>
+              <th>Événement</th>
+              <th>Sortie</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of filtered(); track item.id) {
+              <tr>
+                <td class="cell-name">{{ item.name }}</td>
+                <td><span class="cat-chip">{{ item.category }}</span></td>
+                <td class="cell-right cell-qty">{{ item.quantity }}</td>
+                <td>
+                  <button class="log-status" [class]="'log-status ' + statusClass(item)"
+                          matTooltip="Cliquer : bascule Disponible ↔ En utilisation (autres statuts via Modifier)"
+                          (click)="onStatus(item)">
+                    {{ statusLabels[item.status] }}
+                  </button>
+                </td>
+                <td>
+                  @if (item.condition === 'excellent') {
+                    <span class="cond-chip cond-ok">Excellent</span>
+                  } @else if (item.condition === 'bon') {
+                    <span class="cond-chip cond-mid">Bon</span>
+                  } @else if (item.condition === 'a_reparer') {
+                    <span class="cond-chip cond-bad">À réparer</span>
+                  } @else {
+                    <span class="cond-none">—</span>
+                  }
+                </td>
+                <td class="cell-loc">{{ item.location || '—' }}</td>
+                <td class="cell-event">{{ item.event?.name || '—' }}</td>
+                <td>{{ item.out_date ? (item.out_date | date:'dd/MM/yy') : '—' }}</td>
+                <td>
+                  <span class="row-actions">
+                    <button mat-icon-button matTooltip="Modifier" class="action-edit" (click)="onEdit(item)">
+                      <mat-icon>edit_square</mat-icon>
+                    </button>
+                    <button mat-icon-button matTooltip="Supprimer" class="action-delete" (click)="onDelete(item)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="doc-footer">{{ filtered().length }} article(s)</div>
+    }
+  </div>
+</div>

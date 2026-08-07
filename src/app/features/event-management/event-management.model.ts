@@ -188,3 +188,54 @@ export interface ManagedEvent {
   notes: string | null;
   strategy: string | null;
 }
+
+// ── Staff / Personnel de l'événement ──
+export type StaffStatus = 'planned' | 'confirmed' | 'paid';
+export type StaffPayType = 'hourly' | 'flat';
+
+export interface EventStaff {
+  id: string;
+  event_id: string;
+  name: string;
+  role: string;
+  phone: string | null;
+  pay_type: StaffPayType;
+  rate: number;
+  start_time: string | null;
+  end_time: string | null;
+  status: StaffStatus;
+  checked_in: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateStaffDto {
+  event_id: string;
+  name?: string;
+  role: string;
+  phone?: string;
+  pay_type: StaffPayType;
+  rate: number;
+  start_time?: string;
+  end_time?: string;
+  status?: StaffStatus;
+  notes?: string;
+}
+
+/** Heures travaillées (gère le passage de minuit : 23:00 → 05:00 = 6 h). */
+export function staffHours(s: Pick<EventStaff, 'start_time' | 'end_time'>): number {
+  if (!s.start_time || !s.end_time) return 0;
+  const [sh, sm] = s.start_time.split(':').map(Number);
+  const [eh, em] = s.end_time.split(':').map(Number);
+  if ([sh, sm, eh, em].some(isNaN)) return 0;
+  let minutes = (eh * 60 + em) - (sh * 60 + sm);
+  if (minutes <= 0) minutes += 24 * 60;
+  return Math.round((minutes / 60) * 100) / 100;
+}
+
+/** Coût d'une personne : forfait, ou heures × taux horaire. */
+export function staffCost(s: EventStaff): number {
+  if (s.pay_type === 'flat') return Number(s.rate);
+  return Math.round(staffHours(s) * Number(s.rate) * 100) / 100;
+}

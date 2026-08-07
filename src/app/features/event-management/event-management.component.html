@@ -101,6 +101,25 @@
             <mat-icon class="hub-arrow">chevron_right</mat-icon>
           </button>
 
+          <button class="hub-card staff" (click)="openSection('staff')">
+            <div class="hub-icon"><mat-icon>badge</mat-icon></div>
+            <div class="hub-info">
+              <h3>
+                Staff
+                @if (staffStats().count > 0) {
+                  <span class="hub-badge">{{ staffStats().count }}</span>
+                }
+              </h3>
+              @if (staffStats().count > 0) {
+                <p>{{ staffStats().confirmed }}/{{ staffStats().count }} confirmé(s)</p>
+                <p class="hub-detail">Coût : {{ staffStats().totalCost | currency:'CHF':'symbol':'1.2-2' }}</p>
+              } @else {
+                <p>Serveuses, caisse, DJs, sécurité…</p>
+              }
+            </div>
+            <mat-icon class="hub-arrow">chevron_right</mat-icon>
+          </button>
+
           <button class="hub-card invoices" (click)="openSection('invoices')">
             <div class="hub-icon"><mat-icon>receipt_long</mat-icon></div>
             <div class="hub-info">
@@ -243,6 +262,88 @@
                         <mat-icon>delete</mat-icon>
                       </button>
                     </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+        @case ('staff') {
+          <div class="tab-content">
+            <div class="invoices-header">
+              <h3 class="section-title" style="margin: 0;">Staff / Personnel</h3>
+              <span class="staff-header-actions">
+                <button mat-stroked-button (click)="onReportStaffToBudget()" [disabled]="staffStats().totalCost <= 0"
+                        matTooltip="Ajoute une charge « Personnel / Staff » du montant total au budget">
+                  <mat-icon>account_balance_wallet</mat-icon>
+                  Reporter au budget
+                </button>
+                <button mat-flat-button color="primary" (click)="onAddStaff()">
+                  <mat-icon>person_add</mat-icon>
+                  Ajouter
+                </button>
+              </span>
+            </div>
+
+            @if (!staffAvailable()) {
+              <div class="invoices-empty">
+                <mat-icon>cloud_off</mat-icon>
+                <p>La table du staff n'existe pas encore.</p>
+                <p class="invoices-empty-hint">Exécute <b>event-staff-migration.sql</b> dans Supabase → SQL Editor, puis recharge.</p>
+              </div>
+            } @else if (staff().length === 0) {
+              <div class="invoices-empty">
+                <mat-icon>badge</mat-icon>
+                <p>Aucun membre du staff pour cet événement.</p>
+                <p class="invoices-empty-hint">Ajoute serveuses, caisse, DJs, sécurité… en une fois grâce au champ « Nombre ». Le coût se calcule automatiquement (heures × tarif ou forfait).</p>
+              </div>
+            } @else {
+              <div class="staff-kpis">
+                <div class="staff-kpi"><span class="k">{{ staffStats().count }}</span><span class="l">personnes</span></div>
+                <div class="staff-kpi"><span class="k">{{ staffStats().confirmed }}</span><span class="l">confirmées</span></div>
+                <div class="staff-kpi"><span class="k">{{ staffStats().paid }}</span><span class="l">payées</span></div>
+                <div class="staff-kpi"><span class="k">{{ staffStats().totalCost | currency:'CHF':'symbol':'1.2-2' }}</span><span class="l">coût total</span></div>
+              </div>
+
+              <div class="staff-list">
+                @for (row of staff(); track row.id) {
+                  <div class="staff-row" [class.checked]="row.checked_in">
+                    <input type="checkbox" class="staff-checkin" [checked]="row.checked_in" (change)="onStaffCheckin(row)"
+                           matTooltip="Check-in le soir de l'événement" />
+                    <span class="staff-role-badge">{{ row.role }}</span>
+                    <span class="staff-info">
+                      <span class="staff-name">{{ row.name || '—' }}</span>
+                      @if (row.phone) {
+                        <span class="staff-phone">{{ row.phone }}</span>
+                      }
+                    </span>
+                    <span class="staff-hours">
+                      @if (row.start_time && row.end_time) {
+                        {{ row.start_time }}–{{ row.end_time }} · {{ staffHoursOf(row) }} h
+                      } @else {
+                        —
+                      }
+                    </span>
+                    <span class="staff-rate">
+                      {{ row.rate | currency:'CHF':'symbol':'1.0-2' }}{{ row.pay_type === 'hourly' ? '/h' : '' }}
+                    </span>
+                    <span class="staff-cost">{{ staffCostOf(row) | currency:'CHF':'symbol':'1.2-2' }}</span>
+                    <button class="status-chip"
+                            [class.draft]="row.status === 'planned'"
+                            [class.sent]="row.status === 'confirmed'"
+                            [class.paid]="row.status === 'paid'"
+                            matTooltip="Cliquer pour changer le statut"
+                            (click)="onStaffStatus(row)">
+                      {{ row.status === 'planned' ? 'Prévu' : row.status === 'confirmed' ? 'Confirmé' : 'Payé' }}
+                    </button>
+                    <span class="staff-actions">
+                      <button mat-icon-button matTooltip="Modifier" (click)="onEditStaff(row)">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button matTooltip="Retirer" class="invoice-delete" (click)="onDeleteStaff(row)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </span>
                   </div>
                 }
               </div>

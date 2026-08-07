@@ -52,3 +52,5 @@ Thumbs.db
 backfill-evenements-historiques.sql
 fix-2025-herzo.sql
 management-migration-import.sql
+herzo-cachets-2026.sql
+herzo-revenus-2025-detail.sql

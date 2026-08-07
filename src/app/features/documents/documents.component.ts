@@ -335,6 +335,7 @@ export class DocumentsComponent implements OnInit {
           list.map(i => (i.id === inv.id
             ? {
                 ...i,
+                invoice_number: updated.invoice_number,
                 client_name: updated.client_name,
                 issue_date: updated.issue_date,
                 due_date: updated.due_date,

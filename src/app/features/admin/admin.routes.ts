@@ -47,6 +47,11 @@ export const ADMIN_ROUTES: Routes = [
           import('../documents/documents.routes').then(m => m.DOCUMENTS_ROUTES),
       },
       {
+        path: 'logistics',
+        loadChildren: () =>
+          import('../logistics/logistics.routes').then(m => m.LOGISTICS_ROUTES),
+      },
+      {
         path: 'bar',
         loadChildren: () =>
           import('../bar/bar.routes').then(m => m.BAR_ROUTES),

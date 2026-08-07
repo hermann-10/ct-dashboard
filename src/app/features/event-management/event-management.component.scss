@@ -335,3 +335,138 @@
   .invoice-row { flex-wrap: wrap; gap: 0.5rem; }
   .invoice-actions { width: 100%; justify-content: flex-end; }
 }
+
+/* ═══ Section Staff / Personnel ═══ */
+.hub-card.staff .hub-icon {
+  background: rgba(111, 44, 226, 0.1);
+  color: var(--hm-brand-primary);
+}
+
+.staff-header-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.staff-kpis {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+
+.staff-kpi {
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border-light);
+  border-radius: var(--hm-radius-md);
+  box-shadow: var(--hm-shadow-xs);
+  padding: 0.7rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+
+  .k {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--hm-text-primary);
+  }
+
+  .l {
+    font-size: var(--hm-text-xs);
+    color: var(--hm-text-secondary);
+  }
+}
+
+.staff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.staff-row {
+  display: grid;
+  grid-template-columns: 24px 110px 1.2fr 1fr 90px 110px 100px auto;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border-light);
+  border-radius: var(--hm-radius-md);
+  box-shadow: var(--hm-shadow-xs);
+  padding: 0.55rem 0.9rem;
+
+  &.checked {
+    border-color: rgba(16, 185, 129, 0.45);
+    background: #f4fdf9;
+  }
+}
+
+.staff-checkin {
+  width: 17px;
+  height: 17px;
+  accent-color: #10b981;
+  cursor: pointer;
+}
+
+.staff-role-badge {
+  background: rgba(111, 44, 226, 0.08);
+  color: var(--hm-brand-primary);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.staff-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  .staff-name {
+    font-weight: 600;
+    font-size: var(--hm-text-sm);
+    color: var(--hm-text-primary);
+  }
+
+  .staff-phone {
+    font-size: var(--hm-text-xs);
+    color: var(--hm-text-secondary);
+  }
+}
+
+.staff-hours {
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-secondary);
+  white-space: nowrap;
+}
+
+.staff-rate {
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-secondary);
+  text-align: right;
+}
+
+.staff-cost {
+  font-weight: 700;
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-primary);
+  text-align: right;
+}
+
+.staff-actions {
+  display: inline-flex;
+}
+
+@media (max-width: 900px) {
+  .staff-row {
+    grid-template-columns: 24px 1fr auto;
+    grid-auto-rows: auto;
+
+    .staff-hours,
+    .staff-rate {
+      display: none;
+    }
+  }
+}

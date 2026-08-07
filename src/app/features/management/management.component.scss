@@ -536,3 +536,21 @@
     transition: filter 150ms ease;
   }
 }
+
+.rev-actions .invoice-btn {
+  color: var(--hm-brand-primary);
+  opacity: 0.75;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.rev-actions .contract-btn {
+  color: var(--hm-brand-primary);
+  opacity: 0.75;
+
+  &:hover {
+    opacity: 1;
+  }
+}

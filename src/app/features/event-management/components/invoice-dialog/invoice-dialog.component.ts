@@ -42,7 +42,7 @@ interface DraftItem {
   template: `
     <h2 mat-dialog-title>
       {{ data.mode === 'create' ? 'Nouvelle facture' : 'Modifier la facture' }}
-      <span class="inv-number">N° {{ data.invoiceNumber }}</span>
+      <span class="inv-number">N° {{ form.invoice_number }}</span>
     </h2>
 
     <mat-dialog-content class="dialog-content">
@@ -66,6 +66,11 @@ interface DraftItem {
 
       <h4 class="group-title">Dates & conditions</h4>
       <div class="row">
+        <mat-form-field appearance="outline" class="num-field">
+          <mat-label>N° de facture</mat-label>
+          <input matInput type="number" min="1" step="1" [(ngModel)]="form.invoice_number" required />
+        </mat-form-field>
+
         <mat-form-field appearance="outline">
           <mat-label>Date de facture</mat-label>
           <input matInput [matDatepicker]="issuePicker" [ngModel]="issueDate" (ngModelChange)="onIssueDateChange($event)" (click)="issuePicker.open()" readonly required />
@@ -129,6 +134,7 @@ interface DraftItem {
     .full-width { width: 100%; }
     .row { display: flex; gap: 1rem; }
     .row mat-form-field { flex: 1; }
+    .num-field { max-width: 140px; }
     .group-title { margin: 0.5rem 0 0.5rem; font-size: 0.85rem; font-weight: 700; color: #444; text-transform: uppercase; letter-spacing: 0.04em; }
     .hint { margin: 0 0 0.5rem; font-size: 0.75rem; color: #999; }
     .item-row { display: grid; grid-template-columns: 1fr 130px 40px; gap: 0.6rem; align-items: start; }
@@ -158,6 +164,7 @@ export class InvoiceDialogComponent {
   dueDate: Date | null;
 
   form = {
+    invoice_number: this.data.invoice?.invoice_number ?? this.data.invoiceNumber,
     client_name: this.data.invoice?.client_name ?? '',
     client_address: this.data.invoice?.client_address ?? '',
     client_phone: this.data.invoice?.client_phone ?? '',
@@ -220,6 +227,7 @@ export class InvoiceDialogComponent {
 
   isValid(): boolean {
     return (
+      Number(this.form.invoice_number) >= 1 &&
       !!this.form.client_name.trim() &&
       !!this.form.issue_date &&
       this.items().some(it => it.description.trim())
@@ -237,6 +245,7 @@ export class InvoiceDialogComponent {
     const addrVal = this.addrEl?.nativeElement.value ?? this.form.client_address;
     const phoneVal = this.phoneEl?.nativeElement.value ?? this.form.client_phone;
     this.dialogRef.close({
+      invoice_number: Math.max(1, Math.round(Number(this.form.invoice_number))),
       client_name: nameVal.trim(),
       client_address: addrVal.trim() || null,
       client_phone: phoneVal.trim() || null,

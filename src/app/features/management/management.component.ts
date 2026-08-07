@@ -294,6 +294,63 @@ export class ManagementComponent implements OnInit {
     });
   }
 
+  /** Génère une facture brouillon pré-remplie depuis une prestation existante. */
+  async onInvoiceFromRevenue(rev: ArtistRevenue): Promise<void> {
+    const artist = this.selectedArtist();
+    if (!artist) return;
+    try {
+      const invoiceNumber = await this.supabase.getNextArtistInvoiceNumber();
+      const dateFr = new Date(rev.date + 'T00:00:00').toLocaleDateString('fr-CH');
+      const description = [
+        `Prestation DJ — ${artist.name}`,
+        rev.event_name,
+        rev.venue,
+      ].filter(Boolean).join(' — ') + ` (${dateFr})`;
+      const invoice = await this.supabase.createArtistInvoice({
+        artist_id: artist.id,
+        invoice_number: invoiceNumber,
+        client_name: rev.venue || 'À compléter',
+        issue_date: rev.date,
+        conditions: 'Règlement par virement bancaire',
+        items: [{ description, amount: rev.amount }],
+        status: 'draft',
+      });
+      this.invoices.update(list => [invoice as ArtistInvoice, ...list]);
+      // Bascule sur l'onglet Factures pour montrer le résultat
+      this.mgmtSection.set('factures');
+    } catch (e: any) {
+      alert(
+        'Facture impossible à créer : ' + (e.message ?? 'erreur inconnue') +
+        '\nVérifie que la table artist_invoices existe (management-invoices-contracts.sql).'
+      );
+    }
+  }
+
+  /** Génère un contrat brouillon pré-rempli depuis une prestation existante. */
+  async onContractFromRevenue(rev: ArtistRevenue): Promise<void> {
+    const artist = this.selectedArtist();
+    if (!artist) return;
+    try {
+      const contract = await this.supabase.createArtistContract({
+        artist_id: artist.id,
+        client_name: rev.venue || 'À compléter',
+        event_date: rev.date,
+        venue: rev.venue || undefined,
+        fee: rev.amount,
+        payment_terms: 'Paiement intégral le soir de la prestation',
+        status: 'draft',
+      });
+      this.contracts.update(list => [contract as ArtistContract, ...list]);
+      // Bascule sur l'onglet Contrats pour montrer le résultat
+      this.mgmtSection.set('contrats');
+    } catch (e: any) {
+      alert(
+        'Contrat impossible à créer : ' + (e.message ?? 'erreur inconnue') +
+        '\nVérifie que la table artist_contracts existe (management-invoices-contracts.sql).'
+      );
+    }
+  }
+
   onEdit(revenue: ArtistRevenue): void {
     const ref = this.dialog.open(ArtistRevenueDialogComponent, {
       data: { mode: 'edit', revenue, venues: this.knownVenues() } as ArtistRevenueDialogData,
@@ -347,7 +404,6 @@ export class ManagementComponent implements OnInit {
         const created = await this.supabase.createArtistInvoice({
           ...result,
           artist_id: artist.id,
-          invoice_number: invoiceNumber,
         });
         this.invoices.update(rows => [created as ArtistInvoice, ...rows]);
       } catch (e: any) {

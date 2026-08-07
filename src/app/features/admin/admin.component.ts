@@ -46,6 +46,7 @@ export class AdminComponent {
     { path: '/admin/artists', icon: 'album', label: 'Artistes' },
     { path: '/admin/management', icon: 'work', label: 'Management' },
     { path: '/admin/documents', icon: 'folder_open', label: 'Documents' },
+    { path: '/admin/logistics', icon: 'inventory_2', label: 'Logistique' },
     { path: '/admin/bar', icon: 'local_bar', label: 'Bar / Produits' },
     { path: '/admin/newsletter', icon: 'mail_outline', label: 'Newsletter' },
     { path: '/admin/users', icon: 'people', label: 'Utilisateurs' },

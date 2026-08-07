@@ -520,14 +520,17 @@ export class SupabaseService {
   }
 
   /** Prochain numéro de facture — séquence unique avec les factures artiste. */
+  // Via _rest GET : jeton en cache + timeout 15 s — ne peut pas bloquer
+  // indéfiniment sur le verrou auth de supabase-js.
+  private static readonly NEXT_NUM_QUERY = 'select=invoice_number&order=invoice_number.desc&limit=1';
+
   async getNextInvoiceNumber(): Promise<number> {
     const [a, b] = await Promise.all([
-      this.supabase.from('event_invoices').select('invoice_number').order('invoice_number', { ascending: false }).limit(1),
-      this.supabase.from('artist_invoices').select('invoice_number').order('invoice_number', { ascending: false }).limit(1),
+      this._rest<any[]>('GET', 'event_invoices', undefined, SupabaseService.NEXT_NUM_QUERY),
+      this._rest<any[]>('GET', 'artist_invoices', undefined, SupabaseService.NEXT_NUM_QUERY).catch(() => [] as any[]),
     ]);
-    if (a.error) throw a.error;
-    const maxEvent = a.data?.[0]?.invoice_number ?? 0;
-    const maxArtist = b.error ? 0 : (b.data?.[0]?.invoice_number ?? 0);
+    const maxEvent = a?.[0]?.invoice_number ?? 0;
+    const maxArtist = b?.[0]?.invoice_number ?? 0;
     return Math.max(maxEvent, maxArtist, 232) + 1;
   }
 
@@ -541,6 +544,40 @@ export class SupabaseService {
 
   async deleteEventInvoice(id: string): Promise<void> {
     await this._rest('DELETE', 'event_invoices', undefined, `id=eq.${id}`);
+  }
+
+  // ── Logistique / Inventaire (via _rest : jeton en cache + timeout 15 s) ──
+  async getLogisticsItems(): Promise<any[]> {
+    return this._rest<any[]>('GET', 'logistics_items', undefined, 'select=*,event:events(id,name,date)&order=name.asc');
+  }
+
+  async createLogisticsItem(dto: any): Promise<any> {
+    return this._rest('POST', 'logistics_items', dto);
+  }
+
+  async updateLogisticsItem(id: string, changes: any): Promise<any> {
+    return this._rest('PATCH', 'logistics_items', { ...changes, updated_at: new Date().toISOString() }, `id=eq.${id}`);
+  }
+
+  async deleteLogisticsItem(id: string): Promise<void> {
+    await this._rest('DELETE', 'logistics_items', undefined, `id=eq.${id}`);
+  }
+
+  // ── Event Staff CRUD (via _rest : jeton en cache + timeout 15 s) ──
+  async getEventStaff(eventId: string): Promise<any[]> {
+    return this._rest<any[]>('GET', 'event_staff', undefined, `select=*&event_id=eq.${eventId}&order=created_at.asc`);
+  }
+
+  async createEventStaff(dto: any): Promise<any> {
+    return this._rest('POST', 'event_staff', dto);
+  }
+
+  async updateEventStaff(id: string, changes: any): Promise<any> {
+    return this._rest('PATCH', 'event_staff', { ...changes, updated_at: new Date().toISOString() }, `id=eq.${id}`);
+  }
+
+  async deleteEventStaff(id: string): Promise<void> {
+    await this._rest('DELETE', 'event_staff', undefined, `id=eq.${id}`);
   }
 
   // ── Event Revenues CRUD ──
@@ -994,12 +1031,11 @@ export class SupabaseService {
       d'événements et factures artiste (pas de doublon). */
   async getNextArtistInvoiceNumber(): Promise<number> {
     const [a, b] = await Promise.all([
-      this.supabase.from('artist_invoices').select('invoice_number').order('invoice_number', { ascending: false }).limit(1),
-      this.supabase.from('event_invoices').select('invoice_number').order('invoice_number', { ascending: false }).limit(1),
+      this._rest<any[]>('GET', 'artist_invoices', undefined, SupabaseService.NEXT_NUM_QUERY),
+      this._rest<any[]>('GET', 'event_invoices', undefined, SupabaseService.NEXT_NUM_QUERY).catch(() => [] as any[]),
     ]);
-    if (a.error) throw a.error;
-    const maxArtist = a.data?.[0]?.invoice_number ?? 0;
-    const maxEvent = b.error ? 0 : (b.data?.[0]?.invoice_number ?? 0);
+    const maxArtist = a?.[0]?.invoice_number ?? 0;
+    const maxEvent = b?.[0]?.invoice_number ?? 0;
     return Math.max(maxArtist, maxEvent, 232) + 1;
   }
 

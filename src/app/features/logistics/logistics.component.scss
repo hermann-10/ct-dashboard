@@ -1,0 +1,262 @@
+:host {
+  display: block;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.page-header {
+  margin-bottom: 1.25rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--hm-text-primary);
+    letter-spacing: -0.015em;
+  }
+
+  .subtitle {
+    margin: 0.2rem 0 0;
+    color: var(--hm-text-secondary);
+    font-size: var(--hm-text-sm);
+  }
+}
+
+/* ═══ KPI façon N'JOY ═══ */
+.log-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+.log-kpi {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border-light);
+  border-radius: var(--hm-radius-md);
+  box-shadow: var(--hm-shadow-sm);
+  padding: 0.9rem 1.1rem;
+
+  .k {
+    display: block;
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: var(--hm-text-primary);
+    line-height: 1.1;
+  }
+
+  .l {
+    display: block;
+    font-size: var(--hm-text-xs);
+    color: var(--hm-text-secondary);
+  }
+}
+
+.log-kpi-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.total { background: rgba(111, 44, 226, 0.1); color: var(--hm-brand-primary); }
+  &.ok { background: #e6f7ee; color: #14804a; }
+  &.use { background: #fff3e0; color: #b26a00; }
+  &.warn { background: #fdecec; color: #c62828; }
+}
+
+/* ═══ Carte + toolbar (mêmes classes que Documents) ═══ */
+.doc-card {
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border-light);
+  border-radius: var(--hm-radius-md);
+  box-shadow: var(--hm-shadow-sm);
+  overflow: hidden;
+}
+
+.doc-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1.25rem;
+  background: rgba(111, 44, 226, 0.06);
+  border-bottom: 1px solid var(--hm-border-light);
+}
+
+.doc-toolbar-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--hm-text-primary);
+  margin-right: 0.5rem;
+}
+
+.tb-field {
+  width: 190px;
+
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    height: 40px;
+    background: var(--hm-surface);
+  }
+
+  ::ng-deep .mat-mdc-form-field-infix {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    min-height: 40px;
+  }
+}
+
+.tb-search {
+  width: 250px;
+}
+
+.tb-spacer {
+  flex: 1;
+}
+
+.doc-loading,
+.doc-empty,
+.doc-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3.5rem 1rem;
+  color: var(--hm-text-secondary);
+
+  mat-icon {
+    font-size: 2.6rem;
+    width: 2.6rem;
+    height: 2.6rem;
+    opacity: 0.5;
+  }
+}
+
+.doc-error mat-icon {
+  color: var(--hm-error);
+  opacity: 1;
+}
+
+.doc-empty-hint {
+  margin: 0;
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-tertiary);
+}
+
+/* ═══ Tableau ═══ */
+.table-scroll {
+  overflow-x: auto;
+}
+
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    text-align: left;
+    padding: 0.8rem 1rem;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--hm-border-light);
+    font-size: var(--hm-text-sm);
+    color: var(--hm-text-primary);
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.cell-name {
+  font-weight: 600;
+  white-space: normal;
+  min-width: 160px;
+}
+
+.cell-right {
+  text-align: right;
+}
+
+.cell-qty {
+  font-weight: 700;
+}
+
+.cell-loc,
+.cell-event {
+  color: var(--hm-text-secondary);
+}
+
+.cat-chip {
+  background: var(--hm-bg-secondary);
+  border: 1px solid var(--hm-border-light);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--hm-text-secondary);
+}
+
+/* Statuts façon N'JOY */
+.log-status {
+  border: none;
+  cursor: pointer;
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: filter 120ms ease;
+
+  &:hover {
+    filter: brightness(0.95);
+  }
+
+  &.st-available { background: #e6f7ee; color: #14804a; }
+  &.st-inuse { background: #e3f0fd; color: #1259a6; }
+  &.st-ordered { background: #fff3e0; color: #b26a00; }
+  &.st-missing { background: #fdecec; color: #c62828; }
+}
+
+.cond-chip {
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 0.74rem;
+  font-weight: 600;
+
+  &.cond-ok { background: #e6f7ee; color: #14804a; }
+  &.cond-mid { background: #fff8e1; color: #9a7b00; }
+  &.cond-bad { background: #fdecec; color: #c62828; }
+}
+
+.cond-none {
+  color: var(--hm-text-tertiary);
+}
+
+.row-actions {
+  display: inline-flex;
+  gap: 2px;
+
+  .action-edit { color: #3b82f6; }
+  .action-delete { color: #ef4444; }
+}
+
+.doc-footer {
+  padding: 0.75rem 1.25rem;
+  font-size: var(--hm-text-xs);
+  color: var(--hm-text-tertiary);
+  background: var(--hm-bg-secondary);
+  border-top: 1px solid var(--hm-border-light);
+}
+
+@media (max-width: 768px) {
+  :host { padding: 1rem; }
+  .tb-field, .tb-search { width: 100%; }
+}
