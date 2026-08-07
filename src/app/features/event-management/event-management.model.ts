@@ -187,6 +187,8 @@ export interface ManagedEvent {
   image_url: string | null;
   notes: string | null;
   strategy: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
 }
 
 // ── Staff / Personnel de l'événement ──

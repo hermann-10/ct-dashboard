@@ -49,7 +49,7 @@
     @if (section() === null) {
       <!-- ═══ HUB : vue d'ensemble + cartes de navigation ═══ -->
       <div class="tab-content">
-        <app-budget-overview [budget]="store.budget()" [lineupFees]="store.totalLineupFees()" />
+        <app-budget-overview [budget]="store.budget()" [lineupFees]="staffStats().totalCost" />
 
         <div class="hub-cards">
           <button class="hub-card budget" (click)="openSection('budget')">
@@ -72,7 +72,9 @@
                 }
               </h3>
               <p>{{ store.confirmedArtists() }}/{{ store.totalArtists() }} artiste(s) confirmé(s)</p>
-              <p class="hub-detail">Cachets : {{ store.totalLineupFees() | currency:'CHF':'symbol':'1.2-2' }}</p>
+              @if (lineupSchedule()) {
+                <p class="hub-detail">Passages : {{ lineupSchedule() }}</p>
+              }
             </div>
             <mat-icon class="hub-arrow">chevron_right</mat-icon>
           </button>
@@ -183,6 +185,14 @@
         }
         @case ('lineup') {
           <div class="tab-content">
+            <div class="invoices-header">
+              <h3 class="section-title" style="margin: 0;">Ordre de passage</h3>
+              <button mat-stroked-button (click)="onSuggestSlots()" [disabled]="store.lineup().length === 0"
+                      matTooltip="Répartit l'horaire de la soirée entre les artistes, dans l'ordre de la liste">
+                <mat-icon>schedule</mat-icon>
+                Suggérer les créneaux
+              </button>
+            </div>
             <app-lineup-table
               [lineup]="store.lineup()"
               (add)="onAddLineup()"

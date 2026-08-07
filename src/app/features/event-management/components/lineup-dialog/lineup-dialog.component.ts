@@ -111,15 +111,18 @@ export interface LineupDialogData {
           </mat-select>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Cachet (CHF)</mat-label>
-          <input matInput type="number" formControlName="fee" min="0" />
-        </mat-form-field>
+        <div class="slot-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Début du set</mat-label>
+            <input matInput type="time" formControlName="set_start" />
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Créneau</mat-label>
-          <input matInput formControlName="set_time" placeholder="ex: 22:00 - 23:30" />
-        </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Fin du set</mat-label>
+            <input matInput type="time" formControlName="set_end" />
+          </mat-form-field>
+        </div>
+        <p class="slot-hint">Le cachet se gère dans la section Staff (forfait DJ). Utilise « Suggérer les créneaux » pour répartir automatiquement la soirée.</p>
 
         <mat-slide-toggle formControlName="is_confirmed">Confirmé</mat-slide-toggle>
 
@@ -148,6 +151,9 @@ export interface LineupDialogData {
     </mat-dialog-actions>
   `,
   styles: [`
+    .slot-row { display: flex; gap: 1rem; }
+    .slot-row mat-form-field { flex: 1; }
+    .slot-hint { margin: -0.25rem 0 0.5rem; font-size: 0.75rem; color: #999; }
     .dialog-form {
       display: flex;
       flex-direction: column;
@@ -198,8 +204,8 @@ export class LineupDialogComponent implements OnInit {
     artist_name: [this.data.entry?.artist_name ?? '', Validators.required],
     artist_id: [this.data.entry?.artist_id ?? (null as string | null)],
     role: [this.data.entry?.role ?? ('' as ArtistRole), Validators.required],
-    fee: [this.data.entry?.fee ?? 0, Validators.min(0)],
-    set_time: [this.data.entry?.set_time ?? ''],
+    set_start: [this.parseSlot(this.data.entry?.set_time)[0]],
+    set_end: [this.parseSlot(this.data.entry?.set_time)[1]],
     is_confirmed: [this.data.entry?.is_confirmed ?? false],
     contact_info: [this.data.entry?.contact_info ?? ''],
     notes: [this.data.entry?.notes ?? ''],
@@ -276,13 +282,22 @@ export class LineupDialogComponent implements OnInit {
     this.creatingArtist.set(false);
   }
 
+  /** « 23:00 - 00:30 » → ['23:00', '00:30'] */
+  private parseSlot(setTime: string | null | undefined): [string, string] {
+    const m = (setTime ?? '').match(/(\d{1,2}:\d{2})\s*[-–→]\s*(\d{1,2}:\d{2})/);
+    return m ? [m[1], m[2]] : ['', ''];
+  }
+
   onSave(): void {
     if (this.form.invalid) return;
-    const raw = this.form.getRawValue();
+    const { set_start, set_end, ...raw } = this.form.getRawValue() as any;
     // Ensure artist_name is a string (not an object from autocomplete)
     if (typeof raw.artist_name === 'object' && raw.artist_name !== null) {
       raw.artist_name = (raw.artist_name as any).name;
     }
+    raw.set_time = set_start && set_end ? `${set_start} - ${set_end}` : (set_start || null);
+    // Le cachet ne se saisit plus ici — on préserve la valeur existante.
+    raw.fee = this.data.entry?.fee ?? 0;
     this.dialogRef.close(raw);
   }
 }

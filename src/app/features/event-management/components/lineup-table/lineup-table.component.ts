@@ -1,5 +1,4 @@
 import { Component, input, output, computed, ChangeDetectionStrategy } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -18,7 +17,6 @@ import { EventLineup, ARTIST_ROLES } from '../../event-management.model';
     MatSlideToggleModule,
     MatChipsModule,
     MatTooltipModule,
-    DecimalPipe,
   ],
   template: `
     <div class="table-container">
@@ -50,15 +48,6 @@ import { EventLineup, ARTIST_ROLES } from '../../event-management.model';
           <th mat-header-cell *matHeaderCellDef>Horaire</th>
           <td mat-cell *matCellDef="let artist">{{ artist.set_time ?? '—' }}</td>
           <td mat-footer-cell *matFooterCellDef></td>
-        </ng-container>
-
-        <!-- Cachet -->
-        <ng-container matColumnDef="fee">
-          <th mat-header-cell *matHeaderCellDef>Cachet</th>
-          <td mat-cell *matCellDef="let artist">{{ artist.fee | number:'1.2-2' }} CHF</td>
-          <td mat-footer-cell *matFooterCellDef>
-            <strong>{{ totalFees() | number:'1.2-2' }} CHF</strong>
-          </td>
         </ng-container>
 
         <!-- Confirmé -->
@@ -163,7 +152,7 @@ export class LineupTableComponent {
   remove = output<string>();
   toggleConfirmed = output<string>();
 
-  readonly displayedColumns = ['artist_name', 'role', 'set_time', 'fee', 'is_confirmed', 'actions'];
+  readonly displayedColumns = ['artist_name', 'role', 'set_time', 'is_confirmed', 'actions'];
   private readonly roleMap = new Map(ARTIST_ROLES.map(r => [r.value, r.label]));
 
   totalFees = computed(() =>

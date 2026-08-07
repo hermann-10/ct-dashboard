@@ -45,12 +45,12 @@ import { BudgetSummary } from '../../event-management.model';
         </div>
       </mat-card>
 
-      <!-- Cachets Lineup -->
+      <!-- Coût staff & cachets -->
       <mat-card class="budget-card lineup">
         <mat-icon class="budget-icon">music_note</mat-icon>
         <div class="budget-content">
           <span class="budget-value">{{ lineupFees() | number:'1.2-2' }} CHF</span>
-          <span class="budget-label">Cachets Lineup</span>
+          <span class="budget-label">Coût staff & cachets</span>
         </div>
       </mat-card>
     </div>

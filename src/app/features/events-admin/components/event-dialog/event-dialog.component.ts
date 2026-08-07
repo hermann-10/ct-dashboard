@@ -72,6 +72,18 @@ export interface EventDialogData {
         </mat-form-field>
       </div>
 
+      <div class="row">
+        <mat-form-field appearance="outline">
+          <mat-label>Début de soirée</mat-label>
+          <input matInput type="time" [(ngModel)]="form.start_time" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fin de soirée</mat-label>
+          <input matInput type="time" [(ngModel)]="form.end_time" />
+        </mat-form-field>
+      </div>
+
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Lien billetterie</mat-label>
         <input matInput [(ngModel)]="form.ticket_url" type="url" />
@@ -195,6 +207,8 @@ export class EventDialogComponent {
     date: this.data.event?.date ?? '',
     venue: this.data.event?.venue ?? '',
     city: this.data.event?.city ?? '',
+    start_time: this.data.event?.start_time ?? '',
+    end_time: this.data.event?.end_time ?? '',
     ticket_url: this.data.event?.ticket_url ?? '',
     image_url: this.data.event?.image_url ?? '',
     image_emoji: this.data.event?.image_emoji ?? '🎉',

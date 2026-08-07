@@ -351,6 +351,48 @@ export class EventManagementComponent implements OnInit {
     }
   }
 
+  /** Plage horaire du lineup : premier début → dernière fin. */
+  readonly lineupSchedule = computed(() => {
+    const slots = [...this.store.lineup()]
+      .sort((x, y) => x.sort_order - y.sort_order)
+      .map(l => l.set_time)
+      .filter((t): t is string => !!t && /\d{1,2}:\d{2}/.test(t));
+    if (slots.length === 0) return null;
+    const first = slots[0].match(/(\d{1,2}:\d{2})/)?.[1];
+    const lastMatches = slots[slots.length - 1].match(/(\d{1,2}:\d{2})/g);
+    const last = lastMatches?.[lastMatches.length - 1];
+    return first && last ? `${first} → ${last}` : null;
+  });
+
+  /** Répartit l'horaire de la soirée entre les artistes du lineup. */
+  async onSuggestSlots(): Promise<void> {
+    const event = this.store.event();
+    const lineup = [...this.store.lineup()].sort((a, b) => a.sort_order - b.sort_order);
+    if (!event || lineup.length === 0) return;
+    if (!event.start_time || !event.end_time) {
+      alert("Renseigne d'abord les horaires de la soirée (Début / Fin) dans le formulaire de l'événement, puis réessaie.");
+      return;
+    }
+    const toMin = (t: string): number => {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    };
+    const fmt = (min: number): string =>
+      `${String(Math.floor((((min % 1440) + 1440) % 1440) / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+    const startMin = toMin(event.start_time);
+    let total = toMin(event.end_time) - startMin;
+    if (total <= 0) total += 1440;
+    // Créneaux égaux, arrondis à 5 minutes ; le dernier absorbe le reste.
+    const slot = Math.max(15, Math.round(total / lineup.length / 5) * 5);
+    let cursor = startMin;
+    for (let i = 0; i < lineup.length; i++) {
+      const from = cursor;
+      const to = i === lineup.length - 1 ? startMin + total : cursor + slot;
+      await this.store.editLineupEntry(lineup[i].id, { set_time: `${fmt(from)} - ${fmt(to)}` });
+      cursor = to;
+    }
+  }
+
   // ═══ Staff / Personnel ═══
 
   async loadStaff(eventId: string): Promise<void> {
