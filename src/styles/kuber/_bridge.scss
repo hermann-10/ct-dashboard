@@ -113,3 +113,65 @@
     border-radius: 10px;
   }
 }
+
+/* ═══ Navbar : centrage vertical forcé ═══
+   Le SCSS Kuber pose display:block sur .container-fluid et des
+   margin-top hérités de Bootstrap (collapse-menu-icon +10px,
+   navbar-right +10px, navbar-toggle -7px). On neutralise tout et
+   on aligne en flex sur une seule ligne de 60px. */
+.admin-shell nav.navbar {
+  height: 60px;
+}
+
+.admin-shell nav.navbar .container-fluid {
+  display: flex !important;
+  align-items: center;
+  height: 60px;
+  padding: 0 !important;
+}
+
+.admin-shell nav.navbar .navbar-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 60px;
+  flex-shrink: 0;
+  float: none;
+}
+
+.admin-shell nav.navbar .navbar-collapse {
+  display: flex !important;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  height: 60px;
+  padding: 0;
+  overflow: visible;
+}
+
+.admin-shell nav.navbar .collapse-menu-icon {
+  display: flex;
+  align-items: center;
+  margin: 0 !important;
+  padding-left: 6px;
+  list-style: none;
+}
+
+.admin-shell nav.navbar .navbar-nav.navbar-right {
+  display: flex;
+  align-items: center;
+  float: none !important;
+  margin: 0 16px 0 auto !important;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-shell nav.navbar .navbar-nav.navbar-right > li {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.admin-shell nav.navbar .navbar-toggle {
+  margin-top: 0;
+}

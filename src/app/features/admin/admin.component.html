@@ -1,3 +1,5 @@
+<kuber-admin-styles />
+
 <div class="admin-shell theme-purple"
      [class.ls-closed]="isMobile()"
      [class.overlay-open]="isMobile() && sidenavOpened()"
@@ -56,18 +58,6 @@
     <div class="menu">
       <div class="sidebar-scroll">
         <ul class="list">
-          <li class="sidebar-user-panel">
-            <div class="user-panel">
-              <div class="image">
-                <span class="user-avatar user-avatar-lg">{{ initials() }}</span>
-              </div>
-            </div>
-            <div class="profile-usertitle">
-              <div class="sidebar-userpic-name">{{ displayName() || 'Admin' }}</div>
-              <div class="profile-usertitle-job">HM-Events</div>
-            </div>
-          </li>
-
           <li class="header">NAVIGATION</li>
           @for (item of navItems; track item.path) {
             <li routerLinkActive="active-top">

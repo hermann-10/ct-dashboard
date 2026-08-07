@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthStore } from '../auth.store';
+import { KuberAuthStylesComponent } from '../../../shared/kuber-styles/kuber-auth-styles.component';
 
 @Component({
   selector: 'app-login',
@@ -21,6 +22,7 @@ import { AuthStore } from '../auth.store';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    KuberAuthStylesComponent,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',

@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthStore } from '../auth/auth.store';
+import { KuberAdminStylesComponent } from '../../shared/kuber-styles/kuber-admin-styles.component';
 
 interface NavItem {
   path: string;
@@ -26,6 +27,7 @@ interface NavItem {
     MatButtonModule,
     MatMenuModule,
     MatTooltipModule,
+    KuberAdminStylesComponent,
   ],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',

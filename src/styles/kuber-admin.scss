@@ -1,8 +1,14 @@
 /* ═══════════════════════════════════════════════════════════
    Thème admin Kuber — porté depuis le template Kuber (starter)
-   Chargé globalement mais sans effet sur le site public :
-   tous les sélecteurs ciblent .admin-shell / .navbar / .sidebar /
-   section.content, absents des pages publiques.
+   Chargé à la demande par KuberAdminStylesComponent (shell admin),
+   pas dans le bundle initial : les pages publiques n'en ont pas
+   besoin. Tous les sélecteurs ciblent .admin-shell / .navbar /
+   .sidebar / section.content, absents des pages publiques.
+   Les styles des pages d'authentification vivent dans
+   kuber-auth.scss (chargé par la page login).
+
+   NB : ce fichier pèse ~55 kB une fois compilé — c'est pour lui
+   que le budget `anyComponentStyle` d'angular.json est à 60/80 kB.
    ═══════════════════════════════════════════════════════════ */
 @use "kuber/general";
 @use "kuber/media";
@@ -10,5 +16,4 @@
 @use "kuber/leftsidebaroverlay";
 @use "kuber/card";
 @use "kuber/theme-purple";
-@use "kuber/auth";
 @use "kuber/bridge";

@@ -76,7 +76,7 @@ export class EventManagementComponent implements OnInit {
 
   exporting = signal(false);
 
-  private readonly sections: EventSection[] = ['budget', 'lineup', 'guestlists', 'bar', 'notes', 'invoices'];
+  private readonly sections: EventSection[] = ['budget', 'lineup', 'guestlists', 'bar', 'notes', 'invoices', 'staff'];
   section = signal<EventSection | null>(null);
 
   constructor() {

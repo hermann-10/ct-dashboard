@@ -1,0 +1,7 @@
+/* ═══════════════════════════════════════════════════════════
+   Thème Kuber — pages d'authentification (.auth-container)
+   Chargé à la demande par KuberAuthStylesComponent, utilisé par
+   login / register / forgot-password. Séparé de kuber-admin.scss
+   pour que ni l'un ni l'autre ne pèse sur le bundle initial.
+   ═══════════════════════════════════════════════════════════ */
+@use "kuber/auth";
