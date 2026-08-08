@@ -61,6 +61,10 @@ interface FlatGuest {
             <mat-icon>picture_as_pdf</mat-icon>
             <span>Export PDF</span>
           </button>
+          <button mat-menu-item (click)="onExportMergedPdf()">
+            <mat-icon>sort_by_alpha</mat-icon>
+            <span>Export PDF regroupé (A→Z)</span>
+          </button>
           <button mat-menu-item (click)="onExportExcel()">
             <mat-icon>table_chart</mat-icon>
             <span>Export Excel</span>
@@ -157,7 +161,12 @@ interface FlatGuest {
           } @else {
             <div class="table-body">
               @for (g of filteredGuests(); track g.entry.id) {
-                <div class="table-row" [class.checked-in]="g.entry.is_checked_in">
+                <div
+                  class="table-row"
+                  [class.checked-in]="g.entry.is_checked_in"
+                  matTooltip="Modifier l'invité"
+                  (click)="editEntry.emit({ guestlistId: g.guestlistId, entry: g.entry })"
+                >
                   <span class="td-name">{{ g.entry.guest_name }}</span>
                   <span class="td-accomp">
                     @if (g.entry.accompagnants > 0) {
@@ -207,6 +216,7 @@ interface FlatGuest {
             (addEntry)="addEntry.emit($event)"
             (removeEntry)="removeEntry.emit($event)"
             (toggleCheckedIn)="toggleCheckedIn.emit($event)"
+            (editEntry)="editEntry.emit($event)"
             (editGuestlist)="editGuestlist.emit($event)"
             (removeGuestlist)="removeGuestlist.emit($event)"
           />
@@ -244,6 +254,7 @@ interface FlatGuest {
     .panel-actions {
       display: flex;
       gap: 0.5rem;
+      position: relative;
     }
 
     /* ── Overview section ── */
@@ -339,6 +350,13 @@ interface FlatGuest {
     }
 
     .table-row {
+      cursor: pointer;
+      transition: background 0.15s ease;
+
+      &:hover {
+        background: rgba(111, 44, 226, 0.06);
+      }
+
       display: grid;
       grid-template-columns: 1fr 50px 1fr 60px;
       gap: 0.5rem;
@@ -471,12 +489,18 @@ interface FlatGuest {
     }
 
     .export-notification {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      right: 0;
+      white-space: nowrap;
+      pointer-events: none;
       background: #dcfce7;
       color: #166534;
       font-size: 0.8rem;
       font-weight: 600;
       padding: 4px 12px;
       border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(22, 101, 52, 0.15);
       animation: fadeInOut 2.5s ease forwards;
     }
 
@@ -528,6 +552,7 @@ export class GuestlistPanelComponent {
   createGuestlist = output<void>();
   addEntry = output<EventGuestlist>();
   removeEntry = output<{ guestlistId: string; entryId: string }>();
+  editEntry = output<{ guestlistId: string; entry: GuestlistEntry }>();
   toggleCheckedIn = output<{ guestlistId: string; entryId: string }>();
   editGuestlist = output<EventGuestlist>();
   removeGuestlist = output<string>();
@@ -610,6 +635,13 @@ export class GuestlistPanelComponent {
     if (!ev) return;
     this.exportService.exportPdf(ev, this.guestlists());
     this.showNotification('PDF téléchargé !');
+  }
+
+  onExportMergedPdf(): void {
+    const ev = this.event();
+    if (!ev) return;
+    this.exportService.exportMergedPdf(ev, this.guestlists());
+    this.showNotification('PDF regroupé téléchargé !');
   }
 
   async onExportExcel(): Promise<void> {

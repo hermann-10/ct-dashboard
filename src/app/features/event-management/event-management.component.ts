@@ -11,7 +11,7 @@ import { EventManagementStore } from './event-management.store';
 import { PdfExportService } from './pdf-export.service';
 import { InvoicePdfService } from './invoice-pdf.service';
 import { EventInvoice, InvoiceStatus, invoiceTotal } from './invoice.model';
-import { EventCharge, EventRevenue, EventLineup, EventGuestlist, EventStaff, staffHours, staffCost } from './event-management.model';
+import { EventCharge, EventRevenue, EventLineup, EventGuestlist, GuestlistEntry, EventStaff, staffHours, staffCost } from './event-management.model';
 import {
   BudgetOverviewComponent,
   ChargesTableComponent,
@@ -287,6 +287,28 @@ export class EventManagementComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.store.addGuestEntry(guestlist.id, { ...result, guestlist_id: guestlist.id });
+      }
+    });
+  }
+
+  onEditGuestEntry(event: { guestlistId: string; entry: GuestlistEntry }): void {
+    const gl = this.store.guestlists().find(g => g.id === event.guestlistId);
+    if (!gl) return;
+    const dialogRef = this.dialog.open(GuestDialogComponent, {
+      data: {
+        mode: 'edit',
+        entry: event.entry,
+        currentCount: (gl.entries ?? []).length,
+        quota: gl.quota,
+      } as GuestDialogData,
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.store.editGuestEntry(event.guestlistId, event.entry.id, {
+          guest_name: result.guest_name,
+          accompagnants: result.accompagnants,
+          remarks: result.remarks || null,
+        });
       }
     });
   }

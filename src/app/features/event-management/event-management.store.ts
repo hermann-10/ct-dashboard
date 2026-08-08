@@ -335,6 +335,31 @@ export const EventManagementStore = signalStore(
         patchState(store, { saving: false, error: e.message });
       }
     },
+    async editGuestEntry(
+      guestlistId: string,
+      entryId: string,
+      changes: { guest_name?: string; accompagnants?: number; remarks?: string | null },
+    ) {
+      patchState(store, { saving: true });
+      try {
+        const updated = await service.updateGuestEntry(entryId, changes);
+        patchState(store, {
+          guestlists: store.guestlists().map(gl =>
+            gl.id === guestlistId
+              ? {
+                  ...gl,
+                  entries: (gl.entries ?? [])
+                    .map(e => e.id === entryId ? { ...e, ...updated } : e)
+                    .sort((a, b) => a.guest_name.localeCompare(b.guest_name, 'fr')),
+                }
+              : gl
+          ),
+          saving: false,
+        });
+      } catch (e: any) {
+        patchState(store, { saving: false, error: e.message });
+      }
+    },
     async removeGuestEntry(guestlistId: string, entryId: string) {
       patchState(store, { saving: true });
       try {

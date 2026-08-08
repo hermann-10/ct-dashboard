@@ -74,7 +74,11 @@ import { EventGuestlist, GuestlistEntry } from '../../event-management.model';
                 >
                   <mat-icon>{{ entry.is_checked_in ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
                 </button>
-                <div class="guest-info">
+                <div
+                  class="guest-info"
+                  matTooltip="Modifier l'invité"
+                  (click)="editEntry.emit({ guestlistId: guestlist().id, entry: entry })"
+                >
                   <span class="guest-name">{{ entry.guest_name }}</span>
                   @if (entry.accompagnants > 0) {
                     <mat-chip class="accomp-chip">+{{ entry.accompagnants }}</mat-chip>
@@ -172,6 +176,7 @@ import { EventGuestlist, GuestlistEntry } from '../../event-management.model';
     }
 
     .guest-info {
+      cursor: pointer;
       flex: 1;
       display: flex;
       align-items: center;
@@ -247,6 +252,7 @@ export class GuestlistCardComponent {
 
   addEntry = output<EventGuestlist>();
   removeEntry = output<{ guestlistId: string; entryId: string }>();
+  editEntry = output<{ guestlistId: string; entry: GuestlistEntry }>();
   toggleCheckedIn = output<{ guestlistId: string; entryId: string }>();
   editGuestlist = output<EventGuestlist>();
   removeGuestlist = output<string>();

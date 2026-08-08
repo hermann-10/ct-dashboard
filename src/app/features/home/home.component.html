@@ -53,6 +53,9 @@
                   <span class="badge soon">BIENTÔT</span>
                 }
                 <span class="event-date">{{ event.date | date:'EEEE d MMMM' }}</span>
+                @if (eventHours(event)) {
+                  <span class="event-time">· {{ eventHours(event) }}</span>
+                }
               </div>
               <h3 class="event-name">{{ event.name }}</h3>
               <p class="event-venue">📍 {{ event.venue }}, {{ event.city }}</p>

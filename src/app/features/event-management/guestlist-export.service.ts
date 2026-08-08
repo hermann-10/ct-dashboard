@@ -109,6 +109,73 @@ export class GuestlistExportService {
     doc.save(`guestlists_${event.slug}_${event.date}.pdf`);
   }
 
+  // ── PDF regroupé (A→Z, sans artistes ni résumé) ──────────
+  exportMergedPdf(event: ManagedEvent, guestlists: EventGuestlist[]): void {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // ── Header ──
+    doc.setFillColor(30, 30, 60);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Guestlist — ' + event.name, 14, 18);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${event.date}  •  ${event.venue}, ${event.city}`, 14, 28);
+    doc.text(`Généré le ${new Date().toLocaleDateString('fr-CH')}`, 14, 35);
+    doc.setTextColor(0, 0, 0);
+
+    // ── Toutes les entrées fusionnées, triées A→Z ──
+    const entries = guestlists
+      .flatMap(gl => gl.entries ?? [])
+      .sort((a, b) => a.guest_name.localeCompare(b.guest_name, 'fr'));
+
+    if (entries.length === 0) {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'italic');
+      doc.text('Aucun invité', 14, 55);
+    } else {
+      autoTable(doc, {
+        startY: 50,
+        head: [['#', 'Nom', 'Acc.', 'Remarques', 'Check-in']],
+        body: entries.map((e, i) => [
+          String(i + 1),
+          e.guest_name,
+          e.accompagnants > 0 ? `+${e.accompagnants}` : '—',
+          e.remarks ?? '—',
+          e.is_checked_in ? '✓' : '',
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [111, 66, 193] },
+        styles: { fontSize: 9 },
+        columnStyles: {
+          0: { cellWidth: 10 },
+          2: { cellWidth: 15, halign: 'center' as const },
+          4: { cellWidth: 20, halign: 'center' as const },
+        },
+        margin: { top: 45 },
+      });
+    }
+
+    // ── Footer ──
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(
+        `HM-Events — Guestlist ${event.name} — Page ${i}/${pageCount}`,
+        pageWidth / 2,
+        doc.internal.pageSize.getHeight() - 8,
+        { align: 'center' },
+      );
+    }
+
+    doc.save(`guestlist_az_${event.slug}_${event.date}.pdf`);
+  }
+
   // ── Excel ────────────────────────────────────────────────
   async exportExcel(event: ManagedEvent, guestlists: EventGuestlist[]): Promise<void> {
     const XLSX = await import('xlsx');

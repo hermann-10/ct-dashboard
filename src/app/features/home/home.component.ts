@@ -16,6 +16,8 @@ interface PublicEvent {
   ticket_url: string | null;
   image_url: string | null;
   image_emoji: string;
+  start_time?: string | null;
+  end_time?: string | null;
 }
 
 @Component({
@@ -93,6 +95,20 @@ export class HomeComponent implements OnInit {
         content_type: 'event',
       });
     }
+  }
+
+  /** '23:30' → '23h30', '14:00' → '14h' */
+  formatTime(t: string): string {
+    const [h, m] = t.split(':');
+    return m === '00' ? `${parseInt(h, 10)}h` : `${parseInt(h, 10)}h${m}`;
+  }
+
+  eventHours(event: PublicEvent): string {
+    const start = event.start_time ? this.formatTime(event.start_time) : '';
+    const end = event.end_time ? this.formatTime(event.end_time) : '';
+    if (start && end) return `${start} – ${end}`;
+    if (start) return `dès ${start}`;
+    return '';
   }
 
   isToday(date: string): boolean {
