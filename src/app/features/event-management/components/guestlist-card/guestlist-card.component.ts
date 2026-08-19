@@ -147,6 +147,9 @@ import { EventGuestlist, GuestlistEntry } from '../../event-management.model';
     .guest-list {
       max-height: 400px;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+      overscroll-behavior: contain;
     }
 
     .guest-row {

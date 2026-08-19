@@ -347,6 +347,9 @@ interface FlatGuest {
     .table-body {
       max-height: 400px;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+      overscroll-behavior: contain;
     }
 
     .table-row {
