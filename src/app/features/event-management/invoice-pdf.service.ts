@@ -43,7 +43,7 @@ export class InvoicePdfService {
 
     // ── Logo ──
     try {
-      const logo = await this.loadImage('/hm_dev_logo.png');
+      const logo = await this.loadImage('/hm_logo.png');
       doc.addImage(logo, 'PNG', margin, 14, 16, 16);
     } catch {
       doc.setFont('helvetica', 'bold');
