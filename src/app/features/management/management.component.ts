@@ -15,7 +15,7 @@ import { Artist } from '../artists/artists.model';
 import { InvoicePdfService } from '../event-management/invoice-pdf.service';
 import { EventInvoice, InvoiceStatus, invoiceTotal } from '../event-management/invoice.model';
 import { ContractPdfService } from './contract-pdf.service';
-import { ArtistRevenue, ArtistInvoice, ArtistContract, ContractStatus, YearSummary } from './management.model';
+import { ArtistRevenue, ArtistInvoice, ArtistContract, ContractStatus, YearSummary, DEFAULT_CONTRACT_DETAILS, DEFAULT_PAYMENT_TERMS } from './management.model';
 import { ArtistRevenueDialogComponent, ArtistRevenueDialogData } from './components/artist-revenue-dialog.component';
 import { ArtistInvoiceDialogComponent, ArtistInvoiceDialogData } from './components/artist-invoice-dialog.component';
 import { ArtistContractDialogComponent, ArtistContractDialogData } from './components/artist-contract-dialog.component';
@@ -280,7 +280,8 @@ export class ManagementComponent implements OnInit {
             event_date: revenueDto.date,
             venue: revenueDto.venue || undefined,
             fee: revenueDto.amount,
-            payment_terms: 'Paiement intégral le soir de la prestation',
+            details: DEFAULT_CONTRACT_DETAILS,
+            payment_terms: DEFAULT_PAYMENT_TERMS,
             status: 'draft',
           });
           this.contracts.update(list => [contract as ArtistContract, ...list]);
@@ -337,7 +338,8 @@ export class ManagementComponent implements OnInit {
         event_date: rev.date,
         venue: rev.venue || undefined,
         fee: rev.amount,
-        payment_terms: 'Paiement intégral le soir de la prestation',
+        details: DEFAULT_CONTRACT_DETAILS,
+        payment_terms: DEFAULT_PAYMENT_TERMS,
         status: 'draft',
       });
       this.contracts.update(list => [contract as ArtistContract, ...list]);
@@ -358,8 +360,10 @@ export class ManagementComponent implements OnInit {
     });
     ref.afterClosed().subscribe(async result => {
       if (!result) return;
+      // Les toggles du dialogue ne sont pas des colonnes de artist_revenues
+      const { createInvoice, createContract, ...revenueDto } = result;
       try {
-        const updated = await this.supabase.updateArtistRevenue(revenue.id, result) as ArtistRevenue;
+        const updated = await this.supabase.updateArtistRevenue(revenue.id, revenueDto) as ArtistRevenue;
         this.revenues.update(rows =>
           rows.map(r => (r.id === revenue.id ? updated : r)).sort((a, b) => b.date.localeCompare(a.date))
         );
